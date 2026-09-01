@@ -67,15 +67,17 @@ class Reflector:
                     )
 
     def __str__(self):
-        files = {}
+        files: dict[str, list[str]] = {}
 
         for struct in self.structs.values():
-            files[struct.fname] = str(struct)
+            if struct.fname not in files:
+                files[struct.fname] = []
+            files[struct.fname].append(str(struct))
 
         lines = []
-        for file, content in files.items():
+        for file, contents in files.items():
             lines.append(f"// --- Generated from {file} ---")
-            lines.append(content + "\n")
+            lines.append("\n\n".join(contents) + "\n")
 
         return "\n".join(lines)
 
