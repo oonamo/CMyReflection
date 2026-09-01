@@ -5,17 +5,18 @@
 #include <stddef.h>
 #include <string.h>
 
+#ifndef CMYREFLECTION_PARSED
 typedef enum
 {
     TYPE_INT,
     TYPE_FLOAT,
-    TYPE_STRING,
+    TYPE_STR,
 
 #ifdef CMYREFLECTION_REFLECTION_TYPES
     CMYREFLECTION_REFLECTION_TYPES
 #endif
-
 } FieldType;
+#endif // CMYREFLECTION_PARSED
 
 typedef struct
 {
@@ -31,17 +32,9 @@ const FieldInfo *find_field(const FieldInfo *meta, size_t count,
 bool set_field_value(void *instance, const FieldInfo *field,
                      const void *new_value);
 
-#define DEFINE_FIELD_SETTER_PROTOTYPE(Suffix, CType)                           \
-    bool set_field_##Suffix(void *instance, const FieldInfo *field,            \
-                            CType value);
-
-DEFINE_FIELD_SETTER_PROTOTYPE(int, int);
-DEFINE_FIELD_SETTER_PROTOTYPE(float, float);
-DEFINE_FIELD_SETTER_PROTOTYPE(str, char *);
-
 #define DEFINE_FIELD_SETTER(Suffix, EnumVal, CType)                            \
-    bool set_field_##Suffix(void *instance, const FieldInfo *field,            \
-                            CType value)                                       \
+    static inline bool set_field_##Suffix(void *instance,                      \
+                                          const FieldInfo *field, CType value) \
     {                                                                          \
         if (field && field->type == EnumVal)                                   \
         {                                                                      \
@@ -50,9 +43,14 @@ DEFINE_FIELD_SETTER_PROTOTYPE(str, char *);
         return false;                                                          \
     }
 
-#endif // _CMYREFLECTION_H
 
-#define CMYREFLECTION_IMPLEMENTATION
+#ifndef CMYREFLECTION_PARSED
+DEFINE_FIELD_SETTER(int, TYPE_INT, int);
+DEFINE_FIELD_SETTER(float, TYPE_FLOAT, float);
+DEFINE_FIELD_SETTER(str, TYPE_STR, char *);
+#endif
+
+#endif // _CMYREFLECTION_H
 
 #ifdef CMYREFLECTION_IMPLEMENTATION
 
@@ -67,7 +65,7 @@ const FieldInfo *find_field(const FieldInfo *meta, size_t count,
         }
     }
 
-    return false;
+    return NULL;
 }
 
 bool set_field_value(void *instance, const FieldInfo *field,
@@ -83,9 +81,5 @@ bool set_field_value(void *instance, const FieldInfo *field,
 
     return true;
 }
-
-DEFINE_FIELD_SETTER(int, TYPE_INT, int)
-DEFINE_FIELD_SETTER(float, TYPE_FLOAT, float)
-DEFINE_FIELD_SETTER(str, TYPE_STRING, char *)
 
 #endif // CMYREFLECTION_IMPLEMENTATION

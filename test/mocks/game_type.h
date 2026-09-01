@@ -1,4 +1,5 @@
 #include "stuff.h"
+#include <stdint.h>
 
 /// @reflect
 /// @enum TYPE_VEC2
@@ -18,4 +19,10 @@ typedef struct
     char *player_name;
 
     DamageComponent damage;
+
+    uint8_t game_flags;
+
+    unsigned int other_flags;
+
+    long long score;
 } Game;
