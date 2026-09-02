@@ -5,17 +5,22 @@ from pathlib import Path
 
 
 class Field:
-    def __init__(self, name: str, type_name: str):
+    def __init__(self, name: str, type_name: str, array_bounds: str = None):
         self.name = name
         self.type_name = type_name
-        self.normalized_type_name = type_name.replace(" ", "")
+        self.array_bounds = array_bounds
+
+        base_name = type_name.replace(" ", "")
+
+        self.normalized_type_name = base_name + ("_arr" if array_bounds else "")
         self.type_enum = Reflector.TYPE_MAP.get(
             self.normalized_type_name, Reflector.TYPE_MAP["unknown"]
         )
 
     def gen_field_str(self, struct_name: str) -> str:
         """Generates a formatted string of a field in the metadata struct"""
-        return f'    {{ "{self.name}", {self.type_enum}, offsetof({struct_name}, {self.name}), sizeof({self.type_name}) }}'
+        arr_suffix = f"[{self.array_bounds}]" if self.array_bounds else ""
+        return f'    {{ "{self.name}", {self.type_enum}, offsetof({struct_name}, {self.name}), sizeof({self.type_name}{arr_suffix}) }}'
 
 
 class CStruct:
@@ -101,7 +106,12 @@ class Reflector:
                         enum_name = f"TYPE_{safe_name}"
 
                         Reflector.TYPE_MAP[field.normalized_type_name] = enum_name
-                        Reflector.CTYPES[field.normalized_type_name] = field.type_name
+
+                        if field.array_bounds:
+                            Reflector.CTYPES[field.normalized_type_name] = field.type_name + " *"
+                        else:
+                            Reflector.CTYPES[field.normalized_type_name] = field.type_name
+
                         field.type_enum = enum_name
 
     def generate_file_header(self) -> str:
@@ -121,7 +131,10 @@ class Reflector:
             type_suffix = type_name.replace("*", "ptr").replace(" ", "_")
         ctype = Reflector.CTYPES.get(type_name, type_name)
 
-        return f"DEFINE_FIELD_SETTER({type_suffix}, {type_enum}, {ctype})"
+        if "_arr" in type_name:
+            return f"DEFINE_ARRAY_SETTER({type_suffix}, {type_enum}, {ctype})"
+        else:
+            return f"DEFINE_FIELD_SETTER({type_suffix}, {type_enum}, {ctype})"
 
     def generate_types(self) -> str:
         """Generates the FieldType enum from TYPE_MAP"""
@@ -216,12 +229,18 @@ def generate_reflection(reflector: Reflector, fname: str, code: str):
                     skip_next = False
                     continue
 
-                match = re.search(r"^(.*[\s\*])([a-zA-Z0-9_]+)$", decl.strip())
+                match = re.search(
+                    r"^(.*[\s\*])([a-zA-Z0-9_]+)(?:\s*\[(.*)\])?$", decl.strip()
+                )
+
                 if match:
                     raw_type = match.group(1).strip()
                     field_name = match.group(2).strip()
+                    array_bounds = match.group(3)
 
-                    current_struct.append_field(Field(field_name, raw_type))
+                    current_struct.append_field(
+                        Field(field_name, raw_type, array_bounds)
+                    )
 
         reflector.add_cstruct(current_struct)
 

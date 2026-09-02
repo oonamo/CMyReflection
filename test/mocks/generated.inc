@@ -11,12 +11,15 @@
 typedef enum {
     TYPE_DAMAGE_COMPONENT,
     TYPE_FLOAT,
+    TYPE_FLOAT_ARR,
     TYPE_INT,
     TYPE_LONGLONG,
     TYPE_STR,
     TYPE_UINT8_T,
+    TYPE_UINT8_T_ARR,
     TYPE_UNKNOWN,
     TYPE_UNSIGNEDCHAR,
+    TYPE_UNSIGNEDCHAR_ARR,
     TYPE_UNSIGNEDINT,
     TYPE_VEC2,
 } FieldType;
@@ -40,6 +43,9 @@ DEFINE_FIELD_SETTER(u8, TYPE_UINT8_T, uint8_t)
 DEFINE_FIELD_SETTER(uint, TYPE_UNSIGNEDINT, unsigned int)
 DEFINE_FIELD_SETTER(unsignedchar, TYPE_UNSIGNEDCHAR, unsigned char)
 DEFINE_FIELD_SETTER(ll, TYPE_LONGLONG, long long)
+DEFINE_ARRAY_SETTER(uint8_t_arr, TYPE_UINT8_T_ARR, uint8_t *)
+DEFINE_ARRAY_SETTER(unsignedchar_arr, TYPE_UNSIGNEDCHAR_ARR, unsigned char *)
+DEFINE_ARRAY_SETTER(float_arr, TYPE_FLOAT_ARR, float *)
 
 #endif // _CMYREFLECTION_AUTOGEN
 // --- Metadata Definitions
@@ -60,8 +66,11 @@ const FieldInfo Game_Metadata[] = {
     { "damage", TYPE_DAMAGE_COMPONENT, offsetof(Game, damage), sizeof(DamageComponent) },
     { "game_flags", TYPE_UINT8_T, offsetof(Game, game_flags), sizeof(uint8_t) },
     { "other_flags", TYPE_UNSIGNEDINT, offsetof(Game, other_flags), sizeof(unsigned int) },
-    { "tile_type", TYPE_UNSIGNEDCHAR, offsetof(Game, tile_type), sizeof(unsigned char) },
+    { "current_tile", TYPE_UNSIGNEDCHAR, offsetof(Game, current_tile), sizeof(unsigned char) },
     { "score", TYPE_LONGLONG, offsetof(Game, score), sizeof(long long) },
+    { "grid", TYPE_UINT8_T_ARR, offsetof(Game, grid), sizeof(uint8_t[9]) },
+    { "sliding_window", TYPE_UNSIGNEDCHAR_ARR, offsetof(Game, sliding_window), sizeof(unsigned char[16]) },
+    { "history", TYPE_FLOAT_ARR, offsetof(Game, history), sizeof(float[MAX_ARR_LEN]) },
 };
 const size_t Game_FieldCount = sizeof(Game_Metadata) / sizeof(FieldInfo);
 

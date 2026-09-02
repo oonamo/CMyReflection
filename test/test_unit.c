@@ -2,7 +2,6 @@
 #include <unity_fixture.h>
 
 #include "mocks/game_type.h"
-#include "mocks/stuff.h"
 
 #define CMYREFLECTION_IMPLEMENTATION
 #define REFLECTION_IMPLEMENTATION
@@ -93,6 +92,112 @@ TEST(Unit, Type_Set_Field_Is_Null_Safe)
     TEST_ASSERT_FALSE(set_field_float(&g, NULL, 23.7f));
 }
 
+TEST(Unit, String_Has_Alias)
+{
+    Game g = {0};
+    const FieldInfo *f =
+        find_field(Game_Metadata, Game_FieldCount, "player_name");
+
+    TEST_ASSERT_TRUE(set_field_str(&g, f, "player1"));
+    TEST_ASSERT_EQUAL_STRING("player1", g.player_name);
+}
+
+TEST(Unit, Metadata_Stores_Correct_Sizes)
+{
+    const FieldInfo *f_health =
+        find_field(Game_Metadata, Game_FieldCount, "health");
+    TEST_ASSERT_EQUAL(sizeof(float), f_health->size);
+
+    const FieldInfo *f_pos =
+        find_field(Game_Metadata, Game_FieldCount, "player_pos");
+    TEST_ASSERT_EQUAL(sizeof(Vector2), f_pos->size);
+
+    const FieldInfo *f_name =
+        find_field(Game_Metadata, Game_FieldCount, "player_name");
+    TEST_ASSERT_EQUAL(sizeof(char *), f_name->size);
+}
+
+TEST(Unit, Can_Generate_Array_Literals)
+{
+    Game g = {0};
+    const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "grid");
+    TEST_ASSERT_NOT_NULL(f);
+
+    TEST_ASSERT_EQUAL(sizeof(g.grid), f->size);
+    TEST_ASSERT_EQUAL(TYPE_UINT8_T_ARR, f->type);
+
+    const FieldInfo *winstats =
+        find_field(Game_Metadata, Game_FieldCount, "sliding_window");
+    TEST_ASSERT_NOT_NULL(winstats);
+
+    TEST_ASSERT_EQUAL(sizeof(g.sliding_window), winstats->size);
+    TEST_ASSERT_EQUAL(TYPE_UNSIGNEDCHAR_ARR, winstats->type);
+}
+
+TEST(Unit, Can_Generate_Array_Macro)
+{
+    Game g = {0};
+    const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "history");
+    TEST_ASSERT_NOT_NULL(f);
+
+    TEST_ASSERT_EQUAL(sizeof(g.history), f->size);
+    TEST_ASSERT_EQUAL(TYPE_FLOAT_ARR, f->type);
+}
+
+TEST(Unit, Handles_Spaced_Types)
+{
+    Game g = {0};
+    const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "score");
+    TEST_ASSERT_NOT_NULL(f);
+
+    TEST_ASSERT_EQUAL(TYPE_LONGLONG, f->type);
+    TEST_ASSERT_TRUE(set_field_ll(&g, f, 2393));
+}
+
+TEST(Unit, Array_Setter_Copies_Memory)
+{
+    Game g = {0};
+    const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "history");
+    TEST_ASSERT_NOT_NULL(f);
+
+    float new_history[MAX_ARR_LEN] = {0.0f};
+    for (int i = 0; i < MAX_ARR_LEN; i++)
+    {
+        new_history[i] = i + (i * 0.8f);
+    }
+
+    TEST_ASSERT_TRUE(set_field_float_arr(&g, f, new_history));
+
+    for (int i = 0; i < MAX_ARR_LEN; i++)
+    {
+        TEST_ASSERT_EQUAL_FLOAT(i + (i * 0.8f), g.history[i]);
+    }
+}
+
+TEST(Unit, Custom_Struct_Setter_Works)
+{
+    Game g = {0};
+    const FieldInfo *f =
+        find_field(Game_Metadata, Game_FieldCount, "player_pos");
+    Vector2 new_pos = {.x = 100.0f, .y = 250.0f};
+
+    TEST_ASSERT_TRUE(set_field_Vector2(&g, f, new_pos));
+    TEST_ASSERT_EQUAL_FLOAT(100.0f, g.player_pos.x);
+    TEST_ASSERT_EQUAL_FLOAT(250.0f, g.player_pos.y);
+}
+
+TEST(Unit, Setter_Respects_Struct_Padding)
+{
+    Game g = {0};
+    g.level = 23;
+
+    // NOTE: level is right after health
+    const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "health");
+    set_field_float(&g, f, 50.0f);
+
+    TEST_ASSERT_EQUAL_INT(23, g.level);
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -102,4 +207,12 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, Private_Fields_Are_Ignored);
     RUN_TEST_CASE(Unit, Set_Field_Is_Null_Safe);
     RUN_TEST_CASE(Unit, Type_Set_Field_Is_Null_Safe);
+    RUN_TEST_CASE(Unit, String_Has_Alias);
+    RUN_TEST_CASE(Unit, Metadata_Stores_Correct_Sizes);
+    RUN_TEST_CASE(Unit, Can_Generate_Array_Literals);
+    RUN_TEST_CASE(Unit, Can_Generate_Array_Macro);
+    RUN_TEST_CASE(Unit, Handles_Spaced_Types);
+    RUN_TEST_CASE(Unit, Array_Setter_Copies_Memory);
+    RUN_TEST_CASE(Unit, Custom_Struct_Setter_Works);
+    RUN_TEST_CASE(Unit, Setter_Respects_Struct_Padding);
 }

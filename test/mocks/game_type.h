@@ -9,6 +9,8 @@ typedef struct
     float y;
 } Vector2;
 
+#define MAX_ARR_LEN 256
+
 /// @reflect
 typedef struct
 {
@@ -24,7 +26,7 @@ typedef struct
 
     unsigned int other_flags;
 
-    unsigned char tile_type;
+    unsigned char current_tile;
 
     /// @private
     uint32_t internal_count;
@@ -32,4 +34,10 @@ typedef struct
     void *userdata; /// @private
 
     long long score;
+
+    uint8_t grid[9];
+
+    unsigned char sliding_window[16];
+
+    float history[MAX_ARR_LEN];
 } Game;
