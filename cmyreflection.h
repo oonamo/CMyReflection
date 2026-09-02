@@ -26,6 +26,19 @@ typedef struct
     size_t size;
 } FieldInfo;
 
+typedef struct
+{
+    const FieldInfo *fields;
+    size_t count;
+} StructMetaData;
+
+// NOTE: Implemented in python
+bool get_struct_metadata(FieldType type, StructMetaData *out_meta);
+
+void *resolve_field_path(void *base_instance, const FieldInfo *base_meta,
+                         size_t base_count, const char *path,
+                         const FieldInfo **out_leaf_field);
+
 const FieldInfo *find_field(const FieldInfo *meta, size_t count,
                             const char *name);
 
@@ -43,6 +56,16 @@ bool set_field_value(void *instance, const FieldInfo *field,
         return false;                                                          \
     }
 
+#define DEFINE_ARRAY_SETTER(Suffix, EnumVal, CType)                            \
+    static inline bool set_field_##Suffix(void *instance,                      \
+                                          const FieldInfo *field, CType value) \
+    {                                                                          \
+        if (field && field->type == EnumVal)                                   \
+        {                                                                      \
+            return set_field_value(instance, field, value);                    \
+        }                                                                      \
+        return false;                                                          \
+    }
 
 #ifndef CMYREFLECTION_PARSED
 DEFINE_FIELD_SETTER(int, TYPE_INT, int);
@@ -52,7 +75,80 @@ DEFINE_FIELD_SETTER(str, TYPE_STR, char *);
 
 #endif // _CMYREFLECTION_H
 
+#define CMYREFLECTION_IMPLEMENTATION
+#define CMYREFLECTION_REGISTRY
+
 #ifdef CMYREFLECTION_IMPLEMENTATION
+
+#ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#ifdef CMYREFLECTION_REGISTRY
+
+void *resolve_field_path(void *base_instance, const FieldInfo *base_meta,
+                         size_t base_count, const char *path,
+                         const FieldInfo **out_leaf_field)
+{
+    if (!base_instance || !base_meta || !path || !out_leaf_field)
+    {
+        return NULL;
+    }
+
+    char buffer[256];
+    strncpy(buffer, path, sizeof(buffer) - 1);
+    buffer[sizeof(buffer) - 1] = '\0';
+
+    char *token = buffer;
+    char *next = strchr(token, '.');
+
+    void *current_instance = base_instance;
+    const FieldInfo *current_meta = base_meta;
+    size_t current_count = base_count;
+    const FieldInfo *current_field = NULL;
+
+    while (token)
+    {
+        if (next)
+        {
+            // Chop seperator for find_field to look for current field
+            *next = '\0';
+        }
+
+        current_field = find_field(current_meta, current_count, token);
+
+        if (!current_field)
+        {
+            return NULL;
+        }
+
+        if (next)
+        {
+            current_instance = (char *)current_instance + current_field->offset;
+
+            StructMetaData next_meta;
+            if (!get_struct_metadata(current_field->type, &next_meta))
+            {
+                return NULL;
+            }
+
+            current_meta = next_meta.fields;
+            current_count = next_meta.count;
+
+            token = next + 1;
+            next = strchr(token, '.');
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    *out_leaf_field = current_field;
+    return current_instance;
+}
+
+#endif // CMYREFLECTION_REGISTRY
 
 const FieldInfo *find_field(const FieldInfo *meta, size_t count,
                             const char *name)

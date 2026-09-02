@@ -198,6 +198,20 @@ TEST(Unit, Setter_Respects_Struct_Padding)
     TEST_ASSERT_EQUAL_INT(23, g.level);
 }
 
+TEST(Unit, Can_Set_Nested_Struct_Field)
+{
+    Game g = {0};
+
+    const FieldInfo *leaf = NULL;
+    void *target_struct = resolve_field_path(&g, Game_Metadata, Game_FieldCount,
+                                             "player_pos.x", &leaf);
+
+    TEST_ASSERT_NOT_NULL(target_struct);
+    TEST_ASSERT_NOT_NULL(leaf);
+    TEST_ASSERT_EQUAL_STRING("x", leaf->name);
+    TEST_ASSERT_EQUAL(TYPE_FLOAT, leaf->type);
+};
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -215,4 +229,5 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, Array_Setter_Copies_Memory);
     RUN_TEST_CASE(Unit, Custom_Struct_Setter_Works);
     RUN_TEST_CASE(Unit, Setter_Respects_Struct_Padding);
+    RUN_TEST_CASE(Unit, Can_Set_Nested_Struct_Field);
 }

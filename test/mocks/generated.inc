@@ -81,3 +81,18 @@ const FieldInfo DamageComponent_Metadata[] = {
 const size_t DamageComponent_FieldCount = sizeof(DamageComponent_Metadata) / sizeof(FieldInfo);
 
 #endif // REFLECTION_IMPLEMENTATION
+// --- Auto-Generated Type Registry ---
+bool get_struct_metadata(FieldType type, StructMetaData* out_meta) { 
+   if (!out_meta) return false;   switch(type) {
+     case TYPE_VEC2:
+         out_meta->fields = Vector2_Metadata;
+         out_meta->count = Vector2_FieldCount;
+         return true;
+     case TYPE_DAMAGE_COMPONENT:
+         out_meta->fields = DamageComponent_Metadata;
+         out_meta->count = DamageComponent_FieldCount;
+         return true;
+      default:
+          return false;
+  }
+}

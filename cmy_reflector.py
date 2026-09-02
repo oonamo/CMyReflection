@@ -108,9 +108,13 @@ class Reflector:
                         Reflector.TYPE_MAP[field.normalized_type_name] = enum_name
 
                         if field.array_bounds:
-                            Reflector.CTYPES[field.normalized_type_name] = field.type_name + " *"
+                            Reflector.CTYPES[field.normalized_type_name] = (
+                                field.type_name + " *"
+                            )
                         else:
-                            Reflector.CTYPES[field.normalized_type_name] = field.type_name
+                            Reflector.CTYPES[field.normalized_type_name] = (
+                                field.type_name
+                            )
 
                         field.type_enum = enum_name
 
@@ -176,6 +180,32 @@ class Reflector:
 
         return "\n".join(lines)
 
+    def generate_registry_definition(self) -> str:
+        lines = [
+            "// --- Auto-Generated Type Registry ---",
+            "bool get_struct_metadata(FieldType type, StructMetaData* out_meta) { ",
+            "   if (!out_meta) return false;" "   switch(type) {",
+        ]
+
+        for struct in self.structs.values():
+            normalized = struct.struct_name.replace(" ", "")
+            type_enum = Reflector.TYPE_MAP.get(normalized)
+
+            # fmt: off
+            if type_enum:
+                lines.append(f"     case {type_enum}:")
+                lines.append(f"         out_meta->fields = {struct.struct_name}_Metadata;")
+                lines.append(f"         out_meta->count = {struct.struct_name}_FieldCount;")
+                lines.append( "         return true;")
+
+        lines.append("      default:")
+        lines.append("          return false;")
+        lines.append("  }")
+        lines.append("}\n")
+        # fmt: on
+
+        return "\n".join(lines)
+
     def __str__(self):
         lines = [
             self.generate_file_header(),
@@ -194,6 +224,7 @@ class Reflector:
 
         lines.append("\n#endif // _CMYREFLECTION_AUTOGEN")
         lines.append(self.generate_definitions())
+        lines.append(self.generate_registry_definition())
 
         return "\n".join(lines)
 
