@@ -218,6 +218,7 @@ class Reflector:
             "#define CMYREFLECTION_PARSED",
             "#ifndef _CMYREFLECTION_AUTOGEN",
             "#define _CMYREFLECTION_AUTOGEN",
+            "#define CMYREFLECTION_REGISTRY",
             self.generate_types(),
             "#include <cmyreflection.h>",
             self.generate_declarations(),
