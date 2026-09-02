@@ -24,30 +24,69 @@ typedef enum
 
 typedef struct
 {
-    const char *name;
-    FieldType   type;
-    size_t      offset;
-    size_t      size;
-    size_t      count;
+    const char *name;   /*!< Name of field */
+    FieldType   type;   /*!< Type of field */
+    size_t      offset; /*!< Struct offset of field */
+    size_t      size;   /*!< sizeof type */
+    size_t      count;  /*!< Number of array elements in field */
 } FieldInfo;
 
 typedef struct
 {
-    const FieldInfo *fields;
-    size_t           count;
+    const FieldInfo *fields; /*!< Members of struct  */
+    size_t           count;  /*!< Number of members in struct */
 } StructMetaData;
 
-// NOTE: Implemented in python
+/**
+ * @brief Get's the struct's metadata
+ *
+ * @note Implemented in python generation script
+ *
+ * @param type     [in] Type of struct
+ * @param out_meta [out] The returned struct metadata
+ *
+ * @return true if found, false otherwise
+ */
 bool get_struct_metadata(FieldType type, StructMetaData *out_meta);
 
+/**
+ * @brief Finds the struct containing the path
+ *
+ * @param base_instance [in] Struct to begin traversal
+ * @param base_meta     [in] FieldInfo of root struct
+ * @param base_count    [in] Number of fields in root struct
+ * @param path          [in] string path to look for
+ * @param out_leaf_field [out] FieldInfo returned if found
+ *
+ * @return Pointer to the resolved struct
+ */
 void *resolve_field_path(void             *base_instance,
                          const FieldInfo  *base_meta,
                          size_t            base_count,
                          const char       *path,
                          const FieldInfo **out_leaf_field);
 
+/**
+ * @brief Find's a field in a struct
+ *
+ * @param meta  [in] Array of FieldInfo
+ * @param count [in] Number of elements in meta
+ * @param name  [in] Name of field
+ *
+ * @return Pointer to the field, NULL if not found
+ */
 const FieldInfo *find_field(const FieldInfo *meta, size_t count, const char *name);
 
+/**
+ * @brief Safely sets a field value
+ *
+ * @param instance   [in] Pointer to struct instance to write to
+ * @param field      [in] Field to write to
+ * @param new_value  [in] Value to set
+ * @param write_size [in] Number of bytes to write
+ *
+ * @return true if successful, false otherwise
+ */
 bool set_field_value(void            *instance,
                      const FieldInfo *field,
                      const void      *new_value,
