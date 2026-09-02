@@ -229,6 +229,39 @@ TEST(Unit, Recursive_Lookup_Fails_On_Invalid_Path)
     TEST_ASSERT_NULL(target2);
 }
 
+TEST(Unit, Can_Use_Indicies_On_Lookup)
+{
+    Game g = {0};
+
+    g.enemy_positions[19].x = 18.32f;
+    const FieldInfo *leaf = NULL;
+
+    void *target_struct = resolve_field_path(&g, Game_Metadata, Game_FieldCount,
+                                             "enemy_positions[19].x", &leaf);
+
+    TEST_ASSERT_NOT_NULL(target_struct);
+    TEST_ASSERT_NOT_NULL(leaf);
+    TEST_ASSERT_EQUAL_STRING("x", leaf->name);
+    TEST_ASSERT_EQUAL(TYPE_FLOAT, leaf->type);
+
+    Vector2 *target = (Vector2 *)target_struct;
+    TEST_ASSERT_EQUAL(18.32, target->x);
+    TEST_ASSERT_POINTERS_EQUAL(target, &g.enemy_positions[19]);
+    TEST_ASSERT_TRUE(set_field_float(target_struct, leaf, 30.0f));
+    TEST_ASSERT_EQUAL_FLOAT(30.0f, g.enemy_positions[19].x);
+}
+
+TEST(Unit, Lookup_Safely_Ignores_OOB)
+{
+    Game g = {0};
+
+    const FieldInfo *leaf = NULL;
+    void *target_struct = resolve_field_path(&g, Game_Metadata, Game_FieldCount,
+                                             "enemy_positions[21].x", &leaf);
+    TEST_ASSERT_NULL(target_struct);
+    TEST_ASSERT_NULL(leaf);
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -247,4 +280,7 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, Custom_Struct_Setter_Works);
     RUN_TEST_CASE(Unit, Setter_Respects_Struct_Padding);
     RUN_TEST_CASE(Unit, Can_Set_Nested_Struct_Field);
+    RUN_TEST_CASE(Unit, Recursive_Lookup_Fails_On_Invalid_Path);
+    RUN_TEST_CASE(Unit, Can_Use_Indicies_On_Lookup);
+    RUN_TEST_CASE(Unit, Lookup_Safely_Ignores_OOB);
 }

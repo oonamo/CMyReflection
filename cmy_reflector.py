@@ -20,7 +20,8 @@ class Field:
     def gen_field_str(self, struct_name: str) -> str:
         """Generates a formatted string of a field in the metadata struct"""
         arr_suffix = f"[{self.array_bounds}]" if self.array_bounds else ""
-        return f'    {{ "{self.name}", {self.type_enum}, offsetof({struct_name}, {self.name}), sizeof({self.type_name}{arr_suffix}) }}'
+        count = self.array_bounds if self.array_bounds else "1"
+        return f'    {{ "{self.name}", {self.type_enum}, offsetof({struct_name}, {self.name}), sizeof({self.type_name}{arr_suffix}), {count} }}'
 
 
 class CStruct:
@@ -190,10 +191,15 @@ class Reflector:
         for struct in self.structs.values():
             normalized = struct.struct_name.replace(" ", "")
             type_enum = Reflector.TYPE_MAP.get(normalized)
+            type_enum_arr = Reflector.TYPE_MAP.get(normalized + "_arr")
 
             # fmt: off
+
             if type_enum:
                 lines.append(f"     case {type_enum}:")
+            if type_enum_arr:
+                lines.append(f"     case {type_enum_arr}:")
+            if type_enum or type_enum_arr:
                 lines.append(f"         out_meta->fields = {struct.struct_name}_Metadata;")
                 lines.append(f"         out_meta->count = {struct.struct_name}_FieldCount;")
                 lines.append( "         return true;")

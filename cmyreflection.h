@@ -24,6 +24,7 @@ typedef struct
     FieldType type;
     size_t offset;
     size_t size;
+    size_t count;
 } FieldInfo;
 
 typedef struct
@@ -75,16 +76,13 @@ DEFINE_FIELD_SETTER(str, TYPE_STR, char *);
 
 #endif // _CMYREFLECTION_H
 
-#define CMYREFLECTION_IMPLEMENTATION
-#define CMYREFLECTION_REGISTRY
-
 #ifdef CMYREFLECTION_IMPLEMENTATION
 
+#ifdef CMYREFLECTION_REGISTRY
 #ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS
 #endif
-
-#ifdef CMYREFLECTION_REGISTRY
+#include <stdlib.h>
 
 void *resolve_field_path(void *base_instance, const FieldInfo *base_meta,
                          size_t base_count, const char *path,
@@ -115,6 +113,14 @@ void *resolve_field_path(void *base_instance, const FieldInfo *base_meta,
             *next = '\0';
         }
 
+        char *bracket = strchr(token, '[');
+        int index = -1;
+        if (bracket)
+        {
+            *bracket = '\0';
+            index = atoi(bracket + 1);
+        }
+
         current_field = find_field(current_meta, current_count, token);
 
         if (!current_field)
@@ -122,10 +128,21 @@ void *resolve_field_path(void *base_instance, const FieldInfo *base_meta,
             return NULL;
         }
 
+        current_instance = (char *)current_instance + current_field->offset;
+        if (index >= 0)
+        {
+            if (index >= current_field->count)
+            {
+                return NULL;
+            }
+
+            // Shift instance to correct index
+            size_t elem_size = current_field->size / current_field->count;
+            current_instance = (char *)current_instance + (index * elem_size);
+        }
+
         if (next)
         {
-            current_instance = (char *)current_instance + current_field->offset;
-
             StructMetaData next_meta;
             if (!get_struct_metadata(current_field->type, &next_meta))
             {

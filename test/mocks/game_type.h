@@ -40,4 +40,6 @@ typedef struct
     unsigned char sliding_window[16];
 
     float history[MAX_ARR_LEN];
+
+    Vector2 enemy_positions[20];
 } Game;

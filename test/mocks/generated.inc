@@ -22,6 +22,7 @@ typedef enum {
     TYPE_UNSIGNEDCHAR_ARR,
     TYPE_UNSIGNEDINT,
     TYPE_VEC2,
+    TYPE_VECTOR2_ARR,
 } FieldType;
 
 #include <cmyreflection.h>
@@ -46,6 +47,7 @@ DEFINE_FIELD_SETTER(ll, TYPE_LONGLONG, long long)
 DEFINE_ARRAY_SETTER(uint8_t_arr, TYPE_UINT8_T_ARR, uint8_t *)
 DEFINE_ARRAY_SETTER(unsignedchar_arr, TYPE_UNSIGNEDCHAR_ARR, unsigned char *)
 DEFINE_ARRAY_SETTER(float_arr, TYPE_FLOAT_ARR, float *)
+DEFINE_ARRAY_SETTER(Vector2_arr, TYPE_VECTOR2_ARR, Vector2 *)
 
 #endif // _CMYREFLECTION_AUTOGEN
 // --- Metadata Definitions
@@ -53,30 +55,31 @@ DEFINE_ARRAY_SETTER(float_arr, TYPE_FLOAT_ARR, float *)
 
 // --- Generated from game_type.h ---
 const FieldInfo Vector2_Metadata[] = {
-    { "x", TYPE_FLOAT, offsetof(Vector2, x), sizeof(float) },
-    { "y", TYPE_FLOAT, offsetof(Vector2, y), sizeof(float) },
+    { "x", TYPE_FLOAT, offsetof(Vector2, x), sizeof(float), 1 },
+    { "y", TYPE_FLOAT, offsetof(Vector2, y), sizeof(float), 1 },
 };
 const size_t Vector2_FieldCount = sizeof(Vector2_Metadata) / sizeof(FieldInfo);
 
 const FieldInfo Game_Metadata[] = {
-    { "player_pos", TYPE_VEC2, offsetof(Game, player_pos), sizeof(Vector2) },
-    { "health", TYPE_FLOAT, offsetof(Game, health), sizeof(float) },
-    { "level", TYPE_INT, offsetof(Game, level), sizeof(int) },
-    { "player_name", TYPE_STR, offsetof(Game, player_name), sizeof(char *) },
-    { "damage", TYPE_DAMAGE_COMPONENT, offsetof(Game, damage), sizeof(DamageComponent) },
-    { "game_flags", TYPE_UINT8_T, offsetof(Game, game_flags), sizeof(uint8_t) },
-    { "other_flags", TYPE_UNSIGNEDINT, offsetof(Game, other_flags), sizeof(unsigned int) },
-    { "current_tile", TYPE_UNSIGNEDCHAR, offsetof(Game, current_tile), sizeof(unsigned char) },
-    { "score", TYPE_LONGLONG, offsetof(Game, score), sizeof(long long) },
-    { "grid", TYPE_UINT8_T_ARR, offsetof(Game, grid), sizeof(uint8_t[9]) },
-    { "sliding_window", TYPE_UNSIGNEDCHAR_ARR, offsetof(Game, sliding_window), sizeof(unsigned char[16]) },
-    { "history", TYPE_FLOAT_ARR, offsetof(Game, history), sizeof(float[MAX_ARR_LEN]) },
+    { "player_pos", TYPE_VEC2, offsetof(Game, player_pos), sizeof(Vector2), 1 },
+    { "health", TYPE_FLOAT, offsetof(Game, health), sizeof(float), 1 },
+    { "level", TYPE_INT, offsetof(Game, level), sizeof(int), 1 },
+    { "player_name", TYPE_STR, offsetof(Game, player_name), sizeof(char *), 1 },
+    { "damage", TYPE_DAMAGE_COMPONENT, offsetof(Game, damage), sizeof(DamageComponent), 1 },
+    { "game_flags", TYPE_UINT8_T, offsetof(Game, game_flags), sizeof(uint8_t), 1 },
+    { "other_flags", TYPE_UNSIGNEDINT, offsetof(Game, other_flags), sizeof(unsigned int), 1 },
+    { "current_tile", TYPE_UNSIGNEDCHAR, offsetof(Game, current_tile), sizeof(unsigned char), 1 },
+    { "score", TYPE_LONGLONG, offsetof(Game, score), sizeof(long long), 1 },
+    { "grid", TYPE_UINT8_T_ARR, offsetof(Game, grid), sizeof(uint8_t[9]), 9 },
+    { "sliding_window", TYPE_UNSIGNEDCHAR_ARR, offsetof(Game, sliding_window), sizeof(unsigned char[16]), 16 },
+    { "history", TYPE_FLOAT_ARR, offsetof(Game, history), sizeof(float[MAX_ARR_LEN]), MAX_ARR_LEN },
+    { "enemy_positions", TYPE_VECTOR2_ARR, offsetof(Game, enemy_positions), sizeof(Vector2[20]), 20 },
 };
 const size_t Game_FieldCount = sizeof(Game_Metadata) / sizeof(FieldInfo);
 
 // --- Generated from stuff.h ---
 const FieldInfo DamageComponent_Metadata[] = {
-    { "damage", TYPE_FLOAT, offsetof(DamageComponent, damage), sizeof(float) },
+    { "damage", TYPE_FLOAT, offsetof(DamageComponent, damage), sizeof(float), 1 },
 };
 const size_t DamageComponent_FieldCount = sizeof(DamageComponent_Metadata) / sizeof(FieldInfo);
 
@@ -85,6 +88,7 @@ const size_t DamageComponent_FieldCount = sizeof(DamageComponent_Metadata) / siz
 bool get_struct_metadata(FieldType type, StructMetaData* out_meta) { 
    if (!out_meta) return false;   switch(type) {
      case TYPE_VEC2:
+     case TYPE_VECTOR2_ARR:
          out_meta->fields = Vector2_Metadata;
          out_meta->count = Vector2_FieldCount;
          return true;
