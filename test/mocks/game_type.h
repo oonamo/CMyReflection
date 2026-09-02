@@ -24,5 +24,12 @@ typedef struct
 
     unsigned int other_flags;
 
+    unsigned char tile_type;
+
+    /// @private
+    uint32_t internal_count;
+
+    void *userdata; /// @private
+
     long long score;
 } Game;

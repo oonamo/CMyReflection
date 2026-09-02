@@ -9,12 +9,15 @@
 #ifndef _CMYREFLECTION_AUTOGEN
 #define _CMYREFLECTION_AUTOGEN
 typedef enum {
-    TYPE_CHAR,
     TYPE_DAMAGE_COMPONENT,
     TYPE_FLOAT,
     TYPE_INT,
+    TYPE_LONGLONG,
     TYPE_STR,
+    TYPE_UINT8_T,
     TYPE_UNKNOWN,
+    TYPE_UNSIGNEDCHAR,
+    TYPE_UNSIGNEDINT,
     TYPE_VEC2,
 } FieldType;
 
@@ -27,19 +30,22 @@ extern const size_t Game_FieldCount;
 extern const FieldInfo DamageComponent_Metadata[];
 extern const size_t DamageComponent_FieldCount;
 
-DEFINE_FIELD_SETTER(int, TYPE_INT, int)
-DEFINE_FIELD_SETTER(float, TYPE_FLOAT, float)
-DEFINE_FIELD_SETTER(char, TYPE_CHAR, char)
-DEFINE_FIELD_SETTER(str, TYPE_STR, char*)
-DEFINE_FIELD_SETTER(conststr, TYPE_STR, constchar*)
+DEFINE_FIELD_SETTER(str, TYPE_STR, char *)
+DEFINE_FIELD_SETTER(conststr, TYPE_STR, const char *)
 DEFINE_FIELD_SETTER(Vector2, TYPE_VEC2, Vector2)
 DEFINE_FIELD_SETTER(DamageComponent, TYPE_DAMAGE_COMPONENT, DamageComponent)
+DEFINE_FIELD_SETTER(float, TYPE_FLOAT, float)
+DEFINE_FIELD_SETTER(int, TYPE_INT, int)
+DEFINE_FIELD_SETTER(u8, TYPE_UINT8_T, uint8_t)
+DEFINE_FIELD_SETTER(uint, TYPE_UNSIGNEDINT, unsigned int)
+DEFINE_FIELD_SETTER(unsignedchar, TYPE_UNSIGNEDCHAR, unsigned char)
+DEFINE_FIELD_SETTER(ll, TYPE_LONGLONG, long long)
 
 #endif // _CMYREFLECTION_AUTOGEN
 // --- Metadata Definitions
 #ifdef REFLECTION_IMPLEMENTATION
 
-// --- Generated from .\test\mocks\game_type.c ---
+// --- Generated from game_type.h ---
 const FieldInfo Vector2_Metadata[] = {
     { "x", TYPE_FLOAT, offsetof(Vector2, x), sizeof(float) },
     { "y", TYPE_FLOAT, offsetof(Vector2, y), sizeof(float) },
@@ -52,10 +58,14 @@ const FieldInfo Game_Metadata[] = {
     { "level", TYPE_INT, offsetof(Game, level), sizeof(int) },
     { "player_name", TYPE_STR, offsetof(Game, player_name), sizeof(char *) },
     { "damage", TYPE_DAMAGE_COMPONENT, offsetof(Game, damage), sizeof(DamageComponent) },
+    { "game_flags", TYPE_UINT8_T, offsetof(Game, game_flags), sizeof(uint8_t) },
+    { "other_flags", TYPE_UNSIGNEDINT, offsetof(Game, other_flags), sizeof(unsigned int) },
+    { "tile_type", TYPE_UNSIGNEDCHAR, offsetof(Game, tile_type), sizeof(unsigned char) },
+    { "score", TYPE_LONGLONG, offsetof(Game, score), sizeof(long long) },
 };
 const size_t Game_FieldCount = sizeof(Game_Metadata) / sizeof(FieldInfo);
 
-// --- Generated from .\test\mocks\stuff.h ---
+// --- Generated from stuff.h ---
 const FieldInfo DamageComponent_Metadata[] = {
     { "damage", TYPE_FLOAT, offsetof(DamageComponent, damage), sizeof(float) },
 };
