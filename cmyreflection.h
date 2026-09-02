@@ -1,6 +1,10 @@
 #ifndef _CMYREFLECTION_H
 #define _CMYREFLECTION_H
 
+#define CMYREFLECTION_MAJOR 0
+#define CMYREFLECTION_MINOR 1
+#define CMYREFLECTION_PATCH 0
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
