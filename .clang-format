@@ -1,0 +1,33 @@
+---
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+AlignAfterOpenBracket: Align
+BinPackParameters: false
+BinPackArguments: false
+ColumnLimit: 100
+
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+
+BreakBeforeBraces: Allman
+
+PointerAlignment: Right
+
+SpaceBeforeParens: ControlStatements
+
+InsertBraces: true
+AlignConsecutiveDeclarations: true
+AlignConsecutiveAssignments: true
+AlignConsecutiveBitFields: true
+CommentPragmas: '^/\*'
+IndentPPDirectives: BeforeHash
+
+ReflowComments: true
+
+IndentExternBlock: NoIndent
+SortIncludes: Never
+...

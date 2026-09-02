@@ -15,9 +15,9 @@ typedef struct
 typedef struct
 {
     Vector2 player_pos;
-    float health;
+    float   health;
 
-    int level;
+    int   level;
     char *player_name;
 
     DamageComponent damage;
@@ -40,6 +40,8 @@ typedef struct
     unsigned char sliding_window[16];
 
     float history[MAX_ARR_LEN];
+
+    Vector2 **waypoints;
 
     Vector2 enemy_positions[20];
 } Game;

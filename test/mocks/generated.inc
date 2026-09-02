@@ -28,6 +28,7 @@ typedef enum {
     TYPE_UNSIGNEDINT,
     TYPE_VEC2,
     TYPE_VECTOR2_ARR,
+    TYPE_VECTOR2_PTR_PTR,
 } FieldType;
 
 #include <cmyreflection.h>
@@ -55,9 +56,10 @@ DEFINE_FIELD_SETTER(u8, TYPE_UINT8_T, uint8_t)
 DEFINE_FIELD_SETTER(uint, TYPE_UNSIGNEDINT, unsigned int)
 DEFINE_FIELD_SETTER(unsignedchar, TYPE_UNSIGNEDCHAR, unsigned char)
 DEFINE_FIELD_SETTER(ll, TYPE_LONGLONG, long long)
-DEFINE_ARRAY_SETTER(uint8_t_arr, TYPE_UINT8_T_ARR, uint8_t *, uint8_t)
+DEFINE_ARRAY_SETTER(u8_arr, TYPE_UINT8_T_ARR, uint8_t *, uint8_t)
 DEFINE_ARRAY_SETTER(unsignedchar_arr, TYPE_UNSIGNEDCHAR_ARR, unsigned char *, unsigned char)
 DEFINE_ARRAY_SETTER(float_arr, TYPE_FLOAT_ARR, float *, float)
+DEFINE_FIELD_SETTER(Vector2_ptr_ptr, TYPE_VECTOR2_PTR_PTR, Vector2 **)
 DEFINE_ARRAY_SETTER(Vector2_arr, TYPE_VECTOR2_ARR, Vector2 *, Vector2)
 DEFINE_ARRAY_SETTER(char_arr, TYPE_CHAR_ARR, char *, char)
 DEFINE_FIELD_SETTER(SensorData, TYPE_SENSORDATA, SensorData)
@@ -88,6 +90,7 @@ const FieldInfo Game_Metadata[] = {
     { "grid", TYPE_UINT8_T_ARR, offsetof(Game, grid), sizeof(uint8_t[9]), 9 },
     { "sliding_window", TYPE_UNSIGNEDCHAR_ARR, offsetof(Game, sliding_window), sizeof(unsigned char[16]), 16 },
     { "history", TYPE_FLOAT_ARR, offsetof(Game, history), sizeof(float[MAX_ARR_LEN]), MAX_ARR_LEN },
+    { "waypoints", TYPE_VECTOR2_PTR_PTR, offsetof(Game, waypoints), sizeof(Vector2 **), 1 },
     { "enemy_positions", TYPE_VECTOR2_ARR, offsetof(Game, enemy_positions), sizeof(Vector2[20]), 20 },
 };
 const size_t Game_FieldCount = sizeof(Game_Metadata) / sizeof(FieldInfo);

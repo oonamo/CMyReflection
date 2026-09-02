@@ -130,15 +130,22 @@ class Reflector:
 
     def generate_type_setter(self, type_name: str, type_enum: str) -> str:
         """Generates a macro for setting a field"""
-        if type_name in Reflector.TYPE_ALIASES:
+        aliased_name = (
+            type_name.replace("_arr", "") if "_arr" in type_name else type_name
+        )
+        if "_arr" in type_name and aliased_name in Reflector.TYPE_ALIASES:
+            type_suffix = Reflector.TYPE_ALIASES[aliased_name] + "_arr"
+        elif type_name in Reflector.TYPE_ALIASES:
             type_suffix = Reflector.TYPE_ALIASES[type_name]
         else:
-            type_suffix = type_name.replace("*", "ptr").replace(" ", "_")
+            type_suffix = type_name.replace("*", "_ptr").replace(" ", "_")
         ctype = Reflector.CTYPES.get(type_name, type_name)
 
         if "_arr" in type_name:
             base_type = ctype.replace("*", "", 1).strip()
-            return f"DEFINE_ARRAY_SETTER({type_suffix}, {type_enum}, {ctype}, {base_type})"
+            return (
+                f"DEFINE_ARRAY_SETTER({type_suffix}, {type_enum}, {ctype}, {base_type})"
+            )
         else:
             return f"DEFINE_FIELD_SETTER({type_suffix}, {type_enum}, {ctype})"
 
