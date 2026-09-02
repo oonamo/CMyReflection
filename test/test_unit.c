@@ -210,7 +210,24 @@ TEST(Unit, Can_Set_Nested_Struct_Field)
     TEST_ASSERT_NOT_NULL(leaf);
     TEST_ASSERT_EQUAL_STRING("x", leaf->name);
     TEST_ASSERT_EQUAL(TYPE_FLOAT, leaf->type);
-};
+
+    TEST_ASSERT_TRUE(set_field_float(target_struct, leaf, 30.0f));
+    TEST_ASSERT_EQUAL_FLOAT(30.0f, g.player_pos.x);
+}
+
+TEST(Unit, Recursive_Lookup_Fails_On_Invalid_Path)
+{
+    Game g = {0};
+    const FieldInfo *leaf = NULL;
+
+    void *target1 = resolve_field_path(&g, Game_Metadata, Game_FieldCount,
+                                       "health.xyz", &leaf);
+    TEST_ASSERT_NULL(target1);
+
+    void *target2 = resolve_field_path(&g, Game_Metadata, Game_FieldCount,
+                                       "player_pos.z", &leaf);
+    TEST_ASSERT_NULL(target2);
+}
 
 TEST_GROUP_RUNNER(Unit)
 {
