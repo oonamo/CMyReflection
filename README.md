@@ -60,8 +60,10 @@ python3 cmy_reflector.py ./src/ -o reflection.generated.h
 // ...
 DeviceManager manager = {0};
 
-const FieldInfo *leaf = NULL;
-void *target = resolve_field_path(&manager, DeviceManager_MetaData, DeviceManager_FieldCount, "devices[2].data.voltage", &leaf);
+const FieldInfo *leaf   = NULL;
+void            *target = resolve_field_path(
+    &manager, DeviceManager_MetaData,
+    DeviceManager_FieldCount, "devices[2].data.voltage", &leaf);
 
 if (target && leaf)
 {
@@ -69,8 +71,9 @@ if (target && leaf)
     set_field_float(target, leaf, 240.5f);
 }
 
-const FieldInfo* name_field = find_field(DeviceManager_MetaData, DeviceManager_FieldCount, "device_location");
-char* location = "bedroom1";
+const FieldInfo *name_field =
+    find_field(DeviceManager_MetaData, DeviceManager_FieldCount, "device_location");
+char *location = "bedroom1";
 
 if (!set_field_str(&manager, name_field, location))
 {
