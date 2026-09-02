@@ -45,6 +45,8 @@ add_custom_command(
 set(TEST_SOURCES
   test_main.c
   test_unit.c
+  test_readme.c
+  reflection_impl.c
   ${GENERATED_HEADER}
 )
 

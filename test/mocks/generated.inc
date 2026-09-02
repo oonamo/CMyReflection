@@ -10,12 +10,16 @@
 #define _CMYREFLECTION_AUTOGEN
 #define CMYREFLECTION_REGISTRY
 typedef enum {
+    TYPE_CHAR_ARR,
     TYPE_DAMAGE_COMPONENT,
     TYPE_FLOAT,
     TYPE_FLOAT_ARR,
     TYPE_INT,
+    TYPE_IOTDEVICE_ARR,
     TYPE_LONGLONG,
+    TYPE_SENSORDATA,
     TYPE_STR,
+    TYPE_UINT32_T,
     TYPE_UINT8_T,
     TYPE_UINT8_T_ARR,
     TYPE_UNKNOWN,
@@ -32,6 +36,12 @@ extern const FieldInfo Vector2_Metadata[];
 extern const size_t Vector2_FieldCount;
 extern const FieldInfo Game_Metadata[];
 extern const size_t Game_FieldCount;
+extern const FieldInfo SensorData_Metadata[];
+extern const size_t SensorData_FieldCount;
+extern const FieldInfo IoTDevice_Metadata[];
+extern const size_t IoTDevice_FieldCount;
+extern const FieldInfo DeviceManager_Metadata[];
+extern const size_t DeviceManager_FieldCount;
 extern const FieldInfo DamageComponent_Metadata[];
 extern const size_t DamageComponent_FieldCount;
 
@@ -49,23 +59,10 @@ DEFINE_ARRAY_SETTER(uint8_t_arr, TYPE_UINT8_T_ARR, uint8_t *)
 DEFINE_ARRAY_SETTER(unsignedchar_arr, TYPE_UNSIGNEDCHAR_ARR, unsigned char *)
 DEFINE_ARRAY_SETTER(float_arr, TYPE_FLOAT_ARR, float *)
 DEFINE_ARRAY_SETTER(Vector2_arr, TYPE_VECTOR2_ARR, Vector2 *)
-// --- Auto-Generated Type Registry ---
-bool get_struct_metadata(FieldType type, StructMetaData* out_meta) { 
-   if (!out_meta) return false;   switch(type) {
-     case TYPE_VEC2:
-     case TYPE_VECTOR2_ARR:
-         out_meta->fields = Vector2_Metadata;
-         out_meta->count = Vector2_FieldCount;
-         return true;
-     case TYPE_DAMAGE_COMPONENT:
-         out_meta->fields = DamageComponent_Metadata;
-         out_meta->count = DamageComponent_FieldCount;
-         return true;
-      default:
-          return false;
-  }
-}
-
+DEFINE_ARRAY_SETTER(char_arr, TYPE_CHAR_ARR, char *)
+DEFINE_FIELD_SETTER(SensorData, TYPE_SENSORDATA, SensorData)
+DEFINE_ARRAY_SETTER(IoTDevice_arr, TYPE_IOTDEVICE_ARR, IoTDevice *)
+DEFINE_FIELD_SETTER(u32, TYPE_UINT32_T, uint32_t)
 
 #endif // _CMYREFLECTION_AUTOGEN
 // --- Metadata Definitions
@@ -95,10 +92,57 @@ const FieldInfo Game_Metadata[] = {
 };
 const size_t Game_FieldCount = sizeof(Game_Metadata) / sizeof(FieldInfo);
 
+// --- Generated from readme_example.h ---
+const FieldInfo SensorData_Metadata[] = {
+    { "voltage", TYPE_FLOAT, offsetof(SensorData, voltage), sizeof(float), 1 },
+    { "temp", TYPE_FLOAT, offsetof(SensorData, temp), sizeof(float), 1 },
+};
+const size_t SensorData_FieldCount = sizeof(SensorData_Metadata) / sizeof(FieldInfo);
+
+const FieldInfo IoTDevice_Metadata[] = {
+    { "device_id", TYPE_CHAR_ARR, offsetof(IoTDevice, device_id), sizeof(char[32]), 32 },
+    { "baud_rate", TYPE_INT, offsetof(IoTDevice, baud_rate), sizeof(int), 1 },
+    { "data", TYPE_SENSORDATA, offsetof(IoTDevice, data), sizeof(SensorData), 1 },
+};
+const size_t IoTDevice_FieldCount = sizeof(IoTDevice_Metadata) / sizeof(FieldInfo);
+
+const FieldInfo DeviceManager_Metadata[] = {
+    { "device_location", TYPE_CHAR_ARR, offsetof(DeviceManager, device_location), sizeof(char[MAX_BUF_LEN]), MAX_BUF_LEN },
+    { "devices", TYPE_IOTDEVICE_ARR, offsetof(DeviceManager, devices), sizeof(IoTDevice[8]), 8 },
+    { "op_mode", TYPE_UNSIGNEDCHAR, offsetof(DeviceManager, op_mode), sizeof(unsigned char), 1 },
+    { "flags", TYPE_UINT32_T, offsetof(DeviceManager, flags), sizeof(uint32_t), 1 },
+};
+const size_t DeviceManager_FieldCount = sizeof(DeviceManager_Metadata) / sizeof(FieldInfo);
+
 // --- Generated from stuff.h ---
 const FieldInfo DamageComponent_Metadata[] = {
     { "damage", TYPE_FLOAT, offsetof(DamageComponent, damage), sizeof(float), 1 },
 };
 const size_t DamageComponent_FieldCount = sizeof(DamageComponent_Metadata) / sizeof(FieldInfo);
+
+// --- Auto-Generated Type Registry ---
+bool get_struct_metadata(FieldType type, StructMetaData* out_meta) { 
+   if (!out_meta) return false;   switch(type) {
+     case TYPE_VEC2:
+     case TYPE_VECTOR2_ARR:
+         out_meta->fields = Vector2_Metadata;
+         out_meta->count = Vector2_FieldCount;
+         return true;
+     case TYPE_SENSORDATA:
+         out_meta->fields = SensorData_Metadata;
+         out_meta->count = SensorData_FieldCount;
+         return true;
+     case TYPE_IOTDEVICE_ARR:
+         out_meta->fields = IoTDevice_Metadata;
+         out_meta->count = IoTDevice_FieldCount;
+         return true;
+     case TYPE_DAMAGE_COMPONENT:
+         out_meta->fields = DamageComponent_Metadata;
+         out_meta->count = DamageComponent_FieldCount;
+         return true;
+      default:
+          return false;
+  }
+}
 
 #endif // REFLECTION_IMPLEMENTATION

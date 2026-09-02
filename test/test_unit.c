@@ -2,9 +2,7 @@
 #include <unity_fixture.h>
 
 #include "mocks/game_type.h"
-
-#define CMYREFLECTION_IMPLEMENTATION
-#define REFLECTION_IMPLEMENTATION
+#include "mocks/readme_example.h"
 #include "mocks/generated.inc"
 
 TEST_GROUP(Unit);

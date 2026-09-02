@@ -167,6 +167,8 @@ class Reflector:
             lines.append(f"// --- Generated from {file} ---")
             lines.append("\n\n".join(contents) + "\n")
 
+        lines.append(self.generate_registry_definition())
+
         lines.append("#endif // REFLECTION_IMPLEMENTATION")
 
         return "\n".join(lines)
@@ -229,7 +231,6 @@ class Reflector:
                 continue
             lines.append(self.generate_type_setter(type_name, type_enum))
 
-        lines.append(self.generate_registry_definition())
         lines.append("\n#endif // _CMYREFLECTION_AUTOGEN")
         lines.append(self.generate_definitions())
 
