@@ -229,9 +229,9 @@ class Reflector:
                 continue
             lines.append(self.generate_type_setter(type_name, type_enum))
 
+        lines.append(self.generate_registry_definition())
         lines.append("\n#endif // _CMYREFLECTION_AUTOGEN")
         lines.append(self.generate_definitions())
-        lines.append(self.generate_registry_definition())
 
         return "\n".join(lines)
 

@@ -83,9 +83,11 @@ DEFINE_FIELD_SETTER(str, TYPE_STR, char *);
 #ifdef CMYREFLECTION_IMPLEMENTATION
 
 #ifdef CMYREFLECTION_REGISTRY
+
 #ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS
 #endif
+
 #include <stdlib.h>
 
 void *resolve_field_path(void *base_instance, const FieldInfo *base_meta,
