@@ -1,9 +1,10 @@
+#include <stdio.h>
 #include <unity.h>
 #include <unity_fixture.h>
 
 #include "mocks/game_type.h"
-#include "mocks/readme_example.h"
 #include "mocks/generated.inc"
+#include "mocks/readme_example.h"
 
 TEST_GROUP(Unit);
 
@@ -76,9 +77,9 @@ TEST(Unit, Set_Field_Is_Null_Safe)
 
     float val = 23.45f;
 
-    TEST_ASSERT_FALSE(set_field_value(NULL, f, &val));
-    TEST_ASSERT_FALSE(set_field_value(&g, NULL, &val));
-    TEST_ASSERT_FALSE(set_field_value(&g, f, NULL));
+    TEST_ASSERT_FALSE(set_field_value(NULL, f, &val, sizeof(float)));
+    TEST_ASSERT_FALSE(set_field_value(&g, NULL, &val, sizeof(float)));
+    TEST_ASSERT_FALSE(set_field_value(&g, f, NULL, sizeof(float)));
 }
 
 TEST(Unit, Type_Set_Field_Is_Null_Safe)
@@ -163,13 +164,33 @@ TEST(Unit, Array_Setter_Copies_Memory)
     {
         new_history[i] = i + (i * 0.8f);
     }
-
-    TEST_ASSERT_TRUE(set_field_float_arr(&g, f, new_history));
+    printf("\nDEBUG: Write Size: %zu, Field Size: %zu\n",
+           MAX_ARR_LEN * sizeof(float), f->size);
+    printf("\n\nDEBUG: Expected Type: %d, Actual Type: %d\n", TYPE_FLOAT_ARR,
+           f->type);
+    printf("DEBUG: Expected Count: %d, Actual Count: %zu\n", MAX_ARR_LEN,
+           f->count);
+    TEST_ASSERT_TRUE(set_field_float_arr(&g, f, new_history, MAX_ARR_LEN));
 
     for (int i = 0; i < MAX_ARR_LEN; i++)
     {
         TEST_ASSERT_EQUAL_FLOAT(i + (i * 0.8f), g.history[i]);
     }
+}
+
+TEST(Unit, Array_Setter_Fails_On_OOB)
+{
+    Game g = {0};
+    const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "history");
+
+    float new_history[MAX_ARR_LEN + 4] = {0.0f};
+    for (int i = 0; i < MAX_ARR_LEN + 4; i++)
+    {
+        new_history[i] = i;
+    }
+
+    TEST_ASSERT_FALSE(set_field_float_arr(&g, f, new_history, MAX_ARR_LEN + 4));
+    TEST_ASSERT_TRUE(set_field_float_arr(&g, f, new_history, MAX_ARR_LEN));
 }
 
 TEST(Unit, Custom_Struct_Setter_Works)
@@ -275,6 +296,7 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, Can_Generate_Array_Macro);
     RUN_TEST_CASE(Unit, Handles_Spaced_Types);
     RUN_TEST_CASE(Unit, Array_Setter_Copies_Memory);
+    RUN_TEST_CASE(Unit, Array_Setter_Fails_On_OOB);
     RUN_TEST_CASE(Unit, Custom_Struct_Setter_Works);
     RUN_TEST_CASE(Unit, Setter_Respects_Struct_Padding);
     RUN_TEST_CASE(Unit, Can_Set_Nested_Struct_Field);

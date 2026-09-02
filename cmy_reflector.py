@@ -137,7 +137,8 @@ class Reflector:
         ctype = Reflector.CTYPES.get(type_name, type_name)
 
         if "_arr" in type_name:
-            return f"DEFINE_ARRAY_SETTER({type_suffix}, {type_enum}, {ctype})"
+            base_type = ctype.replace("*", "", 1).strip()
+            return f"DEFINE_ARRAY_SETTER({type_suffix}, {type_enum}, {ctype}, {base_type})"
         else:
             return f"DEFINE_FIELD_SETTER({type_suffix}, {type_enum}, {ctype})"
 

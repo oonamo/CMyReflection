@@ -29,8 +29,10 @@ TEST(IoT, Can_Do_Readme_Things)
     const FieldInfo *location_field = find_field(
         DeviceManager_Metadata, DeviceManager_FieldCount, "device_location");
 
-    TEST_ASSERT_FALSE(set_field_str(&manager, location_field, "bedroom1"));
-    TEST_ASSERT_TRUE(set_field_char_arr(&manager, location_field, "bedroom1"));
+    char *location = "bedroom1";
+    TEST_ASSERT_FALSE(set_field_str(&manager, location_field, location));
+    TEST_ASSERT_TRUE(set_field_char_arr(&manager, location_field, location,
+                                        strlen(location)));
 
     TEST_ASSERT_EQUAL_STRING("device_location", location_field->name);
     TEST_ASSERT_EQUAL(TYPE_CHAR_ARR, location_field->type);

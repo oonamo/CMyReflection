@@ -48,7 +48,7 @@ const FieldInfo *find_field(const FieldInfo *meta, size_t count,
                             const char *name);
 
 bool set_field_value(void *instance, const FieldInfo *field,
-                     const void *new_value);
+                     const void *new_value, size_t write_size);
 
 #define DEFINE_FIELD_SETTER(Suffix, EnumVal, CType)                            \
     static inline bool set_field_##Suffix(void *instance,                      \
@@ -56,18 +56,24 @@ bool set_field_value(void *instance, const FieldInfo *field,
     {                                                                          \
         if (field && field->type == EnumVal)                                   \
         {                                                                      \
-            return set_field_value(instance, field, &value);                   \
+            return set_field_value(instance, field, &value, sizeof(CType));    \
         }                                                                      \
         return false;                                                          \
     }
 
-#define DEFINE_ARRAY_SETTER(Suffix, EnumVal, CType)                            \
+#define DEFINE_ARRAY_SETTER(Suffix, EnumVal, CType, DownCastType)              \
     static inline bool set_field_##Suffix(void *instance,                      \
-                                          const FieldInfo *field, CType value) \
+                                          const FieldInfo *field, CType value, \
+                                          size_t element_count)                \
     {                                                                          \
         if (field && field->type == EnumVal)                                   \
         {                                                                      \
-            return set_field_value(instance, field, value);                    \
+            if (element_count > field->count)                                  \
+            {                                                                  \
+                return false;                                                  \
+            }                                                                  \
+            return set_field_value(instance, field, value,                     \
+                                   element_count * sizeof(DownCastType));      \
         }                                                                      \
         return false;                                                          \
     }
@@ -188,15 +194,20 @@ const FieldInfo *find_field(const FieldInfo *meta, size_t count,
 }
 
 bool set_field_value(void *instance, const FieldInfo *field,
-                     const void *new_value)
+                     const void *new_value, size_t write_size)
 {
     if (!instance || !field || !new_value)
     {
         return false;
     }
 
+    if (write_size > field->size)
+    {
+        return false;
+    }
+
     void *field_ptr = (char *)instance + field->offset;
-    memcpy(field_ptr, new_value, field->size);
+    memcpy(field_ptr, new_value, write_size);
 
     return true;
 }
