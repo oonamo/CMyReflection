@@ -62,8 +62,8 @@ DeviceManager manager = {0};
 
 const FieldInfo *leaf   = NULL;
 void            *target = resolve_field_path(
-    &manager, DeviceManager_MetaData,
-    DeviceManager_FieldCount, "devices[2].data.voltage", &leaf);
+                          &manager, DeviceManager_MetaData,
+                          DeviceManager_FieldCount, "devices[2].data.voltage", &leaf);
 
 if (target && leaf)
 {

@@ -56,3 +56,8 @@ target_link_libraries(test_runner PRIVATE unity)
 target_sources(test_runner PRIVATE ${TEST_SOURCES})
 target_include_directories(test_runner PUBLIC ${PROJECT_SOURCE_DIR})
 add_test(NAME UnitTests COMMAND test_runner -v)
+
+add_test(
+  NAME  Python_Parser_Tests
+  COMMAND Python3::Interpreter -m pytest "${CMAKE_CURRENT_SOURCE_DIR}/test_parser.py" -v
+)

@@ -195,7 +195,8 @@ class Reflector:
         lines = [
             "// --- Auto-Generated Type Registry ---",
             "bool get_struct_metadata(FieldType type, StructMetaData* out_meta) { ",
-            "   if (!out_meta) return false;" "   switch(type) {",
+            "   if (!out_meta) return false;",
+            "   switch(type) {",
         ]
 
         for struct in self.structs.values():
@@ -260,6 +261,8 @@ def generate_reflection(reflector: Reflector, fname: str, code: str):
         if enum_match:
             custom_enum = enum_match.group(1)
             Reflector.TYPE_MAP[struct_name] = custom_enum
+        else:
+            Reflector.TYPE_MAP[struct_name] = f"TYPE_STRUCT_{struct_name.upper()}"
 
         current_struct = CStruct(fname, struct_name)
         skip_next = False

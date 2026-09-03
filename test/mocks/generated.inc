@@ -17,8 +17,11 @@ typedef enum {
     TYPE_INT,
     TYPE_IOTDEVICE_ARR,
     TYPE_LONGLONG,
-    TYPE_SENSORDATA,
     TYPE_STR,
+    TYPE_STRUCT_DEVICEMANAGER,
+    TYPE_STRUCT_GAME,
+    TYPE_STRUCT_IOTDEVICE,
+    TYPE_STRUCT_SENSORDATA,
     TYPE_UINT32_T,
     TYPE_UINT8_T,
     TYPE_UINT8_T_ARR,
@@ -49,6 +52,10 @@ extern const size_t DamageComponent_FieldCount;
 DEFINE_FIELD_SETTER(str, TYPE_STR, char *)
 DEFINE_FIELD_SETTER(conststr, TYPE_STR, const char *)
 DEFINE_FIELD_SETTER(Vector2, TYPE_VEC2, Vector2)
+DEFINE_FIELD_SETTER(Game, TYPE_STRUCT_GAME, Game)
+DEFINE_FIELD_SETTER(SensorData, TYPE_STRUCT_SENSORDATA, SensorData)
+DEFINE_FIELD_SETTER(IoTDevice, TYPE_STRUCT_IOTDEVICE, IoTDevice)
+DEFINE_FIELD_SETTER(DeviceManager, TYPE_STRUCT_DEVICEMANAGER, DeviceManager)
 DEFINE_FIELD_SETTER(DamageComponent, TYPE_DAMAGE_COMPONENT, DamageComponent)
 DEFINE_FIELD_SETTER(float, TYPE_FLOAT, float)
 DEFINE_FIELD_SETTER(int, TYPE_INT, int)
@@ -62,7 +69,6 @@ DEFINE_ARRAY_SETTER(float_arr, TYPE_FLOAT_ARR, float *, float)
 DEFINE_FIELD_SETTER(Vector2_ptr_ptr, TYPE_VECTOR2_PTR_PTR, Vector2 **)
 DEFINE_ARRAY_SETTER(Vector2_arr, TYPE_VECTOR2_ARR, Vector2 *, Vector2)
 DEFINE_ARRAY_SETTER(char_arr, TYPE_CHAR_ARR, char *, char)
-DEFINE_FIELD_SETTER(SensorData, TYPE_SENSORDATA, SensorData)
 DEFINE_ARRAY_SETTER(IoTDevice_arr, TYPE_IOTDEVICE_ARR, IoTDevice *, IoTDevice)
 DEFINE_FIELD_SETTER(u32, TYPE_UINT32_T, uint32_t)
 
@@ -105,7 +111,7 @@ const size_t SensorData_FieldCount = sizeof(SensorData_Metadata) / sizeof(FieldI
 const FieldInfo IoTDevice_Metadata[] = {
     { "device_id", TYPE_CHAR_ARR, offsetof(IoTDevice, device_id), sizeof(char[32]), 32 },
     { "baud_rate", TYPE_INT, offsetof(IoTDevice, baud_rate), sizeof(int), 1 },
-    { "data", TYPE_SENSORDATA, offsetof(IoTDevice, data), sizeof(SensorData), 1 },
+    { "data", TYPE_STRUCT_SENSORDATA, offsetof(IoTDevice, data), sizeof(SensorData), 1 },
 };
 const size_t IoTDevice_FieldCount = sizeof(IoTDevice_Metadata) / sizeof(FieldInfo);
 
@@ -125,19 +131,29 @@ const size_t DamageComponent_FieldCount = sizeof(DamageComponent_Metadata) / siz
 
 // --- Auto-Generated Type Registry ---
 bool get_struct_metadata(FieldType type, StructMetaData* out_meta) { 
-   if (!out_meta) return false;   switch(type) {
+   if (!out_meta) return false;
+   switch(type) {
      case TYPE_VEC2:
      case TYPE_VECTOR2_ARR:
          out_meta->fields = Vector2_Metadata;
          out_meta->count = Vector2_FieldCount;
          return true;
-     case TYPE_SENSORDATA:
+     case TYPE_STRUCT_GAME:
+         out_meta->fields = Game_Metadata;
+         out_meta->count = Game_FieldCount;
+         return true;
+     case TYPE_STRUCT_SENSORDATA:
          out_meta->fields = SensorData_Metadata;
          out_meta->count = SensorData_FieldCount;
          return true;
+     case TYPE_STRUCT_IOTDEVICE:
      case TYPE_IOTDEVICE_ARR:
          out_meta->fields = IoTDevice_Metadata;
          out_meta->count = IoTDevice_FieldCount;
+         return true;
+     case TYPE_STRUCT_DEVICEMANAGER:
+         out_meta->fields = DeviceManager_Metadata;
+         out_meta->count = DeviceManager_FieldCount;
          return true;
      case TYPE_DAMAGE_COMPONENT:
          out_meta->fields = DamageComponent_Metadata;
