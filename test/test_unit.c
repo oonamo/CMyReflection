@@ -346,6 +346,27 @@ TEST(Unit, Does_Not_Corrupt_Adjacent_Fields_When_Setting)
     TEST_ASSERT_EQUAL_FLOAT(23.0f, g.ball.speed.x);
 }
 
+TEST(Unit, Can_Get_Names_Of_Primitives)
+{
+    const char *result = get_name_of_type(TYPE_INT);
+    TEST_ASSERT_NOT_NULL(result);
+    TEST_ASSERT_EQUAL_STRING("TYPE_INT", result);
+}
+
+TEST(Unit, Gan_Get_Names_Of_Structs)
+{
+    const char *result = get_name_of_type(TYPE_STRUCT_BALL);
+    TEST_ASSERT_NOT_NULL(result);
+    TEST_ASSERT_EQUAL_STRING("TYPE_STRUCT_BALL", result);
+}
+
+TEST(Unit, Gan_Get_Names_Of_Arrays)
+{
+    const char *result = get_name_of_type(TYPE_UINT8_T_ARR);
+    TEST_ASSERT_NOT_NULL(result);
+    TEST_ASSERT_EQUAL_STRING("TYPE_UINT8_T_ARR", result);
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -373,4 +394,7 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, SafeSetField_Sets_Primitive_Correctly);
     RUN_TEST_CASE(Unit, SafeSetField_Sets_Arrays_Correctly);
     RUN_TEST_CASE(Unit, Does_Not_Corrupt_Adjacent_Fields_When_Setting);
+    RUN_TEST_CASE(Unit, Can_Get_Names_Of_Primitives);
+    RUN_TEST_CASE(Unit, Gan_Get_Names_Of_Structs);
+    RUN_TEST_CASE(Unit, Gan_Get_Names_Of_Arrays);
 }

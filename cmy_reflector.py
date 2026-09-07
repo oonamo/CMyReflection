@@ -171,6 +171,8 @@ class Reflector:
 
         lines.append(self.generate_generic_type_setter())
 
+        lines.append(self.generate_type_name_converter())
+
         lines.append("#endif // REFLECTION_IMPLEMENTATION")
 
         return "\n".join(lines)
@@ -218,7 +220,17 @@ class Reflector:
         return "\n".join(lines)
 
     def generate_type_name_converter(self) -> str:
-        pass
+        lines = ["const char* get_name_of_type(FieldType type) {", "   switch (type) {"]
+
+        unique_enums = sorted(set(Reflector.TYPE_MAP.values()))
+        for enum in unique_enums:
+            lines.append(f'     case {enum}: return "{enum}";')
+
+        lines.append("  }\n")
+        lines.append("  return NULL;")
+        lines.append("}")
+
+        return "\n".join(lines)
 
     def get_type_suffix(self, type_name: str) -> str:
         if type_name == "unknown":

@@ -67,6 +67,17 @@ bool safe_set_field(void            *instance,
                     size_t           element_count);
 
 /**
+ * @brief Gets the name of the type given
+ *
+ * @note Implemented in python generation script
+ *
+ * @param type [in] Type of enum to convert
+ *
+ * @return name of the enum, NULL if not implemented
+ */
+const char *get_name_of_type(FieldType type);
+
+/**
  * @brief Finds the struct containing the path
  *
  * @param base_instance [in] Struct to begin traversal

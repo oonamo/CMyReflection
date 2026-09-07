@@ -211,4 +211,34 @@ bool safe_set_field(void* instance, const FieldInfo* field, const void* value, s
   }
 }
 
+const char* get_name_of_type(FieldType type) {
+   switch (type) {
+     case TYPE_CHAR_ARR: return "TYPE_CHAR_ARR";
+     case TYPE_CONSTSTR: return "TYPE_CONSTSTR";
+     case TYPE_DAMAGE_COMPONENT: return "TYPE_DAMAGE_COMPONENT";
+     case TYPE_FLOAT: return "TYPE_FLOAT";
+     case TYPE_FLOAT_ARR: return "TYPE_FLOAT_ARR";
+     case TYPE_INT: return "TYPE_INT";
+     case TYPE_IOTDEVICE_ARR: return "TYPE_IOTDEVICE_ARR";
+     case TYPE_LONGLONG: return "TYPE_LONGLONG";
+     case TYPE_STR: return "TYPE_STR";
+     case TYPE_STRUCT_BALL: return "TYPE_STRUCT_BALL";
+     case TYPE_STRUCT_DEVICEMANAGER: return "TYPE_STRUCT_DEVICEMANAGER";
+     case TYPE_STRUCT_GAME: return "TYPE_STRUCT_GAME";
+     case TYPE_STRUCT_IOTDEVICE: return "TYPE_STRUCT_IOTDEVICE";
+     case TYPE_STRUCT_SENSORDATA: return "TYPE_STRUCT_SENSORDATA";
+     case TYPE_UINT32_T: return "TYPE_UINT32_T";
+     case TYPE_UINT8_T: return "TYPE_UINT8_T";
+     case TYPE_UINT8_T_ARR: return "TYPE_UINT8_T_ARR";
+     case TYPE_UNKNOWN: return "TYPE_UNKNOWN";
+     case TYPE_UNSIGNEDCHAR: return "TYPE_UNSIGNEDCHAR";
+     case TYPE_UNSIGNEDCHAR_ARR: return "TYPE_UNSIGNEDCHAR_ARR";
+     case TYPE_UNSIGNEDINT: return "TYPE_UNSIGNEDINT";
+     case TYPE_VEC2: return "TYPE_VEC2";
+     case TYPE_VECTOR2_ARR: return "TYPE_VECTOR2_ARR";
+     case TYPE_VECTOR2_PTR_PTR: return "TYPE_VECTOR2_PTR_PTR";
+  }
+
+  return NULL;
+}
 #endif // REFLECTION_IMPLEMENTATION
