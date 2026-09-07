@@ -296,6 +296,56 @@ TEST(Unit, Set_Array_Can_Write_Partial_Data)
     }
 }
 
+TEST(Unit, SafeSetField_Sets_Primitive_Correctly)
+{
+    Game             g = {0};
+    const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "health");
+
+    float new_health = 712;
+    TEST_ASSERT_TRUE(safe_set_field(&g, f, &new_health, 1));
+    TEST_ASSERT_EQUAL_FLOAT(new_health, g.health);
+}
+
+TEST(Unit, SafeSetField_Sets_Arrays_Correctly)
+{
+    Game             g = {0};
+    const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "grid");
+
+    uint8_t new_grid[9];
+    for (int i = 0; i < 9; i++)
+    {
+        new_grid[i] = (i % 2) * 5;
+    }
+
+    TEST_ASSERT_TRUE(safe_set_field(&g, f, new_grid, 8));
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(new_grid, g.grid, 9);
+}
+
+TEST(Unit, Does_Not_Corrupt_Adjacent_Fields_When_Setting)
+{
+    Game g = {0};
+
+    g.score        = 1337;
+    g.health       = 100.0f;
+    g.level        = 32;
+    g.ball.speed.x = 23.0f;
+    g.ball.radius  = 40.0f;
+
+    const FieldInfo *leaf = NULL;
+    void            *target_struct =
+        resolve_field_path(&g, Game_Metadata, Game_FieldCount, "ball.radius", &leaf);
+
+    TEST_ASSERT_NOT_NULL(target_struct);
+    TEST_ASSERT_NOT_NULL(leaf);
+
+    TEST_ASSERT_TRUE(set_field_float(target_struct, leaf, 88.5f));
+    TEST_ASSERT_EQUAL_FLOAT(88.5f, g.ball.radius);
+    TEST_ASSERT_EQUAL_INT(1337, g.score);
+    TEST_ASSERT_EQUAL_FLOAT(100.0f, g.health);
+    TEST_ASSERT_EQUAL_INT(32, g.level);
+    TEST_ASSERT_EQUAL_FLOAT(23.0f, g.ball.speed.x);
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -320,4 +370,7 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, Lookup_Safely_Ignores_OOB);
     RUN_TEST_CASE(Unit, Set_FIeld_Fails_On_Type_MisMatch);
     RUN_TEST_CASE(Unit, Set_Array_Can_Write_Partial_Data);
+    RUN_TEST_CASE(Unit, SafeSetField_Sets_Primitive_Correctly);
+    RUN_TEST_CASE(Unit, SafeSetField_Sets_Arrays_Correctly);
+    RUN_TEST_CASE(Unit, Does_Not_Corrupt_Adjacent_Fields_When_Setting);
 }

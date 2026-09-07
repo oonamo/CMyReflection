@@ -11,6 +11,7 @@
 #define CMYREFLECTION_REGISTRY
 typedef enum {
     TYPE_CHAR_ARR,
+    TYPE_CONSTSTR,
     TYPE_DAMAGE_COMPONENT,
     TYPE_FLOAT,
     TYPE_FLOAT_ARR,
@@ -18,6 +19,7 @@ typedef enum {
     TYPE_IOTDEVICE_ARR,
     TYPE_LONGLONG,
     TYPE_STR,
+    TYPE_STRUCT_BALL,
     TYPE_STRUCT_DEVICEMANAGER,
     TYPE_STRUCT_GAME,
     TYPE_STRUCT_IOTDEVICE,
@@ -38,6 +40,8 @@ typedef enum {
 // --- Metadata Declarations
 extern const FieldInfo Vector2_Metadata[];
 extern const size_t Vector2_FieldCount;
+extern const FieldInfo Ball_Metadata[];
+extern const size_t Ball_FieldCount;
 extern const FieldInfo Game_Metadata[];
 extern const size_t Game_FieldCount;
 extern const FieldInfo SensorData_Metadata[];
@@ -50,8 +54,9 @@ extern const FieldInfo DamageComponent_Metadata[];
 extern const size_t DamageComponent_FieldCount;
 
 DEFINE_FIELD_SETTER(str, TYPE_STR, char *)
-DEFINE_FIELD_SETTER(conststr, TYPE_STR, const char *)
+DEFINE_FIELD_SETTER(conststr, TYPE_CONSTSTR, const char *)
 DEFINE_FIELD_SETTER(Vector2, TYPE_VEC2, Vector2)
+DEFINE_FIELD_SETTER(Ball, TYPE_STRUCT_BALL, Ball)
 DEFINE_FIELD_SETTER(Game, TYPE_STRUCT_GAME, Game)
 DEFINE_FIELD_SETTER(SensorData, TYPE_STRUCT_SENSORDATA, SensorData)
 DEFINE_FIELD_SETTER(IoTDevice, TYPE_STRUCT_IOTDEVICE, IoTDevice)
@@ -83,8 +88,15 @@ const FieldInfo Vector2_Metadata[] = {
 };
 const size_t Vector2_FieldCount = sizeof(Vector2_Metadata) / sizeof(FieldInfo);
 
+const FieldInfo Ball_Metadata[] = {
+    { "speed", TYPE_VEC2, offsetof(Ball, speed), sizeof(Vector2), 1 },
+    { "radius", TYPE_FLOAT, offsetof(Ball, radius), sizeof(float), 1 },
+};
+const size_t Ball_FieldCount = sizeof(Ball_Metadata) / sizeof(FieldInfo);
+
 const FieldInfo Game_Metadata[] = {
     { "player_pos", TYPE_VEC2, offsetof(Game, player_pos), sizeof(Vector2), 1 },
+    { "ball", TYPE_STRUCT_BALL, offsetof(Game, ball), sizeof(Ball), 1 },
     { "health", TYPE_FLOAT, offsetof(Game, health), sizeof(float), 1 },
     { "level", TYPE_INT, offsetof(Game, level), sizeof(int), 1 },
     { "player_name", TYPE_STR, offsetof(Game, player_name), sizeof(char *), 1 },
@@ -138,6 +150,10 @@ bool get_struct_metadata(FieldType type, StructMetaData* out_meta) {
          out_meta->fields = Vector2_Metadata;
          out_meta->count = Vector2_FieldCount;
          return true;
+     case TYPE_STRUCT_BALL:
+         out_meta->fields = Ball_Metadata;
+         out_meta->count = Ball_FieldCount;
+         return true;
      case TYPE_STRUCT_GAME:
          out_meta->fields = Game_Metadata;
          out_meta->count = Game_FieldCount;
@@ -161,6 +177,37 @@ bool get_struct_metadata(FieldType type, StructMetaData* out_meta) {
          return true;
       default:
           return false;
+  }
+}
+
+// --- Auto-Generated Safe Type Setter ---
+bool safe_set_field(void* instance, const FieldInfo* field, const void* value, size_t element_count) {
+   if (!instance || !field || !value) return false;
+   switch(field->type) {
+      case TYPE_STR: return set_field_str(instance, field, *(char **)value);
+      case TYPE_CONSTSTR: return set_field_conststr(instance, field, *(const char **)value);
+      case TYPE_VEC2: return set_field_Vector2(instance, field, *(Vector2*)value);
+      case TYPE_STRUCT_BALL: return set_field_Ball(instance, field, *(Ball*)value);
+      case TYPE_STRUCT_GAME: return set_field_Game(instance, field, *(Game*)value);
+      case TYPE_STRUCT_SENSORDATA: return set_field_SensorData(instance, field, *(SensorData*)value);
+      case TYPE_STRUCT_IOTDEVICE: return set_field_IoTDevice(instance, field, *(IoTDevice*)value);
+      case TYPE_STRUCT_DEVICEMANAGER: return set_field_DeviceManager(instance, field, *(DeviceManager*)value);
+      case TYPE_DAMAGE_COMPONENT: return set_field_DamageComponent(instance, field, *(DamageComponent*)value);
+      case TYPE_FLOAT: return set_field_float(instance, field, *(float*)value);
+      case TYPE_INT: return set_field_int(instance, field, *(int*)value);
+      case TYPE_UINT8_T: return set_field_u8(instance, field, *(uint8_t*)value);
+      case TYPE_UNSIGNEDINT: return set_field_uint(instance, field, *(unsigned int*)value);
+      case TYPE_UNSIGNEDCHAR: return set_field_unsignedchar(instance, field, *(unsigned char*)value);
+      case TYPE_LONGLONG: return set_field_ll(instance, field, *(long long*)value);
+      case TYPE_UINT8_T_ARR: return set_field_u8_arr(instance, field, (uint8_t*)value, element_count);
+      case TYPE_UNSIGNEDCHAR_ARR: return set_field_unsignedchar_arr(instance, field, (unsigned char*)value, element_count);
+      case TYPE_FLOAT_ARR: return set_field_float_arr(instance, field, (float*)value, element_count);
+      case TYPE_VECTOR2_PTR_PTR: return set_field_Vector2_ptr_ptr(instance, field, *(Vector2 ***)value);
+      case TYPE_VECTOR2_ARR: return set_field_Vector2_arr(instance, field, (Vector2*)value, element_count);
+      case TYPE_CHAR_ARR: return set_field_char_arr(instance, field, (char*)value, element_count);
+      case TYPE_IOTDEVICE_ARR: return set_field_IoTDevice_arr(instance, field, (IoTDevice*)value, element_count);
+      case TYPE_UINT32_T: return set_field_u32(instance, field, *(uint32_t*)value);
+      default: return false;
   }
 }
 

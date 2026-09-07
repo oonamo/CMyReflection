@@ -57,7 +57,7 @@ class CStruct:
 class Reflector:
     TYPE_MAP = {
         "char*": "TYPE_STR",
-        "constchar*": "TYPE_STR",
+        "constchar*": "TYPE_CONSTSTR",
         "unknown": "TYPE_UNKNOWN",
     }
 
@@ -177,6 +177,8 @@ class Reflector:
 
         lines.append(self.generate_registry_definition())
 
+        lines.append(self.generate_generic_type_setter())
+
         lines.append("#endif // REFLECTION_IMPLEMENTATION")
 
         return "\n".join(lines)
@@ -221,6 +223,48 @@ class Reflector:
         lines.append("}\n")
         # fmt: on
 
+        return "\n".join(lines)
+
+    def generate_generic_type_setter(self) -> str:
+        lines = [
+            "// --- Auto-Generated Safe Type Setter ---",
+            "bool safe_set_field(void* instance, const FieldInfo* field, const void* value, size_t element_count) {",
+            "   if (!instance || !field || !value) return false;",
+            "   switch(field->type) {",
+        ]
+
+        for type_name, type_enum in Reflector.TYPE_MAP.items():
+            if type_name == "unknown":
+                continue
+
+            aliased_name = (
+                type_name.replace("_arr", "") if "_arr" in type_name else type_name
+            )
+
+            if "_arr" in type_name and aliased_name in Reflector.TYPE_ALIASES:
+                type_suffix = Reflector.TYPE_ALIASES[aliased_name] + "_arr"
+            elif type_name in Reflector.TYPE_ALIASES:
+                type_suffix = Reflector.TYPE_ALIASES[type_name]
+            else:
+                type_suffix = type_name.replace("*", "_ptr").replace(" ", "_")
+
+            ctype = Reflector.CTYPES.get(type_name, type_name)
+
+            if "_arr" in type_name:
+                base_type = ctype.replace("*", "", 1).strip()
+                lines.append(
+                    f"      case {type_enum}: "
+                    f"return set_field_{type_suffix}(instance, field, ({base_type}*)value, element_count);"
+                )
+            else:
+                lines.append(
+                    f"      case {type_enum}: "
+                    f"return set_field_{type_suffix}(instance, field, *({ctype}*)value);"
+                )
+
+        lines.append("      default: return false;")
+        lines.append("  }")
+        lines.append("}\n")
         return "\n".join(lines)
 
     def __str__(self):

@@ -50,6 +50,23 @@ typedef struct
 bool get_struct_metadata(FieldType type, StructMetaData *out_meta);
 
 /**
+ * @brief Safely sets a field given metadata
+ *
+ * @note Implemented in python generation script
+ *
+ * @param instance      [out] Instance to write
+ * @param field         [in]  Metadata of instance
+ * @param value         [in]  Value to write to
+ * @param element_count [in]  elements to write (if array)
+ *
+ * @return true if found, false otherwise
+ */
+bool safe_set_field(void            *instance,
+                    const FieldInfo *field,
+                    const void      *value,
+                    size_t           element_count);
+
+/**
  * @brief Finds the struct containing the path
  *
  * @param base_instance [in] Struct to begin traversal
@@ -181,21 +198,20 @@ void *resolve_field_path(void             *base_instance,
             return NULL;
         }
 
-        current_instance = (char *)current_instance + current_field->offset;
-        if (index >= 0)
-        {
-            if (index >= current_field->count)
-            {
-                return NULL;
-            }
-
-            // Shift instance to correct index
-            size_t elem_size = current_field->size / current_field->count;
-            current_instance = (char *)current_instance + (index * elem_size);
-        }
-
         if (next)
         {
+            current_instance = (char *)current_instance + current_field->offset;
+            if (index >= 0)
+            {
+                if (index >= current_field->count)
+                {
+                    return NULL;
+                }
+
+                // Shift instance to correct index
+                size_t elem_size = current_field->size / current_field->count;
+                current_instance = (char *)current_instance + (index * elem_size);
+            }
             StructMetaData next_meta;
             if (!get_struct_metadata(current_field->type, &next_meta))
             {

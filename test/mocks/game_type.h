@@ -14,9 +14,16 @@ typedef struct
 /// @reflect
 typedef struct
 {
-    Vector2 player_pos;
-    float   health;
+  Vector2 speed;
+  float radius;
+} Ball;
 
+/// @reflect
+typedef struct
+{
+    Vector2 player_pos;
+    Ball ball;
+    float   health;
     int   level;
     char *player_name;
 
