@@ -130,15 +130,7 @@ class Reflector:
 
     def generate_type_setter(self, type_name: str, type_enum: str) -> str:
         """Generates a macro for setting a field"""
-        aliased_name = (
-            type_name.replace("_arr", "") if "_arr" in type_name else type_name
-        )
-        if "_arr" in type_name and aliased_name in Reflector.TYPE_ALIASES:
-            type_suffix = Reflector.TYPE_ALIASES[aliased_name] + "_arr"
-        elif type_name in Reflector.TYPE_ALIASES:
-            type_suffix = Reflector.TYPE_ALIASES[type_name]
-        else:
-            type_suffix = type_name.replace("*", "_ptr").replace(" ", "_")
+        type_suffix = self.get_type_suffix(type_name)
         ctype = Reflector.CTYPES.get(type_name, type_name)
 
         if "_arr" in type_name:
@@ -225,6 +217,25 @@ class Reflector:
 
         return "\n".join(lines)
 
+    def generate_type_name_converter(self) -> str:
+        pass
+
+    def get_type_suffix(self, type_name: str) -> str:
+        if type_name == "unknown":
+            return "unknown"
+        aliased_name = (
+            type_name.replace("_arr", "") if "_arr" in type_name else type_name
+        )
+
+        if "_arr" in type_name and aliased_name in Reflector.TYPE_ALIASES:
+            type_suffix = Reflector.TYPE_ALIASES[aliased_name] + "_arr"
+        elif type_name in Reflector.TYPE_ALIASES:
+            type_suffix = Reflector.TYPE_ALIASES[type_name]
+        else:
+            type_suffix = type_name.replace("*", "_ptr").replace(" ", "_")
+
+        return type_suffix
+
     def generate_generic_type_setter(self) -> str:
         lines = [
             "// --- Auto-Generated Safe Type Setter ---",
@@ -237,16 +248,7 @@ class Reflector:
             if type_name == "unknown":
                 continue
 
-            aliased_name = (
-                type_name.replace("_arr", "") if "_arr" in type_name else type_name
-            )
-
-            if "_arr" in type_name and aliased_name in Reflector.TYPE_ALIASES:
-                type_suffix = Reflector.TYPE_ALIASES[aliased_name] + "_arr"
-            elif type_name in Reflector.TYPE_ALIASES:
-                type_suffix = Reflector.TYPE_ALIASES[type_name]
-            else:
-                type_suffix = type_name.replace("*", "_ptr").replace(" ", "_")
+            type_suffix = self.get_type_suffix(type_name)
 
             ctype = Reflector.CTYPES.get(type_name, type_name)
 
