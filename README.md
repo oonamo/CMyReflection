@@ -98,6 +98,53 @@ add_custom_command(
     COMMENT "Generating C reflection metadata..."
 )
 ```
+
+## Annotations
+
+> [!NOTE]
+> Currently, *unions* and *nested structs* are not supported.
+
+### @reflect
+Placed before the typedef struct definition
+Instructs the parser to reflect the struct definition
+
+```c
+/// @reflect
+typedef struct
+{
+    int x;
+} MyStruct;
+```
+
+### @enum NAME
+Placed before the typedef struct definition, after `@reflect`
+Renames the type enum to be NAME
+
+```c
+/// @reflect
+/// @enum TYPE_U8_DYN_ARR
+typedef struct
+{
+    uint8_t* data;
+    size_t data_size;
+    size_t len;
+    size_t capacity;
+} DynamicArrayU8;
+```
+
+### @private
+Placed before the field, or after
+
+```c
+/// @reflect
+typedef struct
+{
+    /// @private
+    char data[256];
+    uint32_t uuid32; /// @private
+} recv_buffer_t;
+```
+
 ## Testing
 Uses **Unity**
 
