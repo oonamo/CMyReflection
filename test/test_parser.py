@@ -63,7 +63,7 @@ def test_parses_char_arrays():
     generate_reflection(ref, "test.h", c_code)
     ref.resolve()
 
-    assert "Buf" in Reflector.TYPE_MAP
+    assert "Buf" in ref.type_map
 
     buf_struct = ref.structs["Buf"]
     assert len(buf_struct.fields) == 1
