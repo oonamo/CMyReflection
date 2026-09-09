@@ -13,7 +13,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#ifndef CMYREFLECTION_PARSED
+#ifdef CMYREFLECTION_USE_DEFAULT_TYPES
 typedef enum
 {
     TYPE_INT,
@@ -24,12 +24,20 @@ typedef enum
     CMYREFLECTION_REFLECTION_TYPES
     #endif
 } FieldType;
-#endif // CMYREFLECTION_PARSED
+#endif // CMYREFLECTION_USE_DEFAULT_TYPES
+
+#if defined(CMYREFLECTION_TYPE_ENUM_DEF)
+    #define FIELD_TYPE CMYREFLECTION_TYPE_ENUM_DEF
+#elif !defined(CMYREFLECTION_USE_DEFAULT_TYPES) && !defined(CMYREFLECTION_PARSED)
+    #define FIELD_TYPE int
+#else
+    #define FIELD_TYPE FieldType
+#endif
 
 typedef struct
 {
     const char *name;   /*!< Name of field */
-    FieldType   type;   /*!< Type of field */
+    FIELD_TYPE  type;   /*!< Type of field */
     size_t      offset; /*!< Struct offset of field */
     size_t      size;   /*!< sizeof type */
     size_t      count;  /*!< Number of array elements in field */
@@ -51,7 +59,7 @@ typedef struct
  *
  * @return true if found, false otherwise
  */
-bool get_struct_metadata(FieldType type, StructMetaData *out_meta);
+bool get_struct_metadata(FIELD_TYPE type, StructMetaData *out_meta);
 
 /**
  * @brief Safely sets a field given metadata
@@ -79,7 +87,7 @@ bool safe_set_field(void            *instance,
  *
  * @return name of the enum, NULL if not implemented
  */
-const char *get_name_of_type(FieldType type);
+const char *get_name_of_type(FIELD_TYPE type);
 
 /**
  * @brief Finds the struct containing the path
@@ -149,7 +157,7 @@ bool set_field_value(void            *instance,
         return false;                                                                              \
     }
 
-#if !defined(CMYREFLECTION_PARSED) && !defined(CMYREFLECTION_IMPLEMENTATION)
+#if defined(CMYREFLECTION_USE_DEFAULT_TYPES)
 DEFINE_FIELD_SETTER(int, TYPE_INT, int)
 DEFINE_FIELD_SETTER(float, TYPE_FLOAT, float)
 DEFINE_FIELD_SETTER(str, TYPE_STR, char *)
