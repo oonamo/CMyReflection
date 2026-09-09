@@ -242,3 +242,4 @@ const char* get_name_of_type(FieldType type) {
   return NULL;
 }
 #endif // REFLECTION_IMPLEMENTATION
+

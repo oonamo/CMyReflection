@@ -301,6 +301,9 @@ class Reflector:
         lines.append("\n#endif // _CMYREFLECTION_AUTOGEN")
         lines.append(self.generate_definitions())
 
+        # Prevent -Wnewline-eof
+        lines.append("\n")
+
         return "\n".join(lines)
 
 

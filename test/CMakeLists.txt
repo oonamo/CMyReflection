@@ -67,21 +67,28 @@ add_test(
   COMMAND Python3::Interpreter -m pytest "${CMAKE_CURRENT_SOURCE_DIR}/test_parser.py" -v
 )
 
+if(MSVC)
+  set(STRICT_WARNINGS "/W4" "/WX") # Level 4, Treat as Error
+else()
+  set(STRICT_WARNINGS
+    "-Wall"
+    "-Wextra"
+    "-Wpedantic"
+    "-Werror"
+    "-Wconversion"
+    "-Wshadow"
+    "-Wdouble-promotion"
+    "-Werror=implicit-function-declaration"
+    "-fno-strict-aliasing"
+    "-Wnull-dereference"
+  )
+endif()
+
 add_executable(strict_compile_test reflection_impl.c dummy.c)
 target_include_directories(test_runner PUBLIC ${PROJECT_SOURCE_DIR})
 target_link_libraries(strict_compile_test PRIVATE cmyreflection)
-target_compile_options(strict_compile_test PRIVATE
-    -Wall
-    -Wextra
-    -Wpedantic
-    -Werror
-    -Wconversion
-    -Wshadow
-    -Wdouble-promotion
-    -Werror=implicit-function-declaration
-    -fno-strict-aliasing
-    -Wnull-dereference
-)
+
+target_compile_options(strict_compile_test PRIVATE ${STRICT_WARNINGS})
 target_include_directories(test_runner PUBLIC ${PROJECT_SOURCE_DIR})
 
 add_test(NAME Strict_Compile_Warnings COMMAND strict_compile_test)
