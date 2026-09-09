@@ -50,8 +50,13 @@ set(TEST_SOURCES
   ${GENERATED_HEADER}
 )
 
-
 add_executable(test_runner)
+set_target_properties(test_runner PROPERTIES
+  C_STANDARD 99
+  C_STANDARD_REQUIRED ON
+  C_EXTENSIONS OFF
+)
+
 target_link_libraries(test_runner PRIVATE unity)
 target_sources(test_runner PRIVATE ${TEST_SOURCES})
 target_include_directories(test_runner PUBLIC ${PROJECT_SOURCE_DIR})
@@ -61,3 +66,22 @@ add_test(
   NAME  Python_Parser_Tests
   COMMAND Python3::Interpreter -m pytest "${CMAKE_CURRENT_SOURCE_DIR}/test_parser.py" -v
 )
+
+add_executable(strict_compile_test reflection_impl.c dummy.c)
+target_include_directories(test_runner PUBLIC ${PROJECT_SOURCE_DIR})
+target_link_libraries(strict_compile_test PRIVATE cmyreflection)
+target_compile_options(strict_compile_test PRIVATE
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Werror
+    -Wconversion
+    -Wshadow
+    -Wdouble-promotion
+    -Werror=implicit-function-declaration
+    -fno-strict-aliasing
+    -Wnull-dereference
+)
+target_include_directories(test_runner PUBLIC ${PROJECT_SOURCE_DIR})
+
+add_test(NAME Strict_Compile_Warnings COMMAND strict_compile_test)

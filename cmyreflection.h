@@ -214,14 +214,14 @@ void *resolve_field_path(void             *base_instance,
             current_instance = (char *)current_instance + current_field->offset;
             if (index >= 0)
             {
-                if (index >= current_field->count)
+                if ((size_t)index >= current_field->count)
                 {
                     return NULL;
                 }
 
                 // Shift instance to correct index
                 size_t elem_size = current_field->size / current_field->count;
-                current_instance = (char *)current_instance + (index * elem_size);
+                current_instance = (char *)current_instance + ((size_t)index * elem_size);
             }
             StructMetaData next_meta;
             if (!get_struct_metadata(current_field->type, &next_meta))
