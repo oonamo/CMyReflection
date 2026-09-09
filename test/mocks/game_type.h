@@ -2,6 +2,17 @@
 #include <stdint.h>
 
 /// @reflect
+typedef enum
+{
+    BALL_TYPE_SMALL = 0,
+    BALL_TYPE_MEDIUM,
+    BALL_TYPE_BIG,
+
+    /// @private
+    BALL_TYPE_NONE,
+} BallSize;
+
+/// @reflect
 /// @enum TYPE_VEC2
 typedef struct
 {
@@ -14,18 +25,18 @@ typedef struct
 /// @reflect
 typedef struct
 {
-  Vector2 speed;
-  float radius;
+    Vector2 speed;
+    float   radius;
 } Ball;
 
 /// @reflect
 typedef struct
 {
     Vector2 player_pos;
-    Ball ball;
+    Ball    ball;
     float   health;
-    int   level;
-    char *player_name;
+    int     level;
+    char   *player_name;
 
     DamageComponent damage;
 

@@ -5,10 +5,17 @@ from pathlib import Path
 
 
 class Field:
-    def __init__(self, name: str, type_name: str, array_bounds: str = None):
+    def __init__(
+        self,
+        name: str,
+        type_name: str,
+        array_bounds: str = None,
+        tags: dict[str, str] = {},
+    ):
         self.name = name
         self.type_name = type_name
         self.array_bounds = array_bounds
+        self.tags = tags
 
         base_name = type_name.replace(" ", "")
 
@@ -25,10 +32,17 @@ class Field:
 
 
 class CStruct:
-    def __init__(self, fname: str, struct_name: str, fields: list[Field] = None):
+    def __init__(
+        self,
+        fname: str,
+        struct_name: str,
+        fields: list[Field] = None,
+        tags: dict[str, str] = {},
+    ):
         self.fname = fname
         self.struct_name = struct_name
         self.fields = fields if fields is not None else []
+        self.tags = tags
         pass
 
     def append_field(self, field: Field):
@@ -307,37 +321,55 @@ class Reflector:
         return "\n".join(lines)
 
 
+def extract_tags(comment_text: str) -> dict:
+    tags = {}
+
+    for match in re.finditer(r"///\s*@([a-zA-Z0-9_]+)(?:\s+([^/\n]+))?", comment_text):
+        tag_name = match.group(1)
+        tag_value = match.group(2).strip() if match.group(2) else True
+        tags[tag_name] = tag_value
+
+    return tags
+
+
 def generate_reflection(reflector: Reflector, fname: str, code: str):
     """Constructs the reflection data from the file"""
+    # NOTE: captures all tags after @reflect
     struct_pattern = re.compile(
         r"(///\s*@reflect[\s\S]*?)typedef\s+struct[^{]*\{([^}]+)\}\s*(\w+);"
     )
 
     for struct_match in struct_pattern.finditer(code):
-        header_comments = struct_match.group(1)
+        struct_tags = extract_tags(struct_match.group(1))
         body = struct_match.group(2)
         struct_name = struct_match.group(3)
 
-        enum_match = re.search(r"///\s*@enum\s+([A-Za-z0-9_]+)", header_comments)
-        if enum_match:
-            custom_enum = enum_match.group(1)
-            Reflector.TYPE_MAP[struct_name] = custom_enum
+        if "enum" in struct_tags:
+            Reflector.TYPE_MAP[struct_name] = struct_tags["enum"]
         else:
             Reflector.TYPE_MAP[struct_name] = f"TYPE_STRUCT_{struct_name.upper()}"
 
-        current_struct = CStruct(fname, struct_name)
-        skip_next = False
+        current_struct = CStruct(fname, struct_name, tags=struct_tags)
+        pending_tags = {}
 
         for line in body.split("\n"):
             line = line.strip()
-            if not line or ("///" in line and "@private" in line and ";" not in line):
-                skip_next = True if "@private" in line else skip_next
+            if not line:
+                continue
+
+            if line.startswith("///") and ";" not in line:
+                pending_tags.update(extract_tags(line))
                 continue
 
             if ";" in line:
-                decl, _ = line.split(";", 1)
-                if "@private" in line or skip_next:
-                    skip_next = False
+                parts = line.split("//", 1)
+                decl = parts[0].split(";")[0].strip()
+                inline_comment = f"//{parts[1]}" if len(parts) > 1 else ""
+
+                field_tags = {**pending_tags, **extract_tags(inline_comment)}
+                pending_tags = {}
+
+                if "private" in field_tags:
                     continue
 
                 match = re.search(
@@ -350,7 +382,7 @@ def generate_reflection(reflector: Reflector, fname: str, code: str):
                     array_bounds = match.group(3)
 
                     current_struct.append_field(
-                        Field(field_name, raw_type, array_bounds)
+                        Field(field_name, raw_type, array_bounds, tags=field_tags)
                     )
 
         reflector.add_cstruct(current_struct)

@@ -99,7 +99,7 @@ const FieldInfo Game_Metadata[] = {
     { "ball", TYPE_STRUCT_BALL, offsetof(Game, ball), sizeof(Ball), 1 },
     { "health", TYPE_FLOAT, offsetof(Game, health), sizeof(float), 1 },
     { "level", TYPE_INT, offsetof(Game, level), sizeof(int), 1 },
-    { "player_name", TYPE_STR, offsetof(Game, player_name), sizeof(char *), 1 },
+    { "player_name", TYPE_STR, offsetof(Game, player_name), sizeof(char   *), 1 },
     { "damage", TYPE_DAMAGE_COMPONENT, offsetof(Game, damage), sizeof(DamageComponent), 1 },
     { "game_flags", TYPE_UINT8_T, offsetof(Game, game_flags), sizeof(uint8_t), 1 },
     { "other_flags", TYPE_UNSIGNEDINT, offsetof(Game, other_flags), sizeof(unsigned int), 1 },
