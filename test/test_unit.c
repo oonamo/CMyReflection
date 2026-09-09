@@ -367,6 +367,15 @@ TEST(Unit, Gan_Get_Names_Of_Arrays)
     TEST_ASSERT_EQUAL_STRING("TYPE_UINT8_T_ARR", result);
 }
 
+TEST(Unit, Can_Use_MetaData_Macro)
+{
+
+    StructMetaData game_metadata = MetaData_FromName(Game);
+
+    TEST_ASSERT_EQUAL(Game_FieldCount, game_metadata.count);
+    TEST_ASSERT_POINTERS_EQUAL(Game_Metadata, game_metadata.fields);
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -397,4 +406,5 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, Can_Get_Names_Of_Primitives);
     RUN_TEST_CASE(Unit, Gan_Get_Names_Of_Structs);
     RUN_TEST_CASE(Unit, Gan_Get_Names_Of_Arrays);
+    RUN_TEST_CASE(Unit, Can_Use_MetaData_Macro);
 }
