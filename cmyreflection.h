@@ -1,6 +1,10 @@
 #ifndef _CMYREFLECTION_H
 #define _CMYREFLECTION_H
 
+#ifdef _WIN32
+    #define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #define CMYREFLECTION_MAJOR 0
 #define CMYREFLECTION_MINOR 1
 #define CMYREFLECTION_PATCH 0
@@ -156,10 +160,6 @@ DEFINE_FIELD_SETTER(str, TYPE_STR, char *)
 #ifdef CMYREFLECTION_IMPLEMENTATION
 
 #ifdef CMYREFLECTION_REGISTRY
-
-    #ifdef _WIN32
-        #define _CRT_SECURE_NO_WARNINGS
-    #endif
 
     #include <stdlib.h>
 
