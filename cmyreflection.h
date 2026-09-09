@@ -145,10 +145,10 @@ bool set_field_value(void            *instance,
         return false;                                                                              \
     }
 
-#ifndef CMYREFLECTION_PARSED
-DEFINE_FIELD_SETTER(int, TYPE_INT, int);
-DEFINE_FIELD_SETTER(float, TYPE_FLOAT, float);
-DEFINE_FIELD_SETTER(str, TYPE_STR, char *);
+#if !defined(CMYREFLECTION_PARSED) && !defined(CMYREFLECTION_IMPLEMENTATION)
+DEFINE_FIELD_SETTER(int, TYPE_INT, int)
+DEFINE_FIELD_SETTER(float, TYPE_FLOAT, float)
+DEFINE_FIELD_SETTER(str, TYPE_STR, char *)
 #endif
 
 #endif // _CMYREFLECTION_H
