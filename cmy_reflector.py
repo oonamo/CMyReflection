@@ -255,7 +255,7 @@ class Reflector:
 
         for enum in self.enums.values():
             if enum.fname not in files:
-                files[enum.fnam] = []
+                files[enum.fname] = []
             files[enum.fname].append(enum.generate_definition())
 
         lines = ["// --- Metadata Definitions", "#ifdef REFLECTION_IMPLEMENTATION\n"]
