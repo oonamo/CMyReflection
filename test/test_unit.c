@@ -506,6 +506,13 @@ TEST(Unit, Can_Use_EnumMetaData_Macro)
     TEST_ASSERT_EQUAL_INT(BallSize_MemberCount, md.count);
 }
 
+TEST(Unit, Can_Use_Reverse_Lookup_For_Enum)
+{
+    TEST_ASSERT_EQUAL_STRING(
+        "BALL_TYPE_SMALL",
+        get_enum_member_name(BallSize_Members, BallSize_MemberCount, BALL_TYPE_SMALL));
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -550,4 +557,5 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, SafeSetField_Rejects_Invalid_Enum);
     RUN_TEST_CASE(Unit, CustomValidator_Accepts_And_Rejects_Correctly);
     RUN_TEST_CASE(Unit, Can_Use_EnumMetaData_Macro);
+    RUN_TEST_CASE(Unit, Can_Use_Reverse_Lookup_For_Enum);
 }

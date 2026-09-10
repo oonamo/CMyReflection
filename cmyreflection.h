@@ -70,7 +70,7 @@ typedef struct
 #define EnumMetaData_FromName(EnumName)                                                            \
     (EnumMetaData)                                                                                 \
     {                                                                                              \
-        EnumName##_Members, EnumName##_MemberCount                                                  \
+        EnumName##_Members, EnumName##_MemberCount                                                 \
     }
 
 /**
@@ -164,6 +164,17 @@ const FieldInfo *find_field(const FieldInfo *meta, size_t count, const char *nam
  */
 const EnumMemberInfo *
 find_member(const EnumMemberInfo *meta, size_t member_count, const char *name);
+
+/**
+ * @brief Gets the string name of an enum member given its integer value
+ *
+ * @param meta         [in] Array of EnumMemberInfo
+ * @param member_count [in] Number of elements in meta
+ * @param value        [in] Integer value to find
+ *
+ * @return String name of the member, NULL if not found
+ */
+const char *get_enum_member_name(const EnumMemberInfo *meta, size_t member_count, int value);
 
 /**
  * @brief Safely sets a field value
@@ -340,6 +351,18 @@ const EnumMemberInfo *find_member(const EnumMemberInfo *meta, size_t member_coun
         }
     }
 
+    return NULL;
+}
+
+const char *get_enum_member_name(const EnumMemberInfo *meta, size_t member_count, int value)
+{
+    for (size_t i = 0; i < member_count; i++)
+    {
+        if (meta[i].value == value)
+        {
+            return meta[i].name;
+        }
+    }
     return NULL;
 }
 
