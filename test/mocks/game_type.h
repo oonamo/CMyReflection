@@ -27,6 +27,7 @@ typedef struct
 {
     Vector2 speed;
     float   radius;
+    BallSize size;
 } Ball;
 
 /// @reflect

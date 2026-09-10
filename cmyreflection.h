@@ -55,6 +55,18 @@ typedef struct
         StructName##_Metadata, StructName##_FieldCount                                             \
     }
 
+typedef struct
+{
+    int         value; /*!< Integer value of enum member */
+    const char *name;  /*!< String literal of enum member */
+} EnumMemberInfo;
+
+typedef struct
+{
+    const EnumMemberInfo *members; /*!< Members of enum */
+    size_t                count;   /*!< Numbers of members in enum */
+} EnumMetaData;
+
 /**
  * @brief Get's the struct's metadata
  *
@@ -66,6 +78,18 @@ typedef struct
  * @return true if found, false otherwise
  */
 bool get_struct_metadata(FIELD_TYPE type, StructMetaData *out_meta);
+
+/**
+ * @brief Get's the enum's metadata
+ *
+ * @note Implemented in python generation script
+ *
+ * @param type     [in] Type of enum
+ * @param out_meta [out] The returned enum metadata
+ *
+ * @return true if found, false otherwise
+ */
+bool get_enum_metadata(FIELD_TYPE type, EnumMetaData *out_meta);
 
 /**
  * @brief Safely sets a field given metadata
@@ -124,6 +148,18 @@ void *resolve_field_path(void             *base_instance,
 const FieldInfo *find_field(const FieldInfo *meta, size_t count, const char *name);
 
 /**
+ * @brief Find's a member in a struct
+ *
+ * @param meta  [in] Array of FieldInfo
+ * @param count [in] Number of elements in meta
+ * @param name  [in] Name of field
+ *
+ * @return Pointer to the field, NULL if not found
+ */
+const EnumMemberInfo *
+find_member(const EnumMemberInfo *meta, size_t member_count, const char *name);
+
+/**
  * @brief Safely sets a field value
  *
  * @param instance   [in] Pointer to struct instance to write to
@@ -146,6 +182,19 @@ bool set_field_value(void            *instance,
             return set_field_value(instance, field, &value, sizeof(CType));                        \
         }                                                                                          \
         return false;                                                                              \
+    }
+
+#define DEFINE_ENUM_SETTER(Suffix, EnumVal, CType)                                                 \
+    static inline bool set_field_##Suffix(void *instance, const FieldInfo *field, CType value)     \
+    {                                                                                              \
+        if (field && field->type == EnumVal)                                                       \
+        {                                                                                          \
+            if (!is_valid_##Suffix(value))                                                         \
+            {                                                                                      \
+                return false;                                                                      \
+            }                                                                                      \
+            return set_field_value(instance, field, &value, sizeof(CType));                        \
+        }                                                                                          \
     }
 
 #define DEFINE_ARRAY_SETTER(Suffix, EnumVal, CType, DownCastType)                                  \
@@ -264,6 +313,19 @@ void *resolve_field_path(void             *base_instance,
 const FieldInfo *find_field(const FieldInfo *meta, size_t count, const char *name)
 {
     for (size_t i = 0; i < count; i++)
+    {
+        if (strcmp(meta[i].name, name) == 0)
+        {
+            return &meta[i];
+        }
+    }
+
+    return NULL;
+}
+
+const EnumMemberInfo *find_member(const EnumMemberInfo *meta, size_t member_count, const char *name)
+{
+    for (size_t i = 0; i < member_count; i++)
     {
         if (strcmp(meta[i].name, name) == 0)
         {

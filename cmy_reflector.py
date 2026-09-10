@@ -68,9 +68,80 @@ class CStruct:
         return "\n".join(lines)
 
 
+class EnumMember:
+    def __init__(self, name: str, tags: dict[str, str] = None):
+        self.name = name
+        self.tags = tags
+
+    def gen_member_str(self) -> str:
+        return f'   {{ {self.name}, "{self.name}" }}'
+
+
+class CEnum:
+    def __init__(
+        self,
+        fname: str,
+        name: str,
+        members: list[EnumMember] = None,
+        tags: dict[str, str] = None,
+    ):
+        self.fname = fname
+        self.name = name
+        self.members = members if members is not None else []
+        self.tags = tags if tags is not None else {}
+
+    def generate_definition(self) -> str:
+        """Generates a definition for the enum metadata"""
+        lines = [f"const EnumMemberInfo {self.name}_Members[] = {{"]
+        for member in self.members:
+            lines.append(member.gen_member_str() + ",")
+        lines.append("};")
+        lines.append(
+            f"const size_t {self.name}_MemberCount = sizeof({self.name}_Members) / sizeof(EnumMemberInfo);"
+        )
+
+        return "\n".join(lines)
+
+    def generate_validator(self) -> str:
+        """Generates a function that validates that a given integer is a member of the enum"""
+
+        if "unchecked" in self.tags:
+            return f"// {self.name} is unchecked"
+
+        switch_cases = []
+        for member in self.members:
+            switch_cases.append(f"      case {member.name}:")
+
+        if switch_cases:
+            switch_cases.append("           return true;")
+
+        switch_body = "\n".join(switch_cases)
+
+        template = f"""\
+static inline bool is_valid_{self.name}({self.name} value) {{
+    switch(value) {{
+{switch_body}
+    default:
+        return false;
+    }}
+}}
+"""
+        return template
+
+    def generate_declaration(self) -> str:
+        """Generates a declaration for the enum metadata"""
+        return (
+            f"extern const EnumMemberInfo {self.name}_Members[];\n"
+            f"extern const size_t {self.name}_MemberCount;"
+        )
+
+
 class Reflector:
-    def __init__(self, structs: dict[str, CStruct] = None):
+    def __init__(
+        self, structs: dict[str, CStruct] = None, enums: dict[str, CEnum] = None
+    ):
         self.structs = structs if structs is not None else {}
+        self.enums = enums if enums is not None else {}
         self.type_map = {
             "char*": "TYPE_STR",
             "constchar*": "TYPE_CONSTSTR",
@@ -100,6 +171,12 @@ class Reflector:
 
         self.structs[struct.struct_name] = struct
         return True
+
+    def add_cenum(self, enum: CEnum) -> bool:
+        if enum.name in self.enums:
+            return False
+
+        self.enums[enum.name] = enum
 
     def resolve(self):
         """Resolves all fields and ensures that an enum exists for every type"""
@@ -156,6 +233,13 @@ class Reflector:
 
         return "\n".join(lines)
 
+    def generate_enum_validators(self) -> str:
+        funcs = ["// --- Auto-Generated Enum Validators ---"]
+        for enum in self.enums.values():
+            funcs.append(enum.generate_validator())
+
+        return "\n\n".join(funcs)
+
     def generate_definitions(self) -> str:
         """Generates the definitions for the metadata"""
         files: dict[str, list[str]] = {}
@@ -165,12 +249,21 @@ class Reflector:
                 files[struct.fname] = []
             files[struct.fname].append(struct.generate_definition())
 
+        for enum in self.enums.values():
+            if enum.fname not in files:
+                files[enum.fnam] = []
+            files[enum.fname].append(enum.generate_definition())
+
         lines = ["// --- Metadata Definitions", "#ifdef REFLECTION_IMPLEMENTATION\n"]
         for file, contents in files.items():
             lines.append(f"// --- Generated from {file} ---")
             lines.append("\n\n".join(contents) + "\n")
 
-        lines.append(self.generate_registry_definition())
+        lines.append(self.generate_struct_registry_definition() + "\n")
+
+        lines.append(self.generate_enum_validators())
+
+        lines.append(self.generate_enum_registry_definition())
 
         lines.append(self.generate_generic_type_setter())
 
@@ -186,11 +279,44 @@ class Reflector:
         for struct in self.structs.values():
             lines.append(struct.generate_declaration())
 
+        for enum in self.enums.values():
+            lines.append(enum.generate_declaration())
+
         lines.append("")
 
         return "\n".join(lines)
 
-    def generate_registry_definition(self) -> str:
+    def generate_enum_registry_definition(self) -> str:
+        switch_cases = []
+        for enum in self.enums.values():
+            normalized = enum.name.replace(" ", "")
+            type_enum = self.type_map.get(normalized)
+
+            if type_enum:
+                switch_cases.append(f"      case {type_enum}:")
+                switch_cases.append(
+                    f"          out_meta->members = {enum.name}_Members;"
+                )
+                switch_cases.append(
+                    f"          out_meta->count = {enum.name}_MemberCount;"
+                )
+                switch_cases.append("          return true;")
+
+        switch_body = "\n".join(switch_cases)
+
+        template = f"""\
+// --- Auto-Generated Type Registry
+bool get_enum_metadata(FieldType type, EnumMetaData* out_meta) {{
+    if (!out_meta) return false;
+    switch(type) {{
+{switch_body}
+        default: return false;
+    }}
+}}
+"""
+        return template
+
+    def generate_struct_registry_definition(self) -> str:
         switch_cases = []
         for struct in self.structs.values():
             normalized = struct.struct_name.replace(" ", "")
@@ -337,21 +463,27 @@ def extract_tags(comment_text: str) -> dict:
 def generate_reflection(reflector: Reflector, fname: str, code: str):
     """Constructs the reflection data from the file"""
     # NOTE: captures all tags after @reflect
-    struct_pattern = re.compile(
-        r"(///\s*@reflect[\s\S]*?)typedef\s+struct[^{]*\{([^}]+)\}\s*(\w+);"
+    block_pattern = re.compile(
+        r"(///\s*@reflect[\s\S]*?)typedef\s+(struct|enum)[^{]*\{([^}]+)\}\s*(\w+);"
     )
 
-    for struct_match in struct_pattern.finditer(code):
-        struct_tags = extract_tags(struct_match.group(1))
-        body = struct_match.group(2)
-        struct_name = struct_match.group(3)
+    for match in block_pattern.finditer(code):
+        block_tags = extract_tags(match.group(1))
+        block_type = match.group(2)
+        body = match.group(3)
+        block_name = match.group(4)
 
-        if "enum" in struct_tags:
-            reflector.type_map[struct_name] = struct_tags["enum"]
+        if block_type == "struct":
+            if "enum" in block_tags:
+                reflector.type_map[block_name] = block_tags["enum"]
+            else:
+                reflector.type_map[block_name] = f"TYPE_STRUCT_{block_name.upper()}"
+            current_block = CStruct(fname, block_name, tags=block_tags)
         else:
-            reflector.type_map[struct_name] = f"TYPE_STRUCT_{struct_name.upper()}"
+            type_enum = f"TYPE_ENUM_{block_name.upper()}"
+            reflector.type_map[block_name] = type_enum
+            current_block = CEnum(fname, block_name, tags=block_tags)
 
-        current_struct = CStruct(fname, struct_name, tags=struct_tags)
         pending_tags = {}
 
         for line in body.split("\n"):
@@ -359,35 +491,48 @@ def generate_reflection(reflector: Reflector, fname: str, code: str):
             if not line:
                 continue
 
-            if line.startswith("///") and ";" not in line:
+            if line.startswith("///"):
                 pending_tags.update(extract_tags(line))
                 continue
 
-            if ";" in line:
-                parts = line.split("//", 1)
-                decl = parts[0].split(";")[0].strip()
-                inline_comment = f"//{parts[1]}" if len(parts) > 1 else ""
+            parts = line.split("//", 1)
+            decl = parts[0].strip()
+            inline_comment = f"//{parts[1]}" if len(parts) > 1 else ""
 
-                field_tags = {**pending_tags, **extract_tags(inline_comment)}
-                pending_tags = {}
+            if not decl:
+                continue
 
-                if "private" in field_tags:
-                    continue
+            field_tags = {**pending_tags, **extract_tags(inline_comment)}
+            pending_tags = {}
 
-                match = re.search(
-                    r"^(.*[\s\*])([a-zA-Z0-9_]+)(?:\s*\[(.*)\])?$", decl.strip()
-                )
+            if "private" in field_tags:
+                continue
+
+            if block_type == "struct":
+                decl = decl.split(";")[0].strip()
+                match = re.search(r"^(.*[\s\*])([a-zA-Z0-9_]+)(?:\s*\[(.*)\])?$", decl)
 
                 if match:
                     raw_type = match.group(1).strip()
                     field_name = match.group(2).strip()
                     array_bounds = match.group(3)
-
-                    current_struct.append_field(
+                    current_block.append_field(
                         Field(field_name, raw_type, array_bounds, tags=field_tags)
                     )
+            else:
+                decl = decl.split(",")[0].split("=")[0].strip()
+                match = re.search(r"^([a-zA-Z0-9_]+)", decl)
 
-        reflector.add_cstruct(current_struct)
+                if match:
+                    member_name = match.group(1)
+                    current_block.members.append(
+                        EnumMember(member_name, tags=field_tags)
+                    )
+
+        if block_type == "struct":
+            reflector.add_cstruct(current_block)
+        else:
+            reflector.add_cenum(current_block)
 
 
 def gather_source_files(input_paths: list[str]) -> list[Path]:

@@ -12,6 +12,7 @@ typedef enum {
     TYPE_CHAR_ARR,
     TYPE_CONSTSTR,
     TYPE_DAMAGE_COMPONENT,
+    TYPE_ENUM_BALLSIZE,
     TYPE_FLOAT,
     TYPE_FLOAT_ARR,
     TYPE_INT,
@@ -51,9 +52,12 @@ extern const FieldInfo DeviceManager_Metadata[];
 extern const size_t DeviceManager_FieldCount;
 extern const FieldInfo DamageComponent_Metadata[];
 extern const size_t DamageComponent_FieldCount;
+extern const EnumMemberInfo BallSize_Members[];
+extern const size_t BallSize_MemberCount;
 
 DEFINE_FIELD_SETTER(str, TYPE_STR, char *)
 DEFINE_FIELD_SETTER(conststr, TYPE_CONSTSTR, const char *)
+DEFINE_FIELD_SETTER(BallSize, TYPE_ENUM_BALLSIZE, BallSize)
 DEFINE_FIELD_SETTER(Vector2, TYPE_VEC2, Vector2)
 DEFINE_FIELD_SETTER(Ball, TYPE_STRUCT_BALL, Ball)
 DEFINE_FIELD_SETTER(Game, TYPE_STRUCT_GAME, Game)
@@ -90,6 +94,7 @@ const size_t Vector2_FieldCount = sizeof(Vector2_Metadata) / sizeof(FieldInfo);
 const FieldInfo Ball_Metadata[] = {
     { "speed", TYPE_VEC2, offsetof(Ball, speed), sizeof(Vector2), 1 },
     { "radius", TYPE_FLOAT, offsetof(Ball, radius), sizeof(float), 1 },
+    { "size", TYPE_ENUM_BALLSIZE, offsetof(Ball, size), sizeof(BallSize), 1 },
 };
 const size_t Ball_FieldCount = sizeof(Ball_Metadata) / sizeof(FieldInfo);
 
@@ -111,6 +116,13 @@ const FieldInfo Game_Metadata[] = {
     { "enemy_positions", TYPE_VECTOR2_ARR, offsetof(Game, enemy_positions), sizeof(Vector2[20]), 20 },
 };
 const size_t Game_FieldCount = sizeof(Game_Metadata) / sizeof(FieldInfo);
+
+const EnumMemberInfo BallSize_Members[] = {
+   { BALL_TYPE_SMALL, "BALL_TYPE_SMALL" },
+   { BALL_TYPE_MEDIUM, "BALL_TYPE_MEDIUM" },
+   { BALL_TYPE_BIG, "BALL_TYPE_BIG" },
+};
+const size_t BallSize_MemberCount = sizeof(BallSize_Members) / sizeof(EnumMemberInfo);
 
 // --- Generated from readme_example.h ---
 const FieldInfo SensorData_Metadata[] = {
@@ -177,12 +189,39 @@ bool get_struct_metadata(FieldType type, StructMetaData* out_meta) {
         default: return false;
     }
 }
+
+// --- Auto-Generated Enum Validators ---
+
+static inline bool is_valid_BallSize(BallSize value) {
+    switch(value) {
+      case BALL_TYPE_SMALL:
+      case BALL_TYPE_MEDIUM:
+      case BALL_TYPE_BIG:
+           return true;
+    default:
+        return false;
+    }
+}
+
+// --- Auto-Generated Type Registry
+bool get_enum_metadata(FieldType type, EnumMetaData* out_meta) {
+    if (!out_meta) return false;
+    switch(type) {
+      case TYPE_ENUM_BALLSIZE:
+          out_meta->members = BallSize_Members;
+          out_meta->count = BallSize_MemberCount;
+          return true;
+        default: return false;
+    }
+}
+
 // --- Auto-Generated Safe Type Setter
 bool safe_set_field(void* instance, const FieldInfo* field, const void* value, size_t element_count) {
     if (!instance || !field || !value) return false;
     switch(field->type) {
       case TYPE_STR: return set_field_str(instance, field, *(char **)value);
       case TYPE_CONSTSTR: return set_field_conststr(instance, field, *(const char **)value);
+      case TYPE_ENUM_BALLSIZE: return set_field_BallSize(instance, field, *(BallSize*)value);
       case TYPE_VEC2: return set_field_Vector2(instance, field, *(Vector2*)value);
       case TYPE_STRUCT_BALL: return set_field_Ball(instance, field, *(Ball*)value);
       case TYPE_STRUCT_GAME: return set_field_Game(instance, field, *(Game*)value);
@@ -214,6 +253,7 @@ const char* get_name_of_type(FieldType type) {
      case TYPE_CHAR_ARR: return "TYPE_CHAR_ARR";
      case TYPE_CONSTSTR: return "TYPE_CONSTSTR";
      case TYPE_DAMAGE_COMPONENT: return "TYPE_DAMAGE_COMPONENT";
+     case TYPE_ENUM_BALLSIZE: return "TYPE_ENUM_BALLSIZE";
      case TYPE_FLOAT: return "TYPE_FLOAT";
      case TYPE_FLOAT_ARR: return "TYPE_FLOAT_ARR";
      case TYPE_INT: return "TYPE_INT";

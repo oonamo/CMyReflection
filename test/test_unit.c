@@ -376,6 +376,62 @@ TEST(Unit, Can_Use_MetaData_Macro)
     TEST_ASSERT_POINTERS_EQUAL(Game_Metadata, game_metadata.fields);
 }
 
+TEST(Unit, Can_Find_Enum_Member)
+{
+    const EnumMemberInfo *m =
+        find_member(BallSize_Members, BallSize_MemberCount, "BALL_TYPE_SMALL");
+
+    TEST_ASSERT_NOT_NULL(m);
+    TEST_ASSERT_EQUAL_INT(BALL_TYPE_SMALL, m->value);
+    TEST_ASSERT_EQUAL_STRING("BALL_TYPE_SMALL", m->name);
+}
+
+TEST(Unit, Fails_To_Find_Private_Member)
+{
+    TEST_ASSERT_NULL(find_member(BallSize_Members, BallSize_MemberCount, "BALL_TYPE_NONE"));
+}
+
+TEST(Unit, Fails_To_Find_Invalid_Member)
+{
+    TEST_ASSERT_NULL(find_member(BallSize_Members, BallSize_MemberCount, "BALL_TYPE_DNE"));
+}
+
+TEST(Unit, Can_Set_Enum_Member)
+{
+    Game g = {0};
+
+    const FieldInfo *f = find_field(Ball_Metadata, Ball_FieldCount, "size");
+
+    TEST_ASSERT_TRUE(set_field_BallSize(&g.ball, f, BALL_TYPE_SMALL));
+    TEST_ASSERT_EQUAL_INT(g.ball.size, BALL_TYPE_SMALL);
+
+    TEST_ASSERT_TRUE(set_field_BallSize(&g.ball, f, BALL_TYPE_BIG));
+    TEST_ASSERT_EQUAL_INT(g.ball.size, BALL_TYPE_BIG);
+}
+
+TEST(Unit, SafeSetField_Sets_Enums_Correctly)
+{
+    Game g = {0};
+
+    const FieldInfo *f = find_field(Ball_Metadata, Ball_FieldCount, "size");
+
+    BallSize new_size = BALL_TYPE_MEDIUM;
+
+    TEST_ASSERT_TRUE(safe_set_field(&g.ball, f, &new_size, 1));
+    TEST_ASSERT_EQUAL_INT(BALL_TYPE_MEDIUM, g.ball.size);
+}
+
+TEST(Unit, Can_Get_Enum_Metadata_From_Registry)
+{
+    EnumMetaData meta = {0};
+
+    TEST_ASSERT_TRUE(get_enum_metadata(TYPE_ENUM_BALLSIZE, &meta));
+    TEST_ASSERT_EQUAL_PTR(BallSize_Members, meta.members);
+    TEST_ASSERT_EQUAL_size_t(BallSize_MemberCount, meta.count);
+
+    TEST_ASSERT_FALSE(get_enum_metadata(TYPE_INT, &meta));
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -407,4 +463,10 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, Gan_Get_Names_Of_Structs);
     RUN_TEST_CASE(Unit, Gan_Get_Names_Of_Arrays);
     RUN_TEST_CASE(Unit, Can_Use_MetaData_Macro);
+    RUN_TEST_CASE(Unit, Can_Find_Enum_Member);
+    RUN_TEST_CASE(Unit, Fails_To_Find_Private_Member);
+    RUN_TEST_CASE(Unit, Fails_To_Find_Invalid_Member);
+    RUN_TEST_CASE(Unit, Can_Set_Enum_Member);
+    RUN_TEST_CASE(Unit, SafeSetField_Sets_Enums_Correctly);
+    RUN_TEST_CASE(Unit, Can_Get_Enum_Metadata_From_Registry);
 }
