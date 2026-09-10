@@ -218,12 +218,19 @@ class Reflector:
         if "_arr" in type_name:
             base_type = ctype.replace("*", "", 1).strip()
             return (
-                f"DEFINE_ARRAY_SETTER({type_suffix}, {type_enum}, {ctype}, {base_type})"
+                f"DEFINE_ARRAY_SETTER({type_suffix}, {type_enum}, {ctype}, {base_type})\n"
+                f"DEFINE_ARRAY_GETTER({type_suffix}, {type_enum}, {ctype}, {base_type})\n"
             )
         elif enum_obj and "unchecked" not in enum_obj.tags:
-            return f"DEFINE_ENUM_SETTER({type_suffix}, {type_enum}, {ctype}, is_valid_{enum_obj.name})"
+            return (
+                f"DEFINE_ENUM_SETTER({type_suffix}, {type_enum}, {ctype}, is_valid_{enum_obj.name})\n"
+                f"DEFINE_FIELD_GETTER({type_suffix}, {type_enum}, {ctype})\n"
+            )
         else:
-            return f"DEFINE_FIELD_SETTER({type_suffix}, {type_enum}, {ctype})"
+            return (
+                f"DEFINE_FIELD_SETTER({type_suffix}, {type_enum}, {ctype})\n"
+                f"DEFINE_FIELD_GETTER({type_suffix}, {type_enum}, {ctype})\n"
+            )
 
     def generate_types(self) -> str:
         """Generates the FieldType enum from TYPE_MAP"""

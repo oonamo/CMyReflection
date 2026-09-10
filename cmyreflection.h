@@ -191,12 +191,38 @@ bool set_field_value(void            *instance,
                      const void      *new_value,
                      size_t           write_size);
 
+/**
+ * @brief Safely gets a field value
+ *
+ * @param instance  [in]  Pointer to struct instance
+ * @param field     [in]  Field to read from
+ * @param out_value [out] Buffer to copy data into
+ * @param read_size [in]  Number of bytes expected
+ *
+ * @return true if successful, false otherwise
+ */
+bool get_field_value(const void      *instance,
+                     const FieldInfo *field,
+                     void            *out_value,
+                     size_t           read_size);
+
 #define DEFINE_FIELD_SETTER(Suffix, EnumVal, CType)                                                \
     static inline bool set_field_##Suffix(void *instance, const FieldInfo *field, CType value)     \
     {                                                                                              \
         if (field && field->type == EnumVal)                                                       \
         {                                                                                          \
             return set_field_value(instance, field, &value, sizeof(CType));                        \
+        }                                                                                          \
+        return false;                                                                              \
+    }
+
+#define DEFINE_FIELD_GETTER(Suffix, EnumVal, CType)                                                \
+    static inline bool get_field_##Suffix(                                                         \
+        void *instance, const FieldInfo *field, CType *out_value)                                  \
+    {                                                                                              \
+        if (field && field->type == EnumVal)                                                       \
+        {                                                                                          \
+            return get_field_value(instance, field, out_value, sizeof(CType));                     \
         }                                                                                          \
         return false;                                                                              \
     }
@@ -230,10 +256,30 @@ bool set_field_value(void            *instance,
         return false;                                                                              \
     }
 
+#define DEFINE_ARRAY_GETTER(Suffix, EnumVal, CType, DownCastType)                                  \
+    static inline bool get_field_##Suffix(                                                         \
+        void *instance, const FieldInfo *field, CType value, size_t element_count)                 \
+    {                                                                                              \
+        if (field && field->type == EnumVal)                                                       \
+        {                                                                                          \
+            if (element_count > field->count)                                                      \
+            {                                                                                      \
+                return false;                                                                      \
+            }                                                                                      \
+            return get_field_value(instance, field, value, element_count * sizeof(DownCastType));  \
+        }                                                                                          \
+        return false;                                                                              \
+    }
+
 #if defined(CMYREFLECTION_USE_DEFAULT_TYPES)
 DEFINE_FIELD_SETTER(int, TYPE_INT, int)
+DEFINE_FIELD_GETTER(int, TYPE_INT, int)
+
 DEFINE_FIELD_SETTER(float, TYPE_FLOAT, float)
+DEFINE_FIELD_GETTER(float, TYPE_FLOAT, float)
+
 DEFINE_FIELD_SETTER(str, TYPE_STR, char *)
+DEFINE_FIELD_GETTER(str, TYPE_STR, char *)
 #endif
 
 #endif // _CMYREFLECTION_H
@@ -383,6 +429,27 @@ bool set_field_value(void            *instance,
 
     void *field_ptr = (char *)instance + field->offset;
     memcpy(field_ptr, new_value, write_size);
+
+    return true;
+}
+
+bool get_field_value(const void      *instance,
+                     const FieldInfo *field,
+                     void            *out_value,
+                     size_t           read_size)
+{
+    if (!instance || !field || !out_value)
+    {
+        return false;
+    }
+
+    if (read_size > field->size)
+    {
+        return false;
+    }
+
+    const void *field_ptr = (const char *)instance + field->offset;
+    memcpy(out_value, field_ptr, read_size);
 
     return true;
 }

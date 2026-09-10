@@ -4,5 +4,16 @@
 
 int main(void)
 {
-    set_field_float(NULL, NULL, 0);
+    int   i = 0;
+    float f = 0;
+    char *s = 0;
+
+    set_field_int(NULL, NULL, i);
+    get_field_int(NULL, NULL, &i);
+
+    set_field_float(NULL, NULL, f);
+    get_field_float(NULL, NULL, &f);
+
+    set_field_str(NULL, NULL, s);
+    get_field_str(NULL, NULL, &s);
 }

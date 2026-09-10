@@ -513,6 +513,89 @@ TEST(Unit, Can_Use_Reverse_Lookup_For_Enum)
         get_enum_member_name(BallSize_Members, BallSize_MemberCount, BALL_TYPE_SMALL));
 }
 
+TEST(Unit, FieldGetter_Extracts_Valid_Data)
+{
+    Vector2          v = {3.14f, 2.71f};
+    const FieldInfo *f = find_field(Vector2_Metadata, Vector2_FieldCount, "x");
+
+    float extracted_value = 0.0f;
+
+    TEST_ASSERT_TRUE(get_field_float(&v, f, &extracted_value));
+    TEST_ASSERT_EQUAL_FLOAT(3.14f, extracted_value);
+}
+
+TEST(Unit, FieldGetter_Rejects_Type_Mismatch)
+{
+    Vector2          v = {3.14f, 2.71f};
+    const FieldInfo *f = find_field(Vector2_Metadata, Vector2_FieldCount, "x"); // x is TYPE_FLOAT
+
+    int extracted_value = 99;
+
+    TEST_ASSERT_FALSE(get_field_int(&v, f, &extracted_value));
+    TEST_ASSERT_EQUAL_INT(99, extracted_value);
+}
+
+TEST(Unit, FieldGetter_Extracts_Enum_Correctly)
+{
+    Game g      = {0};
+    g.ball.size = BALL_TYPE_BIG;
+
+    const FieldInfo *f = find_field(Ball_Metadata, Ball_FieldCount, "size");
+
+    BallSize extracted_size = BALL_TYPE_SMALL;
+
+    TEST_ASSERT_TRUE(get_field_BallSize(&g.ball, f, &extracted_size));
+    TEST_ASSERT_EQUAL_INT(BALL_TYPE_BIG, extracted_size);
+}
+
+TEST(Unit, FieldGetter_Respects_Arrays)
+{
+    Game    g = {0};
+    uint8_t expected[9];
+    for (int i = 0; i < 9; i++)
+    {
+        g.grid[i]   = i;
+        expected[i] = i;
+    }
+
+    const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "grid");
+
+    uint8_t out_grid[9];
+
+    TEST_ASSERT_TRUE(get_field_u8_arr(&g, f, out_grid, 9));
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(expected, out_grid, 9);
+
+    memset(out_grid, 0, 9);
+    TEST_ASSERT_TRUE(get_field_u8_arr(&g, f, out_grid, 3));
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(expected, out_grid, 3);
+
+    uint8_t arr_zero[6] = {0};
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(arr_zero, out_grid + 3, 6);
+}
+
+TEST(Unit, FieldGetter_Rejects_OutOfBounds_Read)
+{
+    Game             g = {0};
+    const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "history");
+
+    float out_history[MAX_ARR_LEN + 1];
+    TEST_ASSERT_FALSE(get_field_float_arr(&g, f, out_history, MAX_ARR_LEN + 1));
+}
+
+TEST(Unit, GetFieldValue_Enforces_Bounds_And_Null_Safety)
+{
+    Vector2          v = {1.0f, 1.0f};
+    const FieldInfo *f =
+        find_field(Vector2_Metadata, Vector2_FieldCount, "x"); // size is 4 (sizeof(float))
+
+    float out_val = 0.0f;
+
+    TEST_ASSERT_FALSE(get_field_value(NULL, f, &out_val, sizeof(float)));
+    TEST_ASSERT_FALSE(get_field_value(&v, NULL, &out_val, sizeof(float)));
+    TEST_ASSERT_FALSE(get_field_value(&v, f, NULL, sizeof(float)));
+    TEST_ASSERT_FALSE(get_field_value(&v, f, &out_val, sizeof(double)));
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -558,4 +641,10 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, CustomValidator_Accepts_And_Rejects_Correctly);
     RUN_TEST_CASE(Unit, Can_Use_EnumMetaData_Macro);
     RUN_TEST_CASE(Unit, Can_Use_Reverse_Lookup_For_Enum);
+    RUN_TEST_CASE(Unit, FieldGetter_Extracts_Valid_Data);
+    RUN_TEST_CASE(Unit, FieldGetter_Rejects_Type_Mismatch);
+    RUN_TEST_CASE(Unit, FieldGetter_Extracts_Enum_Correctly);
+    RUN_TEST_CASE(Unit, FieldGetter_Respects_Arrays);
+    RUN_TEST_CASE(Unit, FieldGetter_Rejects_OutOfBounds_Read);
+    RUN_TEST_CASE(Unit, GetFieldValue_Enforces_Bounds_And_Null_Safety);
 }
