@@ -108,6 +108,7 @@ def test_ignores_private_keys():
     assert "private_1" not in field_names
     assert "private_2" not in field_names
 
+
 def test_parser_handles_bad_c_formatting():
     c_code = """
     /// @reflect
@@ -128,7 +129,7 @@ def test_parser_handles_bad_c_formatting():
     parsed_struct = ref.structs["UglyStruct"]
     assert parsed_struct.struct_name == "UglyStruct"
 
-    fields = { f.name: f for f in parsed_struct.fields }
+    fields = {f.name: f for f in parsed_struct.fields}
 
     assert "type_attached" in fields
     assert fields["type_attached"].type_name.strip() == "int*"
@@ -147,3 +148,120 @@ def test_parser_handles_bad_c_formatting():
     assert "ugly_combo" in fields
     assert fields["ugly_combo"].type_name.strip() == "unsigned int  *"
     assert fields["ugly_combo"].array_bounds.strip() == "MAX_ARR"
+
+
+def test_parser_generates_enum():
+    c_code = """
+    /// @reflect
+    typedef enum {
+        VALA,
+        VALB,
+        VALC
+    } MyEnum;
+    """
+
+    ref = Reflector()
+    generate_reflection(ref, "test.h", c_code)
+    ref.resolve()
+
+    assert "MyEnum" in ref.type_map
+    assert "MyEnum" in ref.enums
+
+    enum = ref.enums["MyEnum"]
+
+    members = {m.name: m for m in enum.members}
+
+    assert "VALA" in members
+    assert "VALB" in members
+    assert "VALC" in members
+
+
+def test_parser_ignores_unreflected_enum():
+    c_code = """
+    typedef enum {
+        VALA,
+        VALB,
+        VALC
+    } MyEnum;
+    """
+
+    ref = Reflector()
+    generate_reflection(ref, "test.h", c_code)
+    ref.resolve()
+
+    assert "MyEnum" not in ref.type_map
+    assert "MyEnum" not in ref.enums
+
+
+def test_parser_ignores_private_enum_fields():
+    c_code = """
+    /// @reflect
+    typedef enum {
+        VAL1,
+
+        /// @private
+        VAL2,
+
+        VAL3, /// @private
+
+        VAL4 = 4, /// @private
+
+        VAL5
+    } MyEnum;
+    """
+
+    ref = Reflector()
+    generate_reflection(ref, "test.h", c_code)
+    ref.resolve()
+
+    assert "MyEnum" in ref.type_map
+    assert "MyEnum" in ref.enums
+
+    enum = ref.enums["MyEnum"]
+
+    members = {m.name: m for m in enum.members}
+
+    assert "VAL1" in members
+    assert "VAL2" not in members
+    assert "VAL3" not in members
+    assert "VAL4" not in members
+    assert "VAL5" in members
+
+
+def test_parser_does_not_generate_validator_for_unchecked_enums(tmp_path: Path):
+    c_code = """
+    /// @reflect
+    /// @unchecked
+    typedef enum {
+        VALA,
+        VALB,
+        VALC,
+    } MyEnum;
+    """
+
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    mock_header = src_dir / "test_enum.h"
+
+    mock_header.write_text(c_code)
+
+    out_file = tmp_path / "generated.h"
+
+    script_path = Path(__file__).parent.parent / "cmy_reflector.py"
+
+    result = subprocess.run(
+        ["python3", str(script_path), str(src_dir), "-o", str(out_file)],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, f"Script failed: {result.stderr}"
+    assert out_file.exists(), "Output file was not generated"
+
+    generated_content = out_file.read_text()
+
+    assert "MyEnum_Members" in generated_content
+    assert "MyEnum_MemberCount" in generated_content
+
+    assert "DEFINE_ENUM_SETTER" not in generated_content
+    assert "DEFINE_FIELD_SETTER" in generated_content
