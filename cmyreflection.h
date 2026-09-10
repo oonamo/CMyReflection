@@ -67,6 +67,12 @@ typedef struct
     size_t                count;   /*!< Numbers of members in enum */
 } EnumMetaData;
 
+#define EnumMetaData_FromName(EnumName)                                                            \
+    (EnumMetaData)                                                                                 \
+    {                                                                                              \
+        EnumName##_Members, EnumName##_MemberCount                                                  \
+    }
+
 /**
  * @brief Get's the struct's metadata
  *

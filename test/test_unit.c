@@ -498,6 +498,14 @@ TEST(Unit, CustomValidator_Accepts_And_Rejects_Correctly)
     TEST_ASSERT_EQUAL_INT(FLAG_A | FLAG_B, flags);
 }
 
+TEST(Unit, Can_Use_EnumMetaData_Macro)
+{
+    EnumMetaData md = EnumMetaData_FromName(BallSize);
+
+    TEST_ASSERT_POINTERS_EQUAL(BallSize_Members, md.members);
+    TEST_ASSERT_EQUAL_INT(BallSize_MemberCount, md.count);
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -541,4 +549,5 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, CheckedEnum_Rejects_Invalid_Member);
     RUN_TEST_CASE(Unit, SafeSetField_Rejects_Invalid_Enum);
     RUN_TEST_CASE(Unit, CustomValidator_Accepts_And_Rejects_Correctly);
+    RUN_TEST_CASE(Unit, Can_Use_EnumMetaData_Macro);
 }
