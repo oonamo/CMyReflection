@@ -432,6 +432,72 @@ TEST(Unit, Can_Get_Enum_Metadata_From_Registry)
     TEST_ASSERT_FALSE(get_enum_metadata(TYPE_INT, &meta));
 }
 
+TEST(Unit, CheckedEnum_Validates_Valid_Member)
+{
+    TEST_ASSERT_TRUE(is_valid_BallSize(BALL_TYPE_BIG));
+}
+
+TEST(Unit, CheckedEnum_InValidates_InValid_Member)
+{
+    TEST_ASSERT_FALSE(is_valid_BallSize(-1));
+}
+
+TEST(Unit, CheckedEnum_Accepts_Valid_Member)
+{
+    Game             g = {0};
+    const FieldInfo *f = find_field(Ball_Metadata, Ball_FieldCount, "size");
+
+    TEST_ASSERT_TRUE(set_field_BallSize(&g.ball, f, BALL_TYPE_MEDIUM));
+    TEST_ASSERT_EQUAL_INT(BALL_TYPE_MEDIUM, g.ball.size);
+}
+
+TEST(Unit, CheckedEnum_Rejects_Invalid_Member)
+{
+    Game g             = {0};
+    g.ball.size        = BALL_TYPE_SMALL;
+    const FieldInfo *f = find_field(Ball_Metadata, Ball_FieldCount, "size");
+
+    TEST_ASSERT_FALSE(set_field_BallSize(&g.ball, f, (BallSize)-1));
+    TEST_ASSERT_EQUAL_INT(BALL_TYPE_SMALL, g.ball.size);
+}
+
+TEST(Unit, SafeSetField_Rejects_Invalid_Enum)
+{
+    Game g             = {0};
+    g.ball.size        = BALL_TYPE_SMALL;
+    const FieldInfo *f = find_field(Ball_Metadata, Ball_FieldCount, "size");
+
+    int bad_val = -23;
+
+    TEST_ASSERT_FALSE(safe_set_field(&g.ball, f, &bad_val, 1));
+    TEST_ASSERT_EQUAL_INT(BALL_TYPE_SMALL, g.ball.size);
+}
+
+typedef enum
+{
+    FLAG_A = 1 << 0,
+    FLAG_B = 1 << 1,
+} bit_flags;
+
+static inline bool check_sys_flags(bit_flags f)
+{
+    return f >= 1 && f <= (FLAG_A | FLAG_B);
+}
+
+DEFINE_ENUM_SETTER(bit_flags, 99, bit_flags, check_sys_flags);
+
+TEST(Unit, CustomValidator_Accepts_And_Rejects_Correctly)
+{
+    FieldInfo custom_field = {"flags", 99, 0, sizeof(bit_flags), 1};
+    bit_flags flags        = 0;
+
+    TEST_ASSERT_TRUE(set_field_bit_flags(&flags, &custom_field, FLAG_A | FLAG_B));
+    TEST_ASSERT_EQUAL_INT(FLAG_A | FLAG_B, flags);
+
+    TEST_ASSERT_FALSE(set_field_bit_flags(&flags, &custom_field, 4));
+    TEST_ASSERT_EQUAL_INT(FLAG_A | FLAG_B, flags);
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -469,4 +535,10 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, Can_Set_Enum_Member);
     RUN_TEST_CASE(Unit, SafeSetField_Sets_Enums_Correctly);
     RUN_TEST_CASE(Unit, Can_Get_Enum_Metadata_From_Registry);
+    RUN_TEST_CASE(Unit, CheckedEnum_Validates_Valid_Member);
+    RUN_TEST_CASE(Unit, CheckedEnum_InValidates_InValid_Member);
+    RUN_TEST_CASE(Unit, CheckedEnum_Accepts_Valid_Member);
+    RUN_TEST_CASE(Unit, CheckedEnum_Rejects_Invalid_Member);
+    RUN_TEST_CASE(Unit, SafeSetField_Rejects_Invalid_Enum);
+    RUN_TEST_CASE(Unit, CustomValidator_Accepts_And_Rejects_Correctly);
 }

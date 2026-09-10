@@ -213,11 +213,15 @@ class Reflector:
         type_suffix = self.get_type_suffix(type_name)
         ctype = self.ctypes.get(type_name, type_name)
 
+        enum_obj = next((e for e in self.enums.values() if e.name == type_name), None)
+
         if "_arr" in type_name:
             base_type = ctype.replace("*", "", 1).strip()
             return (
                 f"DEFINE_ARRAY_SETTER({type_suffix}, {type_enum}, {ctype}, {base_type})"
             )
+        elif enum_obj and "unchecked" not in enum_obj.tags:
+            return f"DEFINE_ENUM_SETTER({type_suffix}, {type_enum}, {ctype}, is_valid_{enum_obj.name})"
         else:
             return f"DEFINE_FIELD_SETTER({type_suffix}, {type_enum}, {ctype})"
 
@@ -261,9 +265,7 @@ class Reflector:
 
         lines.append(self.generate_struct_registry_definition() + "\n")
 
-        lines.append(self.generate_enum_validators())
-
-        lines.append(self.generate_enum_registry_definition())
+        lines.append(self.generate_enum_registry_definition() + "\n")
 
         lines.append(self.generate_generic_type_setter())
 
@@ -434,6 +436,8 @@ bool safe_set_field(void* instance, const FieldInfo* field, const void* value, s
             "#include <cmyreflection.h>",
             self.generate_declarations(),
         ]
+
+        lines.append(self.generate_enum_validators())
 
         for type_name, type_enum in self.type_map.items():
             if type_name == "unknown":

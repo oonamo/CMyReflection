@@ -55,9 +55,22 @@ extern const size_t DamageComponent_FieldCount;
 extern const EnumMemberInfo BallSize_Members[];
 extern const size_t BallSize_MemberCount;
 
+// --- Auto-Generated Enum Validators ---
+
+static inline bool is_valid_BallSize(BallSize value) {
+    switch(value) {
+      case BALL_TYPE_SMALL:
+      case BALL_TYPE_MEDIUM:
+      case BALL_TYPE_BIG:
+           return true;
+    default:
+        return false;
+    }
+}
+
 DEFINE_FIELD_SETTER(str, TYPE_STR, char *)
 DEFINE_FIELD_SETTER(conststr, TYPE_CONSTSTR, const char *)
-DEFINE_FIELD_SETTER(BallSize, TYPE_ENUM_BALLSIZE, BallSize)
+DEFINE_ENUM_SETTER(BallSize, TYPE_ENUM_BALLSIZE, BallSize, is_valid_BallSize)
 DEFINE_FIELD_SETTER(Vector2, TYPE_VEC2, Vector2)
 DEFINE_FIELD_SETTER(Ball, TYPE_STRUCT_BALL, Ball)
 DEFINE_FIELD_SETTER(Game, TYPE_STRUCT_GAME, Game)
@@ -190,19 +203,6 @@ bool get_struct_metadata(FieldType type, StructMetaData* out_meta) {
     }
 }
 
-// --- Auto-Generated Enum Validators ---
-
-static inline bool is_valid_BallSize(BallSize value) {
-    switch(value) {
-      case BALL_TYPE_SMALL:
-      case BALL_TYPE_MEDIUM:
-      case BALL_TYPE_BIG:
-           return true;
-    default:
-        return false;
-    }
-}
-
 // --- Auto-Generated Type Registry
 bool get_enum_metadata(FieldType type, EnumMetaData* out_meta) {
     if (!out_meta) return false;
@@ -214,6 +214,7 @@ bool get_enum_metadata(FieldType type, EnumMetaData* out_meta) {
         default: return false;
     }
 }
+
 
 // --- Auto-Generated Safe Type Setter
 bool safe_set_field(void* instance, const FieldInfo* field, const void* value, size_t element_count) {

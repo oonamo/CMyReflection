@@ -184,17 +184,18 @@ bool set_field_value(void            *instance,
         return false;                                                                              \
     }
 
-#define DEFINE_ENUM_SETTER(Suffix, EnumVal, CType)                                                 \
+#define DEFINE_ENUM_SETTER(Suffix, EnumVal, CType, validator)                                      \
     static inline bool set_field_##Suffix(void *instance, const FieldInfo *field, CType value)     \
     {                                                                                              \
         if (field && field->type == EnumVal)                                                       \
         {                                                                                          \
-            if (!is_valid_##Suffix(value))                                                         \
+            if (!validator(value))                                                                 \
             {                                                                                      \
                 return false;                                                                      \
             }                                                                                      \
             return set_field_value(instance, field, &value, sizeof(CType));                        \
         }                                                                                          \
+        return false;                                                                              \
     }
 
 #define DEFINE_ARRAY_SETTER(Suffix, EnumVal, CType, DownCastType)                                  \
