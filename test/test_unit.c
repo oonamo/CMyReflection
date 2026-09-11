@@ -643,6 +643,55 @@ TEST(Unit, WriteOnly_Tag_Prevents_Getters)
     TEST_ASSERT_EQUAL_UINT8(9813, extracted);
 }
 
+TEST(Unit, ResolveMetaData_Finds_Top_Level)
+{
+    const FieldInfo *f = resolve_field_metadata(Game_Metadata, Game_FieldCount, "health");
+
+    TEST_ASSERT_NOT_NULL(f);
+    TEST_ASSERT_EQUAL_STRING("health", f->name);
+    TEST_ASSERT_EQUAL(TYPE_FLOAT, f->type);
+}
+
+TEST(Unit, ResolveMetaData_Finds_Nested_Field)
+{
+    const FieldInfo *f = resolve_field_metadata(Game_Metadata, Game_FieldCount, "ball.speed.y");
+
+    TEST_ASSERT_NOT_NULL(f);
+    TEST_ASSERT_EQUAL_STRING("y", f->name);
+    TEST_ASSERT_EQUAL(TYPE_FLOAT, f->type);
+}
+
+TEST(Unit, ResolveMetadata_Handles_Valid_Array_Indices)
+{
+    const FieldInfo *f =
+        resolve_field_metadata(Game_Metadata, Game_FieldCount, "enemy_positions[5].x");
+
+    TEST_ASSERT_NOT_NULL(f);
+    TEST_ASSERT_EQUAL_STRING("x", f->name);
+    TEST_ASSERT_EQUAL(TYPE_FLOAT, f->type);
+}
+
+TEST(Unit, ResolveMetadata_Rejects_Out_Of_Bounds_Indices)
+{
+    const FieldInfo *f =
+        resolve_field_metadata(Game_Metadata, Game_FieldCount, "enemy_positions[9999].x");
+
+    TEST_ASSERT_NULL(f);
+}
+
+TEST(Unit, ResolveMetadata_Fails_On_Invalid_Paths)
+{
+    TEST_ASSERT_NULL(resolve_field_metadata(Game_Metadata, Game_FieldCount, "fake_field"));
+    TEST_ASSERT_NULL(resolve_field_metadata(Game_Metadata, Game_FieldCount, "ball.dne"));
+    TEST_ASSERT_NULL(resolve_field_metadata(Game_Metadata, Game_FieldCount, "ball.speed.fake"));
+}
+
+TEST(Unit, ResolveMetadata_Is_Null_Safe)
+{
+    TEST_ASSERT_NULL(resolve_field_metadata(NULL, Game_FieldCount, "health"));
+    TEST_ASSERT_NULL(resolve_field_metadata(Game_Metadata, Game_FieldCount, NULL));
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -697,4 +746,10 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, Can_Use_Find_Struct_Macro);
     RUN_TEST_CASE(Unit, Can_Use_Find_Enum_Macro);
     RUN_TEST_CASE(Unit, ReadOnly_Tag_Prevent_Setters);
+    RUN_TEST_CASE(Unit, ResolveMetaData_Finds_Top_Level);
+    RUN_TEST_CASE(Unit, ResolveMetaData_Finds_Nested_Field);
+    RUN_TEST_CASE(Unit, ResolveMetadata_Handles_Valid_Array_Indices);
+    RUN_TEST_CASE(Unit, ResolveMetadata_Rejects_Out_Of_Bounds_Indices);
+    RUN_TEST_CASE(Unit, ResolveMetadata_Fails_On_Invalid_Paths);
+    RUN_TEST_CASE(Unit, ResolveMetadata_Is_Null_Safe);
 }

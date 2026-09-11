@@ -43,6 +43,7 @@ typedef enum
     REFLECT_ERR_ENUM_INVALID,  /*!< Checked enum is not a member of the enum */
     REFLECT_ERR_TYPE_INVALID,
     REFLECT_ERR_ACCESS_DENIED,
+    REFLECT_ERR_NOT_FOUND,
 } ReflectResult;
 
 typedef enum
@@ -164,6 +165,9 @@ void *resolve_field_path(void             *base_instance,
                          size_t            base_count,
                          const char       *path,
                          const FieldInfo **out_leaf_field);
+
+const FieldInfo *
+resolve_field_metadata(const FieldInfo *base_meta, size_t base_count, const char *path);
 
 /**
  * @brief Find's a field in a struct
@@ -331,15 +335,16 @@ DEFINE_FIELD_GETTER(str, TYPE_STR, char *)
 
     #include <stdlib.h>
 
-void *resolve_field_path(void             *base_instance,
-                         const FieldInfo  *base_meta,
-                         size_t            base_count,
-                         const char       *path,
-                         const FieldInfo **out_leaf_field)
+static ReflectResult resolve_path_internal(void             *base_instance,
+                                           const FieldInfo  *base_meta,
+                                           size_t            base_count,
+                                           const char       *path,
+                                           void            **out_instance,
+                                           const FieldInfo **out_leaf_field)
 {
-    if (!base_instance || !base_meta || !path || !out_leaf_field)
+    if (!base_meta || !path || !out_leaf_field)
     {
-        return NULL;
+        return REFLECT_ERR_NULL_PTR;
     }
 
     char buffer[256];
@@ -358,7 +363,6 @@ void *resolve_field_path(void             *base_instance,
     {
         if (next)
         {
-            // Chop seperator for find_field to look for current field
             *next = '\0';
         }
 
@@ -371,32 +375,33 @@ void *resolve_field_path(void             *base_instance,
         }
 
         current_field = find_field(current_meta, current_count, token);
-
         if (!current_field)
         {
-            return NULL;
+            return REFLECT_ERR_NOT_FOUND;
+        }
+
+        if (index >= 0 && (size_t)index >= current_field->count)
+        {
+            return REFLECT_ERR_NOT_FOUND;
         }
 
         if (next)
         {
-            current_instance = (char *)current_instance + current_field->offset;
-            if (index >= 0)
+            if (current_instance)
             {
-                if ((size_t)index >= current_field->count)
+                current_instance = (char *)current_instance + current_field->offset;
+                if (index >= 0)
                 {
-                    return NULL;
+                    size_t elem_size = current_field->size / current_field->count;
+                    current_instance = (char *)current_instance + ((size_t)index * elem_size);
                 }
-
-                // Shift instance to correct index
-                size_t elem_size = current_field->size / current_field->count;
-                current_instance = (char *)current_instance + ((size_t)index * elem_size);
             }
+
             StructMetaData next_meta;
             if (get_struct_metadata(current_field->type, &next_meta) != REFLECT_OK)
             {
-                return NULL;
+                return REFLECT_ERR_TYPE_MISMATCH;
             }
-
             current_meta  = next_meta.fields;
             current_count = next_meta.count;
 
@@ -410,7 +415,46 @@ void *resolve_field_path(void             *base_instance,
     }
 
     *out_leaf_field = current_field;
-    return current_instance;
+    if (out_instance)
+    {
+        *out_instance = current_instance;
+    }
+    return REFLECT_OK;
+}
+
+void *resolve_field_path(void             *base_instance,
+                         const FieldInfo  *base_meta,
+                         size_t            base_count,
+                         const char       *path,
+                         const FieldInfo **out_leaf_field)
+{
+    if (!base_instance)
+    {
+        return NULL;
+    }
+
+    void *resolved_instance = NULL;
+    if (resolve_path_internal(
+            base_instance, base_meta, base_count, path, &resolved_instance, out_leaf_field) ==
+        REFLECT_OK)
+    {
+        return resolved_instance;
+    }
+
+    return NULL;
+}
+
+const FieldInfo *
+resolve_field_metadata(const FieldInfo *base_meta, size_t base_count, const char *path)
+{
+    const FieldInfo *leaf = NULL;
+
+    if (resolve_path_internal(NULL, base_meta, base_count, path, NULL, &leaf) == REFLECT_OK)
+    {
+        return leaf;
+    }
+
+    return NULL;
 }
 
 #endif // CMYREFLECTION_REGISTRY
