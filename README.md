@@ -75,7 +75,7 @@ const FieldInfo *name_field =
     find_field(DeviceManager_MetaData, DeviceManager_FieldCount, "device_location");
 char *location = "bedroom1";
 
-if (!set_field_str(&manager, name_field, location))
+if (set_field_str(&manager, name_field, location) != REFLECT_OK)
 {
     printf("Oops, forget that its a char arr!\n");
 
