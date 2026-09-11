@@ -73,6 +73,12 @@ typedef struct
         EnumName##_Members, EnumName##_MemberCount                                                 \
     }
 
+#define Find_Struct_Field(MetaStruct, FieldName)                                                   \
+    find_field((MetaStruct).fields, (MetaStruct).count, FieldName)
+
+#define Find_Enum_Member(MetaEnum, MemberName)                                                     \
+    find_member((MetaEnum).members, (MetaEnum).count, MemberName)
+
 /**
  * @brief Get's the struct's metadata
  *

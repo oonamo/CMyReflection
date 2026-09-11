@@ -596,6 +596,21 @@ TEST(Unit, GetFieldValue_Enforces_Bounds_And_Null_Safety)
     TEST_ASSERT_FALSE(get_field_value(&v, f, &out_val, sizeof(double)));
 }
 
+TEST(Unit, Can_Use_Find_Struct_Macro)
+{
+    const FieldInfo *f = Find_Struct_Field(MetaData_FromName(Game), "health");
+    TEST_ASSERT_NOT_NULL(f);
+    TEST_ASSERT_EQUAL(TYPE_FLOAT, f->type);
+}
+
+TEST(Unit, Can_Use_Find_Enum_Macro)
+{
+    const EnumMemberInfo *f = Find_Enum_Member(EnumMetaData_FromName(BallSize), "BALL_TYPE_SMALL");
+
+    TEST_ASSERT_NOT_NULL(f);
+    TEST_ASSERT_EQUAL(BALL_TYPE_SMALL, f->value);
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -647,4 +662,6 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, FieldGetter_Respects_Arrays);
     RUN_TEST_CASE(Unit, FieldGetter_Rejects_OutOfBounds_Read);
     RUN_TEST_CASE(Unit, GetFieldValue_Enforces_Bounds_And_Null_Safety);
+    RUN_TEST_CASE(Unit, Can_Use_Find_Struct_Macro);
+    RUN_TEST_CASE(Unit, Can_Use_Find_Enum_Macro);
 }
