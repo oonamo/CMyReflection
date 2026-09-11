@@ -42,15 +42,24 @@ typedef enum
     REFLECT_ERR_OUT_OF_BOUNDS, /*!< Memory requested was out of bounds */
     REFLECT_ERR_ENUM_INVALID,  /*!< Checked enum is not a member of the enum */
     REFLECT_ERR_TYPE_INVALID,
+    REFLECT_ERR_ACCESS_DENIED,
 } ReflectResult;
+
+typedef enum
+{
+    FIELD_ACCESS_READ  = 1 << 0,
+    FIELD_ACCESS_WRITE = 1 << 1,
+    FIELD_ACCESS_RW    = FIELD_ACCESS_READ | FIELD_ACCESS_WRITE
+} FieldAccessFlags;
 
 typedef struct
 {
-    const char *name;   /*!< Name of field */
-    FIELD_TYPE  type;   /*!< Type of field */
-    size_t      offset; /*!< Struct offset of field */
-    size_t      size;   /*!< sizeof type */
-    size_t      count;  /*!< Number of array elements in field */
+    const char      *name;   /*!< Name of field */
+    FIELD_TYPE       type;   /*!< Type of field */
+    size_t           offset; /*!< Struct offset of field */
+    size_t           size;   /*!< sizeof type */
+    size_t           count;  /*!< Number of array elements in field */
+    FieldAccessFlags flags;  /*!< Access flags */
 } FieldInfo;
 
 typedef struct
@@ -452,6 +461,11 @@ set_field_value(void *instance, const FieldInfo *field, const void *new_value, s
         return REFLECT_ERR_NULL_PTR;
     }
 
+    if (!(field->flags & FIELD_ACCESS_WRITE))
+    {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
     if (write_size > field->size)
     {
         return REFLECT_ERR_OUT_OF_BOUNDS;
@@ -469,6 +483,11 @@ get_field_value(const void *instance, const FieldInfo *field, void *out_value, s
     if (!instance || !field || !out_value)
     {
         return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_READ))
+    {
+        return REFLECT_ERR_ACCESS_DENIED;
     }
 
     if (read_size > field->size)

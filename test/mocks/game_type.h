@@ -25,8 +25,8 @@ typedef struct
 /// @reflect
 typedef struct
 {
-    Vector2 speed;
-    float   radius;
+    Vector2  speed;
+    float    radius;
     BallSize size;
 } Ball;
 
@@ -41,9 +41,11 @@ typedef struct
 
     DamageComponent damage;
 
+    /// @readonly
     uint8_t game_flags;
 
-    unsigned int other_flags;
+    /// @writeonly
+    uint32_t hash;
 
     unsigned char current_tile;
 

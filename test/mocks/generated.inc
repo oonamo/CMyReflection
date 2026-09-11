@@ -13,6 +13,8 @@ typedef enum {
     TYPE_CONSTSTR,
     TYPE_DAMAGE_COMPONENT,
     TYPE_ENUM_BALLSIZE,
+    TYPE_ENUM_DEVICESTATE,
+    TYPE_ENUM_MANAGERPERMISSIONS,
     TYPE_FLOAT,
     TYPE_FLOAT_ARR,
     TYPE_INT,
@@ -25,12 +27,12 @@ typedef enum {
     TYPE_STRUCT_IOTDEVICE,
     TYPE_STRUCT_SENSORDATA,
     TYPE_UINT32_T,
+    TYPE_UINT64_T,
     TYPE_UINT8_T,
     TYPE_UINT8_T_ARR,
     TYPE_UNKNOWN,
     TYPE_UNSIGNEDCHAR,
     TYPE_UNSIGNEDCHAR_ARR,
-    TYPE_UNSIGNEDINT,
     TYPE_VEC2,
     TYPE_VECTOR2_ARR,
     TYPE_VECTOR2_PTR_PTR,
@@ -54,6 +56,10 @@ extern const FieldInfo DamageComponent_Metadata[];
 extern const size_t DamageComponent_FieldCount;
 extern const EnumMemberInfo BallSize_Members[];
 extern const size_t BallSize_MemberCount;
+extern const EnumMemberInfo DeviceState_Members[];
+extern const size_t DeviceState_MemberCount;
+extern const EnumMemberInfo ManagerPermissions_Members[];
+extern const size_t ManagerPermissions_MemberCount;
 
 // --- Auto-Generated Enum Validators ---
 
@@ -68,6 +74,19 @@ static inline bool is_valid_BallSize(BallSize value) {
     }
 }
 
+
+static inline bool is_valid_DeviceState(DeviceState value) {
+    switch(value) {
+      case DEVICE_RX:
+      case DEVICE_TX:
+           return true;
+    default:
+        return false;
+    }
+}
+
+
+// ManagerPermissions is unchecked
 DEFINE_FIELD_SETTER(str, TYPE_STR, char *)
 DEFINE_FIELD_GETTER(str, TYPE_STR, char *)
 
@@ -89,8 +108,14 @@ DEFINE_FIELD_GETTER(Game, TYPE_STRUCT_GAME, Game)
 DEFINE_FIELD_SETTER(SensorData, TYPE_STRUCT_SENSORDATA, SensorData)
 DEFINE_FIELD_GETTER(SensorData, TYPE_STRUCT_SENSORDATA, SensorData)
 
+DEFINE_ENUM_SETTER(DeviceState, TYPE_ENUM_DEVICESTATE, DeviceState, is_valid_DeviceState)
+DEFINE_FIELD_GETTER(DeviceState, TYPE_ENUM_DEVICESTATE, DeviceState)
+
 DEFINE_FIELD_SETTER(IoTDevice, TYPE_STRUCT_IOTDEVICE, IoTDevice)
 DEFINE_FIELD_GETTER(IoTDevice, TYPE_STRUCT_IOTDEVICE, IoTDevice)
+
+DEFINE_FIELD_SETTER(ManagerPermissions, TYPE_ENUM_MANAGERPERMISSIONS, ManagerPermissions)
+DEFINE_FIELD_GETTER(ManagerPermissions, TYPE_ENUM_MANAGERPERMISSIONS, ManagerPermissions)
 
 DEFINE_FIELD_SETTER(DeviceManager, TYPE_STRUCT_DEVICEMANAGER, DeviceManager)
 DEFINE_FIELD_GETTER(DeviceManager, TYPE_STRUCT_DEVICEMANAGER, DeviceManager)
@@ -107,8 +132,8 @@ DEFINE_FIELD_GETTER(int, TYPE_INT, int)
 DEFINE_FIELD_SETTER(u8, TYPE_UINT8_T, uint8_t)
 DEFINE_FIELD_GETTER(u8, TYPE_UINT8_T, uint8_t)
 
-DEFINE_FIELD_SETTER(uint, TYPE_UNSIGNEDINT, unsigned int)
-DEFINE_FIELD_GETTER(uint, TYPE_UNSIGNEDINT, unsigned int)
+DEFINE_FIELD_SETTER(u32, TYPE_UINT32_T, uint32_t)
+DEFINE_FIELD_GETTER(u32, TYPE_UINT32_T, uint32_t)
 
 DEFINE_FIELD_SETTER(unsignedchar, TYPE_UNSIGNEDCHAR, unsigned char)
 DEFINE_FIELD_GETTER(unsignedchar, TYPE_UNSIGNEDCHAR, unsigned char)
@@ -134,11 +159,11 @@ DEFINE_ARRAY_GETTER(Vector2_arr, TYPE_VECTOR2_ARR, Vector2 *, Vector2)
 DEFINE_ARRAY_SETTER(char_arr, TYPE_CHAR_ARR, char *, char)
 DEFINE_ARRAY_GETTER(char_arr, TYPE_CHAR_ARR, char *, char)
 
+DEFINE_FIELD_SETTER(uint64_t, TYPE_UINT64_T, uint64_t)
+DEFINE_FIELD_GETTER(uint64_t, TYPE_UINT64_T, uint64_t)
+
 DEFINE_ARRAY_SETTER(IoTDevice_arr, TYPE_IOTDEVICE_ARR, IoTDevice *, IoTDevice)
 DEFINE_ARRAY_GETTER(IoTDevice_arr, TYPE_IOTDEVICE_ARR, IoTDevice *, IoTDevice)
-
-DEFINE_FIELD_SETTER(u32, TYPE_UINT32_T, uint32_t)
-DEFINE_FIELD_GETTER(u32, TYPE_UINT32_T, uint32_t)
 
 
 #endif // CMYREFLECTION_AUTOGEN_H
@@ -147,34 +172,34 @@ DEFINE_FIELD_GETTER(u32, TYPE_UINT32_T, uint32_t)
 
 // --- Generated from game_type.h ---
 const FieldInfo Vector2_Metadata[] = {
-    { "x", TYPE_FLOAT, offsetof(Vector2, x), sizeof(float), 1 },
-    { "y", TYPE_FLOAT, offsetof(Vector2, y), sizeof(float), 1 },
+    { "x", TYPE_FLOAT, offsetof(Vector2, x), sizeof(float), 1, FIELD_ACCESS_RW },
+    { "y", TYPE_FLOAT, offsetof(Vector2, y), sizeof(float), 1, FIELD_ACCESS_RW },
 };
 const size_t Vector2_FieldCount = sizeof(Vector2_Metadata) / sizeof(FieldInfo);
 
 const FieldInfo Ball_Metadata[] = {
-    { "speed", TYPE_VEC2, offsetof(Ball, speed), sizeof(Vector2), 1 },
-    { "radius", TYPE_FLOAT, offsetof(Ball, radius), sizeof(float), 1 },
-    { "size", TYPE_ENUM_BALLSIZE, offsetof(Ball, size), sizeof(BallSize), 1 },
+    { "speed", TYPE_VEC2, offsetof(Ball, speed), sizeof(Vector2), 1, FIELD_ACCESS_RW },
+    { "radius", TYPE_FLOAT, offsetof(Ball, radius), sizeof(float), 1, FIELD_ACCESS_RW },
+    { "size", TYPE_ENUM_BALLSIZE, offsetof(Ball, size), sizeof(BallSize), 1, FIELD_ACCESS_RW },
 };
 const size_t Ball_FieldCount = sizeof(Ball_Metadata) / sizeof(FieldInfo);
 
 const FieldInfo Game_Metadata[] = {
-    { "player_pos", TYPE_VEC2, offsetof(Game, player_pos), sizeof(Vector2), 1 },
-    { "ball", TYPE_STRUCT_BALL, offsetof(Game, ball), sizeof(Ball), 1 },
-    { "health", TYPE_FLOAT, offsetof(Game, health), sizeof(float), 1 },
-    { "level", TYPE_INT, offsetof(Game, level), sizeof(int), 1 },
-    { "player_name", TYPE_STR, offsetof(Game, player_name), sizeof(char   *), 1 },
-    { "damage", TYPE_DAMAGE_COMPONENT, offsetof(Game, damage), sizeof(DamageComponent), 1 },
-    { "game_flags", TYPE_UINT8_T, offsetof(Game, game_flags), sizeof(uint8_t), 1 },
-    { "other_flags", TYPE_UNSIGNEDINT, offsetof(Game, other_flags), sizeof(unsigned int), 1 },
-    { "current_tile", TYPE_UNSIGNEDCHAR, offsetof(Game, current_tile), sizeof(unsigned char), 1 },
-    { "score", TYPE_LONGLONG, offsetof(Game, score), sizeof(long long), 1 },
-    { "grid", TYPE_UINT8_T_ARR, offsetof(Game, grid), sizeof(uint8_t[9]), 9 },
-    { "sliding_window", TYPE_UNSIGNEDCHAR_ARR, offsetof(Game, sliding_window), sizeof(unsigned char[16]), 16 },
-    { "history", TYPE_FLOAT_ARR, offsetof(Game, history), sizeof(float[MAX_ARR_LEN]), MAX_ARR_LEN },
-    { "waypoints", TYPE_VECTOR2_PTR_PTR, offsetof(Game, waypoints), sizeof(Vector2 **), 1 },
-    { "enemy_positions", TYPE_VECTOR2_ARR, offsetof(Game, enemy_positions), sizeof(Vector2[20]), 20 },
+    { "player_pos", TYPE_VEC2, offsetof(Game, player_pos), sizeof(Vector2), 1, FIELD_ACCESS_RW },
+    { "ball", TYPE_STRUCT_BALL, offsetof(Game, ball), sizeof(Ball), 1, FIELD_ACCESS_RW },
+    { "health", TYPE_FLOAT, offsetof(Game, health), sizeof(float), 1, FIELD_ACCESS_RW },
+    { "level", TYPE_INT, offsetof(Game, level), sizeof(int), 1, FIELD_ACCESS_RW },
+    { "player_name", TYPE_STR, offsetof(Game, player_name), sizeof(char   *), 1, FIELD_ACCESS_RW },
+    { "damage", TYPE_DAMAGE_COMPONENT, offsetof(Game, damage), sizeof(DamageComponent), 1, FIELD_ACCESS_RW },
+    { "game_flags", TYPE_UINT8_T, offsetof(Game, game_flags), sizeof(uint8_t), 1, FIELD_ACCESS_READ },
+    { "hash", TYPE_UINT32_T, offsetof(Game, hash), sizeof(uint32_t), 1, FIELD_ACCESS_WRITE },
+    { "current_tile", TYPE_UNSIGNEDCHAR, offsetof(Game, current_tile), sizeof(unsigned char), 1, FIELD_ACCESS_RW },
+    { "score", TYPE_LONGLONG, offsetof(Game, score), sizeof(long long), 1, FIELD_ACCESS_RW },
+    { "grid", TYPE_UINT8_T_ARR, offsetof(Game, grid), sizeof(uint8_t[9]), 9, FIELD_ACCESS_RW },
+    { "sliding_window", TYPE_UNSIGNEDCHAR_ARR, offsetof(Game, sliding_window), sizeof(unsigned char[16]), 16, FIELD_ACCESS_RW },
+    { "history", TYPE_FLOAT_ARR, offsetof(Game, history), sizeof(float[MAX_ARR_LEN]), MAX_ARR_LEN, FIELD_ACCESS_RW },
+    { "waypoints", TYPE_VECTOR2_PTR_PTR, offsetof(Game, waypoints), sizeof(Vector2 **), 1, FIELD_ACCESS_RW },
+    { "enemy_positions", TYPE_VECTOR2_ARR, offsetof(Game, enemy_positions), sizeof(Vector2[20]), 20, FIELD_ACCESS_RW },
 };
 const size_t Game_FieldCount = sizeof(Game_Metadata) / sizeof(FieldInfo);
 
@@ -187,29 +212,44 @@ const size_t BallSize_MemberCount = sizeof(BallSize_Members) / sizeof(EnumMember
 
 // --- Generated from readme_example.h ---
 const FieldInfo SensorData_Metadata[] = {
-    { "voltage", TYPE_FLOAT, offsetof(SensorData, voltage), sizeof(float), 1 },
-    { "temp", TYPE_FLOAT, offsetof(SensorData, temp), sizeof(float), 1 },
+    { "voltage", TYPE_FLOAT, offsetof(SensorData, voltage), sizeof(float), 1, FIELD_ACCESS_RW },
+    { "temp", TYPE_FLOAT, offsetof(SensorData, temp), sizeof(float), 1, FIELD_ACCESS_RW },
 };
 const size_t SensorData_FieldCount = sizeof(SensorData_Metadata) / sizeof(FieldInfo);
 
 const FieldInfo IoTDevice_Metadata[] = {
-    { "device_id", TYPE_CHAR_ARR, offsetof(IoTDevice, device_id), sizeof(char[32]), 32 },
-    { "baud_rate", TYPE_INT, offsetof(IoTDevice, baud_rate), sizeof(int), 1 },
-    { "data", TYPE_STRUCT_SENSORDATA, offsetof(IoTDevice, data), sizeof(SensorData), 1 },
+    { "device_id", TYPE_CHAR_ARR, offsetof(IoTDevice, device_id), sizeof(char[32]), 32, FIELD_ACCESS_RW },
+    { "baud_rate", TYPE_INT, offsetof(IoTDevice, baud_rate), sizeof(int), 1, FIELD_ACCESS_RW },
+    { "data", TYPE_STRUCT_SENSORDATA, offsetof(IoTDevice, data), sizeof(SensorData), 1, FIELD_ACCESS_RW },
+    { "state", TYPE_ENUM_DEVICESTATE, offsetof(IoTDevice, state), sizeof(DeviceState), 1, FIELD_ACCESS_RW },
+    { "uuid", TYPE_UINT64_T, offsetof(IoTDevice, uuid), sizeof(uint64_t), 1, FIELD_ACCESS_READ },
 };
 const size_t IoTDevice_FieldCount = sizeof(IoTDevice_Metadata) / sizeof(FieldInfo);
 
 const FieldInfo DeviceManager_Metadata[] = {
-    { "device_location", TYPE_CHAR_ARR, offsetof(DeviceManager, device_location), sizeof(char[MAX_BUF_LEN]), MAX_BUF_LEN },
-    { "devices", TYPE_IOTDEVICE_ARR, offsetof(DeviceManager, devices), sizeof(IoTDevice[8]), 8 },
-    { "op_mode", TYPE_UNSIGNEDCHAR, offsetof(DeviceManager, op_mode), sizeof(unsigned char), 1 },
-    { "flags", TYPE_UINT32_T, offsetof(DeviceManager, flags), sizeof(uint32_t), 1 },
+    { "op_mode", TYPE_UNSIGNEDCHAR, offsetof(DeviceManager, op_mode), sizeof(unsigned char), 1, FIELD_ACCESS_RW },
+    { "permissions", TYPE_ENUM_MANAGERPERMISSIONS, offsetof(DeviceManager, permissions), sizeof(ManagerPermissions), 1, FIELD_ACCESS_RW },
+    { "device_location", TYPE_CHAR_ARR, offsetof(DeviceManager, device_location), sizeof(char[MAX_BUF_LEN]), MAX_BUF_LEN, FIELD_ACCESS_RW },
+    { "devices", TYPE_IOTDEVICE_ARR, offsetof(DeviceManager, devices), sizeof(IoTDevice[8]), 8, FIELD_ACCESS_RW },
 };
 const size_t DeviceManager_FieldCount = sizeof(DeviceManager_Metadata) / sizeof(FieldInfo);
 
+const EnumMemberInfo DeviceState_Members[] = {
+   { DEVICE_RX, "DEVICE_RX" },
+   { DEVICE_TX, "DEVICE_TX" },
+};
+const size_t DeviceState_MemberCount = sizeof(DeviceState_Members) / sizeof(EnumMemberInfo);
+
+const EnumMemberInfo ManagerPermissions_Members[] = {
+   { MANAGER_NONE, "MANAGER_NONE" },
+   { MANAGER_READ, "MANAGER_READ" },
+   { MANAGER_WRITE, "MANAGER_WRITE" },
+};
+const size_t ManagerPermissions_MemberCount = sizeof(ManagerPermissions_Members) / sizeof(EnumMemberInfo);
+
 // --- Generated from stuff.h ---
 const FieldInfo DamageComponent_Metadata[] = {
-    { "damage", TYPE_FLOAT, offsetof(DamageComponent, damage), sizeof(float), 1 },
+    { "damage", TYPE_FLOAT, offsetof(DamageComponent, damage), sizeof(float), 1, FIELD_ACCESS_RW },
 };
 const size_t DamageComponent_FieldCount = sizeof(DamageComponent_Metadata) / sizeof(FieldInfo);
 
@@ -259,6 +299,14 @@ ReflectResult get_enum_metadata(FieldType type, EnumMetaData* out_meta) {
           out_meta->members = BallSize_Members;
           out_meta->count = BallSize_MemberCount;
           return REFLECT_OK;
+      case TYPE_ENUM_DEVICESTATE:
+          out_meta->members = DeviceState_Members;
+          out_meta->count = DeviceState_MemberCount;
+          return REFLECT_OK;
+      case TYPE_ENUM_MANAGERPERMISSIONS:
+          out_meta->members = ManagerPermissions_Members;
+          out_meta->count = ManagerPermissions_MemberCount;
+          return REFLECT_OK;
         default: return REFLECT_ERR_ENUM_INVALID;
     }
 }
@@ -275,13 +323,15 @@ ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void*
       case TYPE_STRUCT_BALL: return set_field_Ball(instance, field, *(Ball*)value);
       case TYPE_STRUCT_GAME: return set_field_Game(instance, field, *(Game*)value);
       case TYPE_STRUCT_SENSORDATA: return set_field_SensorData(instance, field, *(SensorData*)value);
+      case TYPE_ENUM_DEVICESTATE: return set_field_DeviceState(instance, field, *(DeviceState*)value);
       case TYPE_STRUCT_IOTDEVICE: return set_field_IoTDevice(instance, field, *(IoTDevice*)value);
+      case TYPE_ENUM_MANAGERPERMISSIONS: return set_field_ManagerPermissions(instance, field, *(ManagerPermissions*)value);
       case TYPE_STRUCT_DEVICEMANAGER: return set_field_DeviceManager(instance, field, *(DeviceManager*)value);
       case TYPE_DAMAGE_COMPONENT: return set_field_DamageComponent(instance, field, *(DamageComponent*)value);
       case TYPE_FLOAT: return set_field_float(instance, field, *(float*)value);
       case TYPE_INT: return set_field_int(instance, field, *(int*)value);
       case TYPE_UINT8_T: return set_field_u8(instance, field, *(uint8_t*)value);
-      case TYPE_UNSIGNEDINT: return set_field_uint(instance, field, *(unsigned int*)value);
+      case TYPE_UINT32_T: return set_field_u32(instance, field, *(uint32_t*)value);
       case TYPE_UNSIGNEDCHAR: return set_field_unsignedchar(instance, field, *(unsigned char*)value);
       case TYPE_LONGLONG: return set_field_ll(instance, field, *(long long*)value);
       case TYPE_UINT8_T_ARR: return set_field_u8_arr(instance, field, (uint8_t*)value, element_count);
@@ -290,8 +340,8 @@ ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void*
       case TYPE_VECTOR2_PTR_PTR: return set_field_Vector2_ptr_ptr(instance, field, *(Vector2 ***)value);
       case TYPE_VECTOR2_ARR: return set_field_Vector2_arr(instance, field, (Vector2*)value, element_count);
       case TYPE_CHAR_ARR: return set_field_char_arr(instance, field, (char*)value, element_count);
+      case TYPE_UINT64_T: return set_field_uint64_t(instance, field, *(uint64_t*)value);
       case TYPE_IOTDEVICE_ARR: return set_field_IoTDevice_arr(instance, field, (IoTDevice*)value, element_count);
-      case TYPE_UINT32_T: return set_field_u32(instance, field, *(uint32_t*)value);
         default: return REFLECT_ERR_TYPE_INVALID;
     }
 }
@@ -303,6 +353,8 @@ const char* get_name_of_type(FieldType type) {
      case TYPE_CONSTSTR: return "TYPE_CONSTSTR";
      case TYPE_DAMAGE_COMPONENT: return "TYPE_DAMAGE_COMPONENT";
      case TYPE_ENUM_BALLSIZE: return "TYPE_ENUM_BALLSIZE";
+     case TYPE_ENUM_DEVICESTATE: return "TYPE_ENUM_DEVICESTATE";
+     case TYPE_ENUM_MANAGERPERMISSIONS: return "TYPE_ENUM_MANAGERPERMISSIONS";
      case TYPE_FLOAT: return "TYPE_FLOAT";
      case TYPE_FLOAT_ARR: return "TYPE_FLOAT_ARR";
      case TYPE_INT: return "TYPE_INT";
@@ -315,12 +367,12 @@ const char* get_name_of_type(FieldType type) {
      case TYPE_STRUCT_IOTDEVICE: return "TYPE_STRUCT_IOTDEVICE";
      case TYPE_STRUCT_SENSORDATA: return "TYPE_STRUCT_SENSORDATA";
      case TYPE_UINT32_T: return "TYPE_UINT32_T";
+     case TYPE_UINT64_T: return "TYPE_UINT64_T";
      case TYPE_UINT8_T: return "TYPE_UINT8_T";
      case TYPE_UINT8_T_ARR: return "TYPE_UINT8_T_ARR";
      case TYPE_UNKNOWN: return "TYPE_UNKNOWN";
      case TYPE_UNSIGNEDCHAR: return "TYPE_UNSIGNEDCHAR";
      case TYPE_UNSIGNEDCHAR_ARR: return "TYPE_UNSIGNEDCHAR_ARR";
-     case TYPE_UNSIGNEDINT: return "TYPE_UNSIGNEDINT";
      case TYPE_VEC2: return "TYPE_VEC2";
      case TYPE_VECTOR2_ARR: return "TYPE_VECTOR2_ARR";
      case TYPE_VECTOR2_PTR_PTR: return "TYPE_VECTOR2_PTR_PTR";

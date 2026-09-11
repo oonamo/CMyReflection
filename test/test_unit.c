@@ -488,7 +488,7 @@ DEFINE_ENUM_SETTER(bit_flags, 99, bit_flags, check_sys_flags);
 
 TEST(Unit, CustomValidator_Accepts_And_Rejects_Correctly)
 {
-    FieldInfo custom_field = {"flags", 99, 0, sizeof(bit_flags), 1};
+    FieldInfo custom_field = {"flags", 99, 0, sizeof(bit_flags), 1, FIELD_ACCESS_RW};
     bit_flags flags        = 0;
 
     TEST_ASSERT_TRUE(set_field_bit_flags(&flags, &custom_field, FLAG_A | FLAG_B) == REFLECT_OK);
@@ -611,6 +611,38 @@ TEST(Unit, Can_Use_Find_Enum_Macro)
     TEST_ASSERT_EQUAL(BALL_TYPE_SMALL, f->value);
 }
 
+TEST(Unit, ReadOnly_Tag_Prevent_Setters)
+{
+    Game g       = {0};
+    g.game_flags = 2 << 1;
+
+    const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "game_flags");
+
+    uint8_t new_flag = 1 << 1;
+
+    TEST_ASSERT_EQUAL(REFLECT_ERR_ACCESS_DENIED, set_field_u8(&g, f, new_flag));
+
+    uint8_t extracted = 0;
+    TEST_ASSERT_EQUAL(REFLECT_OK, get_field_u8(&g, f, &extracted));
+    TEST_ASSERT_EQUAL_UINT8(2 << 1, extracted);
+}
+
+TEST(Unit, WriteOnly_Tag_Prevents_Getters)
+{
+    Game g = {0};
+    g.hash = 15812;
+
+    const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "hash");
+
+    uint32_t new_hash = 9813;
+
+    TEST_ASSERT_EQUAL(REFLECT_OK, set_field_u8(&g, f, new_hash));
+
+    uint32_t extracted = 0;
+    TEST_ASSERT_EQUAL(REFLECT_ERR_ACCESS_DENIED, get_field_u32(&g, f, &extracted));
+    TEST_ASSERT_EQUAL_UINT8(9813, extracted);
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -664,4 +696,5 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, GetFieldValue_Enforces_Bounds_And_Null_Safety);
     RUN_TEST_CASE(Unit, Can_Use_Find_Struct_Macro);
     RUN_TEST_CASE(Unit, Can_Use_Find_Enum_Macro);
+    RUN_TEST_CASE(Unit, ReadOnly_Tag_Prevent_Setters);
 }

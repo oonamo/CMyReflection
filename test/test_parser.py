@@ -39,7 +39,7 @@ def test_array_setter_generation(tmp_path: Path):
     assert "TYPE_FLOAT_ARR" in generated_content
 
     assert (
-        '{ "history", TYPE_FLOAT_ARR, offsetof(Game, history), sizeof(float[MAX_ARR_LEN]), MAX_ARR_LEN }'
+        '{ "history", TYPE_FLOAT_ARR, offsetof(Game, history), sizeof(float[MAX_ARR_LEN]), MAX_ARR_LEN, FIELD_ACCESS_RW }'
         in generated_content
     )
 

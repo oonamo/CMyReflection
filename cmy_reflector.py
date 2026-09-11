@@ -28,7 +28,15 @@ class Field:
         """Generates a formatted string of a field in the metadata struct"""
         arr_suffix = f"[{self.array_bounds}]" if self.array_bounds else ""
         count = self.array_bounds if self.array_bounds else "1"
-        return f'    {{ "{self.name}", {self.type_enum}, offsetof({struct_name}, {self.name}), sizeof({self.type_name}{arr_suffix}), {count} }}'
+
+        if "readonly" in self.tags:
+            flags = "FIELD_ACCESS_READ"
+        elif "writeonly" in self.tags:
+            flags = "FIELD_ACCESS_WRITE"
+        else:
+            flags = "FIELD_ACCESS_RW"
+
+        return f'    {{ "{self.name}", {self.type_enum}, offsetof({struct_name}, {self.name}), sizeof({self.type_name}{arr_suffix}), {count}, {flags} }}'
 
 
 class CStruct:
