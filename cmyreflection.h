@@ -34,6 +34,16 @@ typedef enum
     #define FIELD_TYPE FieldType
 #endif
 
+typedef enum
+{
+    REFLECT_OK = 0,            /*!< Ok */
+    REFLECT_ERR_NULL_PTR,      /*!< A null pointer was passed as a parameter */
+    REFLECT_ERR_TYPE_MISMATCH, /*!< A type mismatch occured */
+    REFLECT_ERR_OUT_OF_BOUNDS, /*!< Memory requested was out of bounds */
+    REFLECT_ERR_ENUM_INVALID,  /*!< Checked enum is not a member of the enum */
+    REFLECT_ERR_TYPE_INVALID,
+} ReflectResult;
+
 typedef struct
 {
     const char *name;   /*!< Name of field */
@@ -89,7 +99,7 @@ typedef struct
  *
  * @return true if found, false otherwise
  */
-bool get_struct_metadata(FIELD_TYPE type, StructMetaData *out_meta);
+ReflectResult get_struct_metadata(FIELD_TYPE type, StructMetaData *out_meta);
 
 /**
  * @brief Get's the enum's metadata
@@ -101,7 +111,7 @@ bool get_struct_metadata(FIELD_TYPE type, StructMetaData *out_meta);
  *
  * @return true if found, false otherwise
  */
-bool get_enum_metadata(FIELD_TYPE type, EnumMetaData *out_meta);
+ReflectResult get_enum_metadata(FIELD_TYPE type, EnumMetaData *out_meta);
 
 /**
  * @brief Safely sets a field given metadata
@@ -115,10 +125,8 @@ bool get_enum_metadata(FIELD_TYPE type, EnumMetaData *out_meta);
  *
  * @return true if found, false otherwise
  */
-bool safe_set_field(void            *instance,
-                    const FieldInfo *field,
-                    const void      *value,
-                    size_t           element_count);
+ReflectResult
+safe_set_field(void *instance, const FieldInfo *field, const void *value, size_t element_count);
 
 /**
  * @brief Gets the name of the type given
@@ -192,10 +200,8 @@ const char *get_enum_member_name(const EnumMemberInfo *meta, size_t member_count
  *
  * @return true if successful, false otherwise
  */
-bool set_field_value(void            *instance,
-                     const FieldInfo *field,
-                     const void      *new_value,
-                     size_t           write_size);
+ReflectResult
+set_field_value(void *instance, const FieldInfo *field, const void *new_value, size_t write_size);
 
 /**
  * @brief Safely gets a field value
@@ -207,74 +213,94 @@ bool set_field_value(void            *instance,
  *
  * @return true if successful, false otherwise
  */
-bool get_field_value(const void      *instance,
-                     const FieldInfo *field,
-                     void            *out_value,
-                     size_t           read_size);
+ReflectResult
+get_field_value(const void *instance, const FieldInfo *field, void *out_value, size_t read_size);
 
 #define DEFINE_FIELD_SETTER(Suffix, EnumVal, CType)                                                \
-    static inline bool set_field_##Suffix(void *instance, const FieldInfo *field, CType value)     \
+    static inline ReflectResult set_field_##Suffix(                                                \
+        void *instance, const FieldInfo *field, CType value)                                       \
     {                                                                                              \
-        if (field && field->type == EnumVal)                                                       \
+        if (!instance || !field)                                                                   \
         {                                                                                          \
-            return set_field_value(instance, field, &value, sizeof(CType));                        \
+            return REFLECT_ERR_NULL_PTR;                                                           \
         }                                                                                          \
-        return false;                                                                              \
+        if (field->type != EnumVal)                                                                \
+        {                                                                                          \
+            return REFLECT_ERR_TYPE_MISMATCH;                                                      \
+        }                                                                                          \
+        return set_field_value(instance, field, &value, sizeof(CType));                            \
     }
 
 #define DEFINE_FIELD_GETTER(Suffix, EnumVal, CType)                                                \
-    static inline bool get_field_##Suffix(                                                         \
+    static inline ReflectResult get_field_##Suffix(                                                \
         void *instance, const FieldInfo *field, CType *out_value)                                  \
     {                                                                                              \
-        if (field && field->type == EnumVal)                                                       \
+        if (!instance || !field)                                                                   \
         {                                                                                          \
-            return get_field_value(instance, field, out_value, sizeof(CType));                     \
+            return REFLECT_ERR_NULL_PTR;                                                           \
         }                                                                                          \
-        return false;                                                                              \
+        if (field->type != EnumVal)                                                                \
+        {                                                                                          \
+            return REFLECT_ERR_TYPE_MISMATCH;                                                      \
+        }                                                                                          \
+        return get_field_value(instance, field, out_value, sizeof(CType));                         \
     }
 
 #define DEFINE_ENUM_SETTER(Suffix, EnumVal, CType, validator)                                      \
-    static inline bool set_field_##Suffix(void *instance, const FieldInfo *field, CType value)     \
+    static inline ReflectResult set_field_##Suffix(                                                \
+        void *instance, const FieldInfo *field, CType value)                                       \
     {                                                                                              \
-        if (field && field->type == EnumVal)                                                       \
+        if (!instance || !field)                                                                   \
         {                                                                                          \
-            if (!validator(value))                                                                 \
-            {                                                                                      \
-                return false;                                                                      \
-            }                                                                                      \
-            return set_field_value(instance, field, &value, sizeof(CType));                        \
+            return REFLECT_ERR_NULL_PTR;                                                           \
         }                                                                                          \
-        return false;                                                                              \
+        if (field->type != EnumVal)                                                                \
+        {                                                                                          \
+            return REFLECT_ERR_TYPE_MISMATCH;                                                      \
+        }                                                                                          \
+        if (!validator(value))                                                                     \
+        {                                                                                          \
+            return REFLECT_ERR_ENUM_INVALID;                                                       \
+        }                                                                                          \
+        return set_field_value(instance, field, &value, sizeof(CType));                            \
     }
 
 #define DEFINE_ARRAY_SETTER(Suffix, EnumVal, CType, DownCastType)                                  \
-    static inline bool set_field_##Suffix(                                                         \
+    static inline ReflectResult set_field_##Suffix(                                                \
         void *instance, const FieldInfo *field, CType value, size_t element_count)                 \
     {                                                                                              \
-        if (field && field->type == EnumVal)                                                       \
+        if (!instance || !field)                                                                   \
         {                                                                                          \
-            if (element_count > field->count)                                                      \
-            {                                                                                      \
-                return false;                                                                      \
-            }                                                                                      \
-            return set_field_value(instance, field, value, element_count * sizeof(DownCastType));  \
+            return REFLECT_ERR_NULL_PTR;                                                           \
         }                                                                                          \
-        return false;                                                                              \
+        if (field->type != EnumVal)                                                                \
+        {                                                                                          \
+            return REFLECT_ERR_TYPE_MISMATCH;                                                      \
+        }                                                                                          \
+        if (element_count > field->count)                                                          \
+        {                                                                                          \
+            return REFLECT_ERR_OUT_OF_BOUNDS;                                                      \
+        }                                                                                          \
+        return set_field_value(instance, field, value, element_count * sizeof(DownCastType));      \
     }
 
 #define DEFINE_ARRAY_GETTER(Suffix, EnumVal, CType, DownCastType)                                  \
     static inline bool get_field_##Suffix(                                                         \
         void *instance, const FieldInfo *field, CType value, size_t element_count)                 \
     {                                                                                              \
-        if (field && field->type == EnumVal)                                                       \
+        if (!instance || !field)                                                                   \
         {                                                                                          \
-            if (element_count > field->count)                                                      \
-            {                                                                                      \
-                return false;                                                                      \
-            }                                                                                      \
-            return get_field_value(instance, field, value, element_count * sizeof(DownCastType));  \
+            return REFLECT_ERR_NULL_PTR;                                                           \
         }                                                                                          \
-        return false;                                                                              \
+        if (field->type != EnumVal)                                                                \
+        {                                                                                          \
+            return REFLECT_ERR_TYPE_MISMATCH;                                                      \
+        }                                                                                          \
+        if (element_count > field->count)                                                          \
+        {                                                                                          \
+            return REFLECT_ERR_OUT_OF_BOUNDS;                                                      \
+        }                                                                                          \
+        return get_field_value(instance, field, value, element_count * sizeof(DownCastType));      \
     }
 
 #if defined(CMYREFLECTION_USE_DEFAULT_TYPES)
@@ -357,7 +383,7 @@ void *resolve_field_path(void             *base_instance,
                 current_instance = (char *)current_instance + ((size_t)index * elem_size);
             }
             StructMetaData next_meta;
-            if (!get_struct_metadata(current_field->type, &next_meta))
+            if (get_struct_metadata(current_field->type, &next_meta) != REFLECT_OK)
             {
                 return NULL;
             }
@@ -418,46 +444,42 @@ const char *get_enum_member_name(const EnumMemberInfo *meta, size_t member_count
     return NULL;
 }
 
-bool set_field_value(void            *instance,
-                     const FieldInfo *field,
-                     const void      *new_value,
-                     size_t           write_size)
+ReflectResult
+set_field_value(void *instance, const FieldInfo *field, const void *new_value, size_t write_size)
 {
     if (!instance || !field || !new_value)
     {
-        return false;
+        return REFLECT_ERR_NULL_PTR;
     }
 
     if (write_size > field->size)
     {
-        return false;
+        return REFLECT_ERR_OUT_OF_BOUNDS;
     }
 
     void *field_ptr = (char *)instance + field->offset;
     memcpy(field_ptr, new_value, write_size);
 
-    return true;
+    return REFLECT_OK;
 }
 
-bool get_field_value(const void      *instance,
-                     const FieldInfo *field,
-                     void            *out_value,
-                     size_t           read_size)
+ReflectResult
+get_field_value(const void *instance, const FieldInfo *field, void *out_value, size_t read_size)
 {
     if (!instance || !field || !out_value)
     {
-        return false;
+        return REFLECT_ERR_NULL_PTR;
     }
 
     if (read_size > field->size)
     {
-        return false;
+        return REFLECT_ERR_OUT_OF_BOUNDS;
     }
 
     const void *field_ptr = (const char *)instance + field->offset;
     memcpy(out_value, field_ptr, read_size);
 
-    return true;
+    return REFLECT_OK;
 }
 
 #endif // CMYREFLECTION_IMPLEMENTATION

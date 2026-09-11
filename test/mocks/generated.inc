@@ -214,58 +214,58 @@ const FieldInfo DamageComponent_Metadata[] = {
 const size_t DamageComponent_FieldCount = sizeof(DamageComponent_Metadata) / sizeof(FieldInfo);
 
 // --- Auto-Generated Type Registry
-bool get_struct_metadata(FieldType type, StructMetaData* out_meta) {
+ReflectResult get_struct_metadata(FieldType type, StructMetaData* out_meta) {
     if (!out_meta) return false;
     switch(type) {
       case TYPE_VEC2:
       case TYPE_VECTOR2_ARR:
           out_meta->fields = Vector2_Metadata;
           out_meta->count = Vector2_FieldCount;
-          return true;
+          return REFLECT_OK;
       case TYPE_STRUCT_BALL:
           out_meta->fields = Ball_Metadata;
           out_meta->count = Ball_FieldCount;
-          return true;
+          return REFLECT_OK;
       case TYPE_STRUCT_GAME:
           out_meta->fields = Game_Metadata;
           out_meta->count = Game_FieldCount;
-          return true;
+          return REFLECT_OK;
       case TYPE_STRUCT_SENSORDATA:
           out_meta->fields = SensorData_Metadata;
           out_meta->count = SensorData_FieldCount;
-          return true;
+          return REFLECT_OK;
       case TYPE_STRUCT_IOTDEVICE:
       case TYPE_IOTDEVICE_ARR:
           out_meta->fields = IoTDevice_Metadata;
           out_meta->count = IoTDevice_FieldCount;
-          return true;
+          return REFLECT_OK;
       case TYPE_STRUCT_DEVICEMANAGER:
           out_meta->fields = DeviceManager_Metadata;
           out_meta->count = DeviceManager_FieldCount;
-          return true;
+          return REFLECT_OK;
       case TYPE_DAMAGE_COMPONENT:
           out_meta->fields = DamageComponent_Metadata;
           out_meta->count = DamageComponent_FieldCount;
-          return true;
-        default: return false;
+          return REFLECT_OK;
+        default: return REFLECT_ERR_TYPE_INVALID;
     }
 }
 
 // --- Auto-Generated Type Registry
-bool get_enum_metadata(FieldType type, EnumMetaData* out_meta) {
+ReflectResult get_enum_metadata(FieldType type, EnumMetaData* out_meta) {
     if (!out_meta) return false;
     switch(type) {
       case TYPE_ENUM_BALLSIZE:
           out_meta->members = BallSize_Members;
           out_meta->count = BallSize_MemberCount;
-          return true;
-        default: return false;
+          return REFLECT_OK;
+        default: return REFLECT_ERR_ENUM_INVALID;
     }
 }
 
 
 // --- Auto-Generated Safe Type Setter
-bool safe_set_field(void* instance, const FieldInfo* field, const void* value, size_t element_count) {
+ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void* value, size_t element_count) {
     if (!instance || !field || !value) return false;
     switch(field->type) {
       case TYPE_STR: return set_field_str(instance, field, *(char **)value);
@@ -292,7 +292,7 @@ bool safe_set_field(void* instance, const FieldInfo* field, const void* value, s
       case TYPE_CHAR_ARR: return set_field_char_arr(instance, field, (char*)value, element_count);
       case TYPE_IOTDEVICE_ARR: return set_field_IoTDevice_arr(instance, field, (IoTDevice*)value, element_count);
       case TYPE_UINT32_T: return set_field_u32(instance, field, *(uint32_t*)value);
-        default: return false;
+        default: return REFLECT_ERR_TYPE_INVALID;
     }
 }
 

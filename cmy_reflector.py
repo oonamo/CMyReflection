@@ -309,17 +309,17 @@ class Reflector:
                 switch_cases.append(
                     f"          out_meta->count = {enum.name}_MemberCount;"
                 )
-                switch_cases.append("          return true;")
+                switch_cases.append("          return REFLECT_OK;")
 
         switch_body = "\n".join(switch_cases)
 
         template = f"""\
 // --- Auto-Generated Type Registry
-bool get_enum_metadata(FieldType type, EnumMetaData* out_meta) {{
+ReflectResult get_enum_metadata(FieldType type, EnumMetaData* out_meta) {{
     if (!out_meta) return false;
     switch(type) {{
 {switch_body}
-        default: return false;
+        default: return REFLECT_ERR_ENUM_INVALID;
     }}
 }}
 """
@@ -344,17 +344,17 @@ bool get_enum_metadata(FieldType type, EnumMetaData* out_meta) {{
                 switch_cases.append(
                     f"          out_meta->count = {struct.struct_name}_FieldCount;"
                 )
-                switch_cases.append("          return true;")
+                switch_cases.append("          return REFLECT_OK;")
 
         switch_body = "\n".join(switch_cases)
 
         template = f"""\
 // --- Auto-Generated Type Registry
-bool get_struct_metadata(FieldType type, StructMetaData* out_meta) {{
+ReflectResult get_struct_metadata(FieldType type, StructMetaData* out_meta) {{
     if (!out_meta) return false;
     switch(type) {{
 {switch_body}
-        default: return false;
+        default: return REFLECT_ERR_TYPE_INVALID;
     }}
 }}"""
 
@@ -422,11 +422,11 @@ const char* get_name_of_type(FieldType type) {{
 
         template = f"""\
 // --- Auto-Generated Safe Type Setter
-bool safe_set_field(void* instance, const FieldInfo* field, const void* value, size_t element_count) {{
+ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void* value, size_t element_count) {{
     if (!instance || !field || !value) return false;
     switch(field->type) {{
 {switch_body}
-        default: return false;
+        default: return REFLECT_ERR_TYPE_INVALID;
     }}
 }}
 """

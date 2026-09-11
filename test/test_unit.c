@@ -39,7 +39,7 @@ TEST(Unit, Can_Use_Generated_Setter)
     Game             g = {0};
     const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "health");
 
-    bool success = set_field_float(&g, f, 18.0f);
+    bool success = set_field_float(&g, f, 18.0f) == REFLECT_OK;
 
     TEST_ASSERT_TRUE(success);
     TEST_ASSERT_EQUAL_FLOAT(18.0f, g.health);
@@ -52,7 +52,7 @@ TEST(Unit, Setter_Has_Type_Safety)
     const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "level");
     TEST_ASSERT_EQUAL(TYPE_INT, f->type);
 
-    bool success = set_field_float(&g, f, 80.0f);
+    bool success = set_field_float(&g, f, 80.0f) == REFLECT_OK;
 
     TEST_ASSERT_FALSE(success);
     TEST_ASSERT_EQUAL_INT(0, g.level);
@@ -79,9 +79,9 @@ TEST(Unit, Set_Field_Is_Null_Safe)
 
     float val = 23.45f;
 
-    TEST_ASSERT_FALSE(set_field_value(NULL, f, &val, sizeof(float)));
-    TEST_ASSERT_FALSE(set_field_value(&g, NULL, &val, sizeof(float)));
-    TEST_ASSERT_FALSE(set_field_value(&g, f, NULL, sizeof(float)));
+    TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, set_field_value(NULL, f, &val, sizeof(float)));
+    TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, set_field_value(&g, NULL, &val, sizeof(float)));
+    TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, set_field_value(&g, f, NULL, sizeof(float)));
 }
 
 TEST(Unit, Type_Set_Field_Is_Null_Safe)
@@ -90,7 +90,7 @@ TEST(Unit, Type_Set_Field_Is_Null_Safe)
     const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "health");
     TEST_ASSERT_NOT_NULL(f);
 
-    TEST_ASSERT_FALSE(set_field_float(&g, NULL, 23.7f));
+    TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, set_field_float(&g, NULL, 23.7f));
 }
 
 TEST(Unit, String_Has_Alias)
@@ -98,7 +98,7 @@ TEST(Unit, String_Has_Alias)
     Game             g = {0};
     const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "player_name");
 
-    TEST_ASSERT_TRUE(set_field_str(&g, f, "player1"));
+    TEST_ASSERT_EQUAL(REFLECT_OK, set_field_str(&g, f, "player1"));
     TEST_ASSERT_EQUAL_STRING("player1", g.player_name);
 }
 
@@ -147,7 +147,7 @@ TEST(Unit, Handles_Spaced_Types)
     TEST_ASSERT_NOT_NULL(f);
 
     TEST_ASSERT_EQUAL(TYPE_LONGLONG, f->type);
-    TEST_ASSERT_TRUE(set_field_ll(&g, f, 2393));
+    TEST_ASSERT_EQUAL(REFLECT_OK, set_field_ll(&g, f, 2393));
 }
 
 TEST(Unit, Array_Setter_Copies_Memory)
@@ -162,8 +162,7 @@ TEST(Unit, Array_Setter_Copies_Memory)
         new_history[i] = i + (i * 0.8f);
     }
 
-    TEST_ASSERT_TRUE(set_field_float_arr(&g, f, new_history, MAX_ARR_LEN));
-
+    TEST_ASSERT_EQUAL(REFLECT_OK, set_field_float_arr(&g, f, new_history, MAX_ARR_LEN));
     for (int i = 0; i < MAX_ARR_LEN; i++)
     {
         TEST_ASSERT_EQUAL_FLOAT(i + (i * 0.8f), g.history[i]);
@@ -181,8 +180,9 @@ TEST(Unit, Array_Setter_Fails_On_OOB)
         new_history[i] = i;
     }
 
-    TEST_ASSERT_FALSE(set_field_float_arr(&g, f, new_history, MAX_ARR_LEN + 4));
-    TEST_ASSERT_TRUE(set_field_float_arr(&g, f, new_history, MAX_ARR_LEN));
+    TEST_ASSERT_EQUAL(REFLECT_ERR_OUT_OF_BOUNDS,
+                      set_field_float_arr(&g, f, new_history, MAX_ARR_LEN + 4));
+    TEST_ASSERT_EQUAL(REFLECT_OK, set_field_float_arr(&g, f, new_history, MAX_ARR_LEN));
 }
 
 TEST(Unit, Custom_Struct_Setter_Works)
@@ -191,7 +191,7 @@ TEST(Unit, Custom_Struct_Setter_Works)
     const FieldInfo *f       = find_field(Game_Metadata, Game_FieldCount, "player_pos");
     Vector2          new_pos = {.x = 100.0f, .y = 250.0f};
 
-    TEST_ASSERT_TRUE(set_field_Vector2(&g, f, new_pos));
+    TEST_ASSERT_EQUAL(REFLECT_OK, set_field_Vector2(&g, f, new_pos));
     TEST_ASSERT_EQUAL_FLOAT(100.0f, g.player_pos.x);
     TEST_ASSERT_EQUAL_FLOAT(250.0f, g.player_pos.y);
 }
@@ -221,7 +221,7 @@ TEST(Unit, Can_Set_Nested_Struct_Field)
     TEST_ASSERT_EQUAL_STRING("x", leaf->name);
     TEST_ASSERT_EQUAL(TYPE_FLOAT, leaf->type);
 
-    TEST_ASSERT_TRUE(set_field_float(target_struct, leaf, 30.0f));
+    TEST_ASSERT_TRUE(set_field_float(target_struct, leaf, 30.0f) == REFLECT_OK);
     TEST_ASSERT_EQUAL_FLOAT(30.0f, g.player_pos.x);
 }
 
@@ -255,7 +255,7 @@ TEST(Unit, Can_Use_Indicies_On_Lookup)
     Vector2 *target = (Vector2 *)target_struct;
     TEST_ASSERT_EQUAL(18.32, target->x);
     TEST_ASSERT_POINTERS_EQUAL(target, &g.enemy_positions[19]);
-    TEST_ASSERT_TRUE(set_field_float(target_struct, leaf, 30.0f));
+    TEST_ASSERT_TRUE(set_field_float(target_struct, leaf, 30.0f) == REFLECT_OK);
     TEST_ASSERT_EQUAL_FLOAT(30.0f, g.enemy_positions[19].x);
 }
 
@@ -275,7 +275,7 @@ TEST(Unit, Set_FIeld_Fails_On_Type_MisMatch)
     Game             g = {0};
     const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "score");
 
-    TEST_ASSERT_FALSE(set_field_int(&g, f, 32));
+    TEST_ASSERT_FALSE(set_field_int(&g, f, 32) == REFLECT_OK);
     TEST_ASSERT_TRUE(g.score == 0);
 }
 
@@ -286,7 +286,7 @@ TEST(Unit, Set_Array_Can_Write_Partial_Data)
 
     uint8_t partial_write[2] = {23, 12};
 
-    TEST_ASSERT_TRUE(set_field_u8_arr(&g, f, partial_write, 2));
+    TEST_ASSERT_TRUE(set_field_u8_arr(&g, f, partial_write, 2) == REFLECT_OK);
     TEST_ASSERT_EQUAL_UINT8(23, g.grid[0]);
     TEST_ASSERT_EQUAL_UINT8(12, g.grid[1]);
 
@@ -302,7 +302,7 @@ TEST(Unit, SafeSetField_Sets_Primitive_Correctly)
     const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "health");
 
     float new_health = 712;
-    TEST_ASSERT_TRUE(safe_set_field(&g, f, &new_health, 1));
+    TEST_ASSERT_TRUE(safe_set_field(&g, f, &new_health, 1) == REFLECT_OK);
     TEST_ASSERT_EQUAL_FLOAT(new_health, g.health);
 }
 
@@ -317,7 +317,7 @@ TEST(Unit, SafeSetField_Sets_Arrays_Correctly)
         new_grid[i] = (i % 2) * 5;
     }
 
-    TEST_ASSERT_TRUE(safe_set_field(&g, f, new_grid, 8));
+    TEST_ASSERT_TRUE(safe_set_field(&g, f, new_grid, 8) == REFLECT_OK);
     TEST_ASSERT_EQUAL_UINT8_ARRAY(new_grid, g.grid, 9);
 }
 
@@ -338,7 +338,7 @@ TEST(Unit, Does_Not_Corrupt_Adjacent_Fields_When_Setting)
     TEST_ASSERT_NOT_NULL(target_struct);
     TEST_ASSERT_NOT_NULL(leaf);
 
-    TEST_ASSERT_TRUE(set_field_float(target_struct, leaf, 88.5f));
+    TEST_ASSERT_TRUE(set_field_float(target_struct, leaf, 88.5f) == REFLECT_OK);
     TEST_ASSERT_EQUAL_FLOAT(88.5f, g.ball.radius);
     TEST_ASSERT_EQUAL_INT(1337, g.score);
     TEST_ASSERT_EQUAL_FLOAT(100.0f, g.health);
@@ -402,10 +402,10 @@ TEST(Unit, Can_Set_Enum_Member)
 
     const FieldInfo *f = find_field(Ball_Metadata, Ball_FieldCount, "size");
 
-    TEST_ASSERT_TRUE(set_field_BallSize(&g.ball, f, BALL_TYPE_SMALL));
+    TEST_ASSERT_TRUE(set_field_BallSize(&g.ball, f, BALL_TYPE_SMALL) == REFLECT_OK);
     TEST_ASSERT_EQUAL_INT(g.ball.size, BALL_TYPE_SMALL);
 
-    TEST_ASSERT_TRUE(set_field_BallSize(&g.ball, f, BALL_TYPE_BIG));
+    TEST_ASSERT_TRUE(set_field_BallSize(&g.ball, f, BALL_TYPE_BIG) == REFLECT_OK);
     TEST_ASSERT_EQUAL_INT(g.ball.size, BALL_TYPE_BIG);
 }
 
@@ -417,7 +417,7 @@ TEST(Unit, SafeSetField_Sets_Enums_Correctly)
 
     BallSize new_size = BALL_TYPE_MEDIUM;
 
-    TEST_ASSERT_TRUE(safe_set_field(&g.ball, f, &new_size, 1));
+    TEST_ASSERT_TRUE(safe_set_field(&g.ball, f, &new_size, 1) == REFLECT_OK);
     TEST_ASSERT_EQUAL_INT(BALL_TYPE_MEDIUM, g.ball.size);
 }
 
@@ -425,11 +425,11 @@ TEST(Unit, Can_Get_Enum_Metadata_From_Registry)
 {
     EnumMetaData meta = {0};
 
-    TEST_ASSERT_TRUE(get_enum_metadata(TYPE_ENUM_BALLSIZE, &meta));
+    TEST_ASSERT_EQUAL(REFLECT_OK, get_enum_metadata(TYPE_ENUM_BALLSIZE, &meta));
     TEST_ASSERT_EQUAL_PTR(BallSize_Members, meta.members);
     TEST_ASSERT_EQUAL_size_t(BallSize_MemberCount, meta.count);
 
-    TEST_ASSERT_FALSE(get_enum_metadata(TYPE_INT, &meta));
+    TEST_ASSERT_EQUAL(REFLECT_ERR_ENUM_INVALID, get_enum_metadata(TYPE_INT, &meta));
 }
 
 TEST(Unit, CheckedEnum_Validates_Valid_Member)
@@ -447,7 +447,7 @@ TEST(Unit, CheckedEnum_Accepts_Valid_Member)
     Game             g = {0};
     const FieldInfo *f = find_field(Ball_Metadata, Ball_FieldCount, "size");
 
-    TEST_ASSERT_TRUE(set_field_BallSize(&g.ball, f, BALL_TYPE_MEDIUM));
+    TEST_ASSERT_TRUE(set_field_BallSize(&g.ball, f, BALL_TYPE_MEDIUM) == REFLECT_OK);
     TEST_ASSERT_EQUAL_INT(BALL_TYPE_MEDIUM, g.ball.size);
 }
 
@@ -457,7 +457,7 @@ TEST(Unit, CheckedEnum_Rejects_Invalid_Member)
     g.ball.size        = BALL_TYPE_SMALL;
     const FieldInfo *f = find_field(Ball_Metadata, Ball_FieldCount, "size");
 
-    TEST_ASSERT_FALSE(set_field_BallSize(&g.ball, f, (BallSize)-1));
+    TEST_ASSERT_FALSE(set_field_BallSize(&g.ball, f, (BallSize)-1) == REFLECT_OK);
     TEST_ASSERT_EQUAL_INT(BALL_TYPE_SMALL, g.ball.size);
 }
 
@@ -469,7 +469,7 @@ TEST(Unit, SafeSetField_Rejects_Invalid_Enum)
 
     int bad_val = -23;
 
-    TEST_ASSERT_FALSE(safe_set_field(&g.ball, f, &bad_val, 1));
+    TEST_ASSERT_FALSE(safe_set_field(&g.ball, f, &bad_val, 1) == REFLECT_OK);
     TEST_ASSERT_EQUAL_INT(BALL_TYPE_SMALL, g.ball.size);
 }
 
@@ -491,10 +491,10 @@ TEST(Unit, CustomValidator_Accepts_And_Rejects_Correctly)
     FieldInfo custom_field = {"flags", 99, 0, sizeof(bit_flags), 1};
     bit_flags flags        = 0;
 
-    TEST_ASSERT_TRUE(set_field_bit_flags(&flags, &custom_field, FLAG_A | FLAG_B));
+    TEST_ASSERT_TRUE(set_field_bit_flags(&flags, &custom_field, FLAG_A | FLAG_B) == REFLECT_OK);
     TEST_ASSERT_EQUAL_INT(FLAG_A | FLAG_B, flags);
 
-    TEST_ASSERT_FALSE(set_field_bit_flags(&flags, &custom_field, 4));
+    TEST_ASSERT_FALSE(set_field_bit_flags(&flags, &custom_field, 4) == REFLECT_OK);
     TEST_ASSERT_EQUAL_INT(FLAG_A | FLAG_B, flags);
 }
 
@@ -520,7 +520,7 @@ TEST(Unit, FieldGetter_Extracts_Valid_Data)
 
     float extracted_value = 0.0f;
 
-    TEST_ASSERT_TRUE(get_field_float(&v, f, &extracted_value));
+    TEST_ASSERT_TRUE(get_field_float(&v, f, &extracted_value) == REFLECT_OK);
     TEST_ASSERT_EQUAL_FLOAT(3.14f, extracted_value);
 }
 
@@ -531,7 +531,7 @@ TEST(Unit, FieldGetter_Rejects_Type_Mismatch)
 
     int extracted_value = 99;
 
-    TEST_ASSERT_FALSE(get_field_int(&v, f, &extracted_value));
+    TEST_ASSERT_FALSE(get_field_int(&v, f, &extracted_value) == REFLECT_OK);
     TEST_ASSERT_EQUAL_INT(99, extracted_value);
 }
 
@@ -544,7 +544,7 @@ TEST(Unit, FieldGetter_Extracts_Enum_Correctly)
 
     BallSize extracted_size = BALL_TYPE_SMALL;
 
-    TEST_ASSERT_TRUE(get_field_BallSize(&g.ball, f, &extracted_size));
+    TEST_ASSERT_TRUE(get_field_BallSize(&g.ball, f, &extracted_size) == REFLECT_OK);
     TEST_ASSERT_EQUAL_INT(BALL_TYPE_BIG, extracted_size);
 }
 
@@ -562,11 +562,11 @@ TEST(Unit, FieldGetter_Respects_Arrays)
 
     uint8_t out_grid[9];
 
-    TEST_ASSERT_TRUE(get_field_u8_arr(&g, f, out_grid, 9));
+    TEST_ASSERT_TRUE(get_field_u8_arr(&g, f, out_grid, 9) == REFLECT_OK);
     TEST_ASSERT_EQUAL_UINT8_ARRAY(expected, out_grid, 9);
 
     memset(out_grid, 0, 9);
-    TEST_ASSERT_TRUE(get_field_u8_arr(&g, f, out_grid, 3));
+    TEST_ASSERT_TRUE(get_field_u8_arr(&g, f, out_grid, 3) == REFLECT_OK);
     TEST_ASSERT_EQUAL_UINT8_ARRAY(expected, out_grid, 3);
 
     uint8_t arr_zero[6] = {0};
@@ -579,7 +579,7 @@ TEST(Unit, FieldGetter_Rejects_OutOfBounds_Read)
     const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "history");
 
     float out_history[MAX_ARR_LEN + 1];
-    TEST_ASSERT_FALSE(get_field_float_arr(&g, f, out_history, MAX_ARR_LEN + 1));
+    TEST_ASSERT_FALSE(get_field_float_arr(&g, f, out_history, MAX_ARR_LEN + 1) == REFLECT_OK);
 }
 
 TEST(Unit, GetFieldValue_Enforces_Bounds_And_Null_Safety)
@@ -590,10 +590,10 @@ TEST(Unit, GetFieldValue_Enforces_Bounds_And_Null_Safety)
 
     float out_val = 0.0f;
 
-    TEST_ASSERT_FALSE(get_field_value(NULL, f, &out_val, sizeof(float)));
-    TEST_ASSERT_FALSE(get_field_value(&v, NULL, &out_val, sizeof(float)));
-    TEST_ASSERT_FALSE(get_field_value(&v, f, NULL, sizeof(float)));
-    TEST_ASSERT_FALSE(get_field_value(&v, f, &out_val, sizeof(double)));
+    TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, get_field_value(NULL, f, &out_val, sizeof(float)));
+    TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, get_field_value(&v, NULL, &out_val, sizeof(float)));
+    TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, get_field_value(&v, f, NULL, sizeof(float)));
+    TEST_ASSERT_EQUAL(REFLECT_ERR_OUT_OF_BOUNDS, get_field_value(&v, f, &out_val, sizeof(double)));
 }
 
 TEST(Unit, Can_Use_Find_Struct_Macro)
