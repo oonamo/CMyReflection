@@ -324,7 +324,7 @@ class Reflector:
         template = f"""\
 // --- Auto-Generated Type Registry
 ReflectResult get_enum_metadata(FieldType type, EnumMetaData* out_meta) {{
-    if (!out_meta) return false;
+    if (!out_meta) return REFLECT_ERR_NULL_PTR;
     switch(type) {{
 {switch_body}
         default: return REFLECT_ERR_ENUM_INVALID;
@@ -359,7 +359,7 @@ ReflectResult get_enum_metadata(FieldType type, EnumMetaData* out_meta) {{
         template = f"""\
 // --- Auto-Generated Type Registry
 ReflectResult get_struct_metadata(FieldType type, StructMetaData* out_meta) {{
-    if (!out_meta) return false;
+    if (!out_meta) return REFLECT_ERR_NULL_PTR;
     switch(type) {{
 {switch_body}
         default: return REFLECT_ERR_TYPE_INVALID;
