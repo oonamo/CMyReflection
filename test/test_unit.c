@@ -748,6 +748,74 @@ TEST(Unit, ReflectQuery_Handles_Invalid_And_Nulls)
     TEST_ASSERT_NULL(reflect_query(&g, &meta, "health", NULL));
 }
 
+TEST(Unit, GetArrayElement_Gets_Valid_Element)
+{
+    Game             g = {0};
+    const FieldInfo *f = Find_Struct_Field(MetaData_FromName(Game), "grid");
+
+    for (int i = 0; i < 9; i++)
+    {
+        g.grid[i] = i;
+    }
+
+    for (int i = 0; i < 9; i++)
+    {
+        uint8_t res = 0;
+        TEST_ASSERT_EQUAL(REFLECT_OK, get_array_element(&g, f, i, &res, sizeof(uint8_t)));
+        TEST_ASSERT_EQUAL_UINT8(i, res);
+    }
+}
+
+TEST(Unit, GetArrayElement_Gets_Struct)
+{
+    Game g = {0};
+
+    g.enemy_positions[2].x = 45.0f;
+    g.enemy_positions[2].y = 45.0f;
+
+    const FieldInfo *f = Find_Struct_Field(MetaData_FromName(Game), "enemy_positions");
+
+    Vector2 out_vec = {0};
+    TEST_ASSERT_EQUAL(REFLECT_OK, get_array_element(&g, f, 2, &out_vec, sizeof(Vector2)));
+    TEST_ASSERT_EQUAL_FLOAT(45.0f, out_vec.x);
+    TEST_ASSERT_EQUAL_FLOAT(45.0f, out_vec.y);
+}
+
+TEST(Unit, GetArrayElement_Rejects_OutOfBounds_Index)
+{
+    Game             g = {0};
+    const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "grid");
+
+    uint8_t out_val = 0;
+    TEST_ASSERT_EQUAL(REFLECT_ERR_OUT_OF_BOUNDS,
+                      get_array_element(&g, f, 9, &out_val, sizeof(uint8_t)));
+    TEST_ASSERT_EQUAL(REFLECT_ERR_OUT_OF_BOUNDS,
+                      get_array_element(&g, f, 999, &out_val, sizeof(uint8_t)));
+}
+
+TEST(Unit, GetArrayElement_Rejects_Size_Mismatch)
+{
+    Game             g = {0};
+    const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "history"); // float array
+
+    double out_val = 0;
+    TEST_ASSERT_EQUAL(REFLECT_ERR_TYPE_MISMATCH,
+                      get_array_element(&g, f, 0, &out_val, sizeof(double)));
+}
+
+TEST(Unit, GetArrayElement_Is_Null_Safe)
+{
+    Game             g       = {0};
+    const FieldInfo *f       = find_field(Game_Metadata, Game_FieldCount, "grid");
+    uint8_t          out_val = 0;
+
+    TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR,
+                      get_array_element(NULL, f, 0, &out_val, sizeof(uint8_t)));
+    TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR,
+                      get_array_element(&g, NULL, 0, &out_val, sizeof(uint8_t)));
+    TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, get_array_element(&g, f, 0, NULL, sizeof(uint8_t)));
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -812,4 +880,9 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, ReflectQuery_Routes_Nested_Path)
     RUN_TEST_CASE(Unit, ReflectQuery_Routes_Array_Paths)
     RUN_TEST_CASE(Unit, ReflectQuery_Handles_Invalid_And_Nulls)
+    RUN_TEST_CASE(Unit, GetArrayElement_Gets_Valid_Element)
+    RUN_TEST_CASE(Unit, GetArrayElement_Gets_Struct)
+    RUN_TEST_CASE(Unit, GetArrayElement_Rejects_OutOfBounds_Index)
+    RUN_TEST_CASE(Unit, GetArrayElement_Rejects_Size_Mismatch)
+    RUN_TEST_CASE(Unit, GetArrayElement_Is_Null_Safe)
 }

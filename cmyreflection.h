@@ -234,6 +234,12 @@ set_field_value(void *instance, const FieldInfo *field, const void *new_value, s
 ReflectResult
 get_field_value(const void *instance, const FieldInfo *field, void *out_value, size_t read_size);
 
+ReflectResult get_array_element(const void      *instance,
+                                const FieldInfo *field,
+                                size_t           index,
+                                void            *out_value,
+                                size_t           element_size);
+
 #define DEFINE_FIELD_SETTER(Suffix, EnumVal, CType)                                                \
     static inline ReflectResult set_field_##Suffix(                                                \
         void *instance, const FieldInfo *field, CType value)                                       \
@@ -571,6 +577,36 @@ get_field_value(const void *instance, const FieldInfo *field, void *out_value, s
 
     const void *field_ptr = (const char *)instance + field->offset;
     memcpy(out_value, field_ptr, read_size);
+
+    return REFLECT_OK;
+}
+
+ReflectResult get_array_element(const void      *instance,
+                                const FieldInfo *field,
+                                size_t           index,
+                                void            *out_value,
+                                size_t           element_size)
+{
+    if (!instance || !field || !out_value)
+    {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (index >= field->count)
+    {
+        return REFLECT_ERR_OUT_OF_BOUNDS;
+    }
+
+    size_t expected_elem_size = field->size / field->count;
+    if (element_size != expected_elem_size)
+    {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+    const char *array_base = (const char *)instance + field->offset;
+    const char *elem_ptr   = array_base + (index * expected_elem_size);
+
+    memcpy(out_value, elem_ptr, expected_elem_size);
 
     return REFLECT_OK;
 }
