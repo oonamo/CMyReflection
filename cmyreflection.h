@@ -169,6 +169,11 @@ void *resolve_field_path(void             *base_instance,
 const FieldInfo *
 resolve_field_metadata(const FieldInfo *base_meta, size_t base_count, const char *path);
 
+void *reflect_query(void                 *instance,
+                    const StructMetaData *meta,
+                    const char           *query,
+                    const FieldInfo     **out_field);
+
 /**
  * @brief Find's a field in a struct
  *
@@ -455,6 +460,31 @@ resolve_field_metadata(const FieldInfo *base_meta, size_t base_count, const char
     }
 
     return NULL;
+}
+
+void *reflect_query(void                 *instance,
+                    const StructMetaData *meta,
+                    const char           *query,
+                    const FieldInfo     **out_field)
+{
+    if (!instance || !meta || !query || !out_field)
+    {
+        return NULL;
+    }
+
+    // Fast path
+    if (strpbrk(query, ".[") == NULL)
+    {
+        *out_field = find_field(meta->fields, meta->count, query);
+        if (*out_field == NULL)
+        {
+            return NULL;
+        }
+        return instance;
+    }
+
+    // Slow path
+    return resolve_field_path(instance, meta->fields, meta->count, query, out_field);
 }
 
 #endif // CMYREFLECTION_REGISTRY

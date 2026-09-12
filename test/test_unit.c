@@ -692,6 +692,62 @@ TEST(Unit, ResolveMetadata_Is_Null_Safe)
     TEST_ASSERT_NULL(resolve_field_metadata(Game_Metadata, Game_FieldCount, NULL));
 }
 
+TEST(Unit, ReflectQuery_Works_On_Top_Level)
+{
+    Game             g    = {0};
+    StructMetaData   meta = MetaData_FromName(Game);
+    const FieldInfo *leaf = NULL;
+
+    void *target = reflect_query(&g, &meta, "health", &leaf);
+
+    TEST_ASSERT_NOT_NULL(target);
+    TEST_ASSERT_POINTERS_EQUAL(&g, target);
+    TEST_ASSERT_NOT_NULL(leaf);
+    TEST_ASSERT_EQUAL_STRING("health", leaf->name);
+}
+
+TEST(Unit, ReflectQuery_Routes_Nested_Path)
+{
+    Game             g    = {0};
+    StructMetaData   meta = MetaData_FromName(Game);
+    const FieldInfo *leaf = NULL;
+
+    void *target = reflect_query(&g, &meta, "ball.speed.x", &leaf);
+
+    TEST_ASSERT_NOT_NULL(target);
+    TEST_ASSERT_POINTERS_EQUAL(&g.ball.speed, target);
+    TEST_ASSERT_NOT_NULL(leaf);
+    TEST_ASSERT_EQUAL_STRING("x", leaf->name);
+}
+
+TEST(Unit, ReflectQuery_Routes_Array_Paths)
+{
+    Game             g    = {0};
+    StructMetaData   meta = MetaData_FromName(Game);
+    const FieldInfo *leaf = NULL;
+
+    void *target = reflect_query(&g, &meta, "enemy_positions[5].y", &leaf);
+
+    TEST_ASSERT_NOT_NULL(target);
+    TEST_ASSERT_POINTERS_EQUAL(&g.enemy_positions[5], target);
+    TEST_ASSERT_NOT_NULL(leaf);
+    TEST_ASSERT_EQUAL_STRING("y", leaf->name);
+}
+
+TEST(Unit, ReflectQuery_Handles_Invalid_And_Nulls)
+{
+    Game             g    = {0};
+    StructMetaData   meta = MetaData_FromName(Game);
+    const FieldInfo *leaf = NULL;
+
+    TEST_ASSERT_NULL(reflect_query(&g, &meta, "invalid_field", &leaf));
+    TEST_ASSERT_NULL(reflect_query(&g, &meta, "ball.dne", &leaf));
+    TEST_ASSERT_NULL(reflect_query(NULL, &meta, "health", &leaf));
+    TEST_ASSERT_NULL(reflect_query(&g, NULL, "health", &leaf));
+    TEST_ASSERT_NULL(reflect_query(&g, &meta, NULL, &leaf));
+    TEST_ASSERT_NULL(reflect_query(&g, &meta, "health", NULL));
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -752,4 +808,8 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, ResolveMetadata_Rejects_Out_Of_Bounds_Indices);
     RUN_TEST_CASE(Unit, ResolveMetadata_Fails_On_Invalid_Paths);
     RUN_TEST_CASE(Unit, ResolveMetadata_Is_Null_Safe);
+    RUN_TEST_CASE(Unit, ReflectQuery_Works_On_Top_Level)
+    RUN_TEST_CASE(Unit, ReflectQuery_Routes_Nested_Path)
+    RUN_TEST_CASE(Unit, ReflectQuery_Routes_Array_Paths)
+    RUN_TEST_CASE(Unit, ReflectQuery_Handles_Invalid_And_Nulls)
 }
