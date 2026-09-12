@@ -255,7 +255,7 @@ const size_t DamageComponent_FieldCount = sizeof(DamageComponent_Metadata) / siz
 
 // --- Auto-Generated Type Registry
 ReflectResult get_struct_metadata(FieldType type, StructMetaData* out_meta) {
-    if (!out_meta) return false;
+    if (!out_meta) return REFLECT_ERR_NULL_PTR;
     switch(type) {
       case TYPE_VEC2:
       case TYPE_VECTOR2_ARR:
@@ -293,7 +293,7 @@ ReflectResult get_struct_metadata(FieldType type, StructMetaData* out_meta) {
 
 // --- Auto-Generated Type Registry
 ReflectResult get_enum_metadata(FieldType type, EnumMetaData* out_meta) {
-    if (!out_meta) return false;
+    if (!out_meta) return REFLECT_ERR_NULL_PTR;
     switch(type) {
       case TYPE_ENUM_BALLSIZE:
           out_meta->members = BallSize_Members;

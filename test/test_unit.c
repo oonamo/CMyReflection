@@ -816,6 +816,61 @@ TEST(Unit, GetArrayElement_Is_Null_Safe)
     TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, get_array_element(&g, f, 0, NULL, sizeof(uint8_t)));
 }
 
+typedef struct
+{
+    int         visited_count;
+    const void *last_seen_instance;
+} VisitorTestState;
+
+static void test_mock_visitor(const void *instance, const FieldInfo *field, void *user_data)
+{
+    VisitorTestState *state = (VisitorTestState *)user_data;
+    state->visited_count++;
+    state->last_seen_instance = instance;
+}
+
+TEST(Unit, VisitStruct_Iterates_Top_Level_Fields)
+{
+    Game             g      = {0};
+    VisitorTestState state  = {0};
+    int              indent = 0;
+
+    TEST_ASSERT_EQUAL(REFLECT_OK,
+                      visit_struct_fields(&g, TYPE_STRUCT_GAME, test_mock_visitor, &state));
+    TEST_ASSERT_EQUAL_INT(Game_FieldCount, state.visited_count);
+    TEST_ASSERT_POINTERS_EQUAL(&g, state.last_seen_instance);
+}
+
+TEST(Unit, VisitStruct_Works_Without_Instance)
+{
+    VisitorTestState state = {0};
+
+    TEST_ASSERT_EQUAL(REFLECT_OK,
+                      visit_struct_fields(NULL, TYPE_STRUCT_BALL, test_mock_visitor, &state));
+    TEST_ASSERT_EQUAL_INT(Ball_FieldCount, state.visited_count);
+    TEST_ASSERT_NULL(state.last_seen_instance);
+}
+
+TEST(Unit, VisitStruct_Rejects_Invalid_Types)
+{
+    VisitorTestState state = {0};
+    Game             g     = {0};
+
+    TEST_ASSERT_EQUAL(REFLECT_ERR_TYPE_MISMATCH,
+                      visit_struct_fields(&g, TYPE_INT, test_mock_visitor, &state));
+    TEST_ASSERT_EQUAL(REFLECT_ERR_TYPE_MISMATCH,
+                      visit_struct_fields(&g, TYPE_FLOAT_ARR, test_mock_visitor, &state));
+
+    TEST_ASSERT_EQUAL_INT(0, state.visited_count);
+}
+
+TEST(Unit, VisitStruct_Is_Null_Safe)
+{
+    Game g = {0};
+
+    TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, visit_struct_fields(&g, TYPE_STRUCT_GAME, NULL, NULL));
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -885,4 +940,8 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, GetArrayElement_Rejects_OutOfBounds_Index)
     RUN_TEST_CASE(Unit, GetArrayElement_Rejects_Size_Mismatch)
     RUN_TEST_CASE(Unit, GetArrayElement_Is_Null_Safe)
+    RUN_TEST_CASE(Unit, VisitStruct_Iterates_Top_Level_Fields)
+    RUN_TEST_CASE(Unit, VisitStruct_Works_Without_Instance)
+    RUN_TEST_CASE(Unit, VisitStruct_Rejects_Invalid_Types)
+    RUN_TEST_CASE(Unit, VisitStruct_Is_Null_Safe)
 }

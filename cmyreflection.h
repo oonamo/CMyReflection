@@ -240,6 +240,11 @@ ReflectResult get_array_element(const void      *instance,
                                 void            *out_value,
                                 size_t           element_size);
 
+typedef void (*FieldVisitor)(const void *base_instance, const FieldInfo *field, void *user_data);
+
+ReflectResult
+visit_struct_fields(const void *instance, FIELD_TYPE type, FieldVisitor visitor, void *user_data);
+
 #define DEFINE_FIELD_SETTER(Suffix, EnumVal, CType)                                                \
     static inline ReflectResult set_field_##Suffix(                                                \
         void *instance, const FieldInfo *field, CType value)                                       \
@@ -257,7 +262,7 @@ ReflectResult get_array_element(const void      *instance,
 
 #define DEFINE_FIELD_GETTER(Suffix, EnumVal, CType)                                                \
     static inline ReflectResult get_field_##Suffix(                                                \
-        void *instance, const FieldInfo *field, CType *out_value)                                  \
+        const void *instance, const FieldInfo *field, CType *out_value)                            \
     {                                                                                              \
         if (!instance || !field)                                                                   \
         {                                                                                          \
@@ -310,7 +315,7 @@ ReflectResult get_array_element(const void      *instance,
 
 #define DEFINE_ARRAY_GETTER(Suffix, EnumVal, CType, DownCastType)                                  \
     static inline bool get_field_##Suffix(                                                         \
-        void *instance, const FieldInfo *field, CType value, size_t element_count)                 \
+        const void *instance, const FieldInfo *field, CType value, size_t element_count)           \
     {                                                                                              \
         if (!instance || !field)                                                                   \
         {                                                                                          \
@@ -491,6 +496,30 @@ void *reflect_query(void                 *instance,
 
     // Slow path
     return resolve_field_path(instance, meta->fields, meta->count, query, out_field);
+}
+
+ReflectResult
+visit_struct_fields(const void *instance, FIELD_TYPE type, FieldVisitor visitor, void *user_data)
+{
+    if (!visitor)
+    {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    StructMetaData meta;
+    if (get_struct_metadata(type, &meta) != REFLECT_OK)
+    {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+    for (size_t i = 0; i < meta.count; i++)
+    {
+        const FieldInfo *field = &meta.fields[i];
+
+        visitor(instance, field, user_data);
+    }
+
+    return REFLECT_OK;
 }
 
 #endif // CMYREFLECTION_REGISTRY
