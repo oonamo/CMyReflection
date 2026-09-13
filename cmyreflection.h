@@ -62,6 +62,7 @@ typedef struct
     size_t           count;             /*!< Number of array elements in field */
     FieldAccessFlags flags;             /*!< Access flags */
     const char      *length_field_name; /*!< Associated field length string */
+    void            *user_data;         /*!< User data */
 } FieldInfo;
 
 typedef struct
@@ -78,8 +79,9 @@ typedef struct
 
 typedef struct
 {
-    int         value; /*!< Integer value of enum member */
-    const char *name;  /*!< String literal of enum member */
+    int         value;     /*!< Integer value of enum member */
+    const char *name;      /*!< String literal of enum member */
+    void       *user_data; /*!< User data */
 } EnumMemberInfo;
 
 typedef struct

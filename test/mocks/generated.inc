@@ -40,6 +40,7 @@ typedef enum {
 } FieldType;
 
 #include <cmyreflection.h>
+// --- Plugin-Generated-Extensions ---
 // --- Metadata Declarations
 extern const FieldInfo Vector2_Metadata[];
 extern const size_t Vector2_FieldCount;
@@ -179,85 +180,85 @@ DEFINE_DYNAMIC_ARRAY_GETTER(Game_waypoints, TYPE_VECTOR2_PTR, Vector2 *, Vector2
 
 // --- Generated from game_type.h ---
 const FieldInfo Vector2_Metadata[] = {
-    { "x", TYPE_FLOAT, offsetof(Vector2, x), sizeof(float), 1, FIELD_ACCESS_RW, NULL },
-    { "y", TYPE_FLOAT, offsetof(Vector2, y), sizeof(float), 1, FIELD_ACCESS_RW, NULL },
+    { "x", TYPE_FLOAT, offsetof(Vector2, x), sizeof(float), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "y", TYPE_FLOAT, offsetof(Vector2, y), sizeof(float), 1, FIELD_ACCESS_RW, NULL, NULL },
 };
 const size_t Vector2_FieldCount = sizeof(Vector2_Metadata) / sizeof(FieldInfo);
 
 const FieldInfo Ball_Metadata[] = {
-    { "speed", TYPE_VEC2, offsetof(Ball, speed), sizeof(Vector2), 1, FIELD_ACCESS_RW, NULL },
-    { "radius", TYPE_FLOAT, offsetof(Ball, radius), sizeof(float), 1, FIELD_ACCESS_RW, NULL },
-    { "size", TYPE_ENUM_BALLSIZE, offsetof(Ball, size), sizeof(BallSize), 1, FIELD_ACCESS_RW, NULL },
+    { "speed", TYPE_VEC2, offsetof(Ball, speed), sizeof(Vector2), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "radius", TYPE_FLOAT, offsetof(Ball, radius), sizeof(float), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "size", TYPE_ENUM_BALLSIZE, offsetof(Ball, size), sizeof(BallSize), 1, FIELD_ACCESS_RW, NULL, NULL },
 };
 const size_t Ball_FieldCount = sizeof(Ball_Metadata) / sizeof(FieldInfo);
 
 const FieldInfo Game_Metadata[] = {
-    { "player_pos", TYPE_VEC2, offsetof(Game, player_pos), sizeof(Vector2), 1, FIELD_ACCESS_RW, NULL },
-    { "ball", TYPE_STRUCT_BALL, offsetof(Game, ball), sizeof(Ball), 1, FIELD_ACCESS_RW, NULL },
-    { "health", TYPE_FLOAT, offsetof(Game, health), sizeof(float), 1, FIELD_ACCESS_RW, NULL },
-    { "level", TYPE_INT, offsetof(Game, level), sizeof(int), 1, FIELD_ACCESS_RW, NULL },
-    { "player_name", TYPE_CHAR_PTR, offsetof(Game, player_name), sizeof(char   *), 1, FIELD_ACCESS_RW, NULL },
-    { "damage", TYPE_DAMAGE_COMPONENT, offsetof(Game, damage), sizeof(DamageComponent), 1, FIELD_ACCESS_RW, NULL },
-    { "game_flags", TYPE_UINT8_T, offsetof(Game, game_flags), sizeof(uint8_t), 1, FIELD_ACCESS_READ, NULL },
-    { "hash", TYPE_UINT32_T, offsetof(Game, hash), sizeof(uint32_t), 1, FIELD_ACCESS_WRITE, NULL },
-    { "current_tile", TYPE_UNSIGNEDCHAR, offsetof(Game, current_tile), sizeof(unsigned char), 1, FIELD_ACCESS_RW, NULL },
-    { "score", TYPE_LONGLONG, offsetof(Game, score), sizeof(long long), 1, FIELD_ACCESS_RW, NULL },
-    { "grid", TYPE_UINT8_T_ARR, offsetof(Game, grid), sizeof(uint8_t[9]), 9, FIELD_ACCESS_RW, NULL },
-    { "sliding_window", TYPE_UNSIGNEDCHAR_ARR, offsetof(Game, sliding_window), sizeof(unsigned char[16]), 16, FIELD_ACCESS_RW, NULL },
-    { "history", TYPE_FLOAT_ARR, offsetof(Game, history), sizeof(float[MAX_ARR_LEN]), MAX_ARR_LEN, FIELD_ACCESS_RW, NULL },
-    { "num_waypoints", TYPE_SIZE_T, offsetof(Game, num_waypoints), sizeof(size_t), 1, FIELD_ACCESS_RW, NULL },
-    { "waypoints", TYPE_VECTOR2_PTR, offsetof(Game, waypoints), sizeof(Vector2 *), 1, FIELD_ACCESS_RW, "num_waypoints" },
-    { "enemy_positions", TYPE_VECTOR2_ARR, offsetof(Game, enemy_positions), sizeof(Vector2[20]), 20, FIELD_ACCESS_RW, NULL },
+    { "player_pos", TYPE_VEC2, offsetof(Game, player_pos), sizeof(Vector2), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "ball", TYPE_STRUCT_BALL, offsetof(Game, ball), sizeof(Ball), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "health", TYPE_FLOAT, offsetof(Game, health), sizeof(float), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "level", TYPE_INT, offsetof(Game, level), sizeof(int), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "player_name", TYPE_CHAR_PTR, offsetof(Game, player_name), sizeof(char   *), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "damage", TYPE_DAMAGE_COMPONENT, offsetof(Game, damage), sizeof(DamageComponent), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "game_flags", TYPE_UINT8_T, offsetof(Game, game_flags), sizeof(uint8_t), 1, FIELD_ACCESS_READ, NULL, NULL },
+    { "hash", TYPE_UINT32_T, offsetof(Game, hash), sizeof(uint32_t), 1, FIELD_ACCESS_WRITE, NULL, NULL },
+    { "current_tile", TYPE_UNSIGNEDCHAR, offsetof(Game, current_tile), sizeof(unsigned char), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "score", TYPE_LONGLONG, offsetof(Game, score), sizeof(long long), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "grid", TYPE_UINT8_T_ARR, offsetof(Game, grid), sizeof(uint8_t[9]), 9, FIELD_ACCESS_RW, NULL, NULL },
+    { "sliding_window", TYPE_UNSIGNEDCHAR_ARR, offsetof(Game, sliding_window), sizeof(unsigned char[16]), 16, FIELD_ACCESS_RW, NULL, NULL },
+    { "history", TYPE_FLOAT_ARR, offsetof(Game, history), sizeof(float[MAX_ARR_LEN]), MAX_ARR_LEN, FIELD_ACCESS_RW, NULL, NULL },
+    { "num_waypoints", TYPE_SIZE_T, offsetof(Game, num_waypoints), sizeof(size_t), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "waypoints", TYPE_VECTOR2_PTR, offsetof(Game, waypoints), sizeof(Vector2 *), 1, FIELD_ACCESS_RW, "num_waypoints", NULL },
+    { "enemy_positions", TYPE_VECTOR2_ARR, offsetof(Game, enemy_positions), sizeof(Vector2[20]), 20, FIELD_ACCESS_RW, NULL, NULL },
 };
 const size_t Game_FieldCount = sizeof(Game_Metadata) / sizeof(FieldInfo);
 
 const EnumMemberInfo BallSize_Members[] = {
-   { BALL_TYPE_SMALL, "BALL_TYPE_SMALL" },
-   { BALL_TYPE_MEDIUM, "BALL_TYPE_MEDIUM" },
-   { BALL_TYPE_BIG, "BALL_TYPE_BIG" },
+   { BALL_TYPE_SMALL, "BALL_TYPE_SMALL", NULL },
+   { BALL_TYPE_MEDIUM, "BALL_TYPE_MEDIUM", NULL },
+   { BALL_TYPE_BIG, "BALL_TYPE_BIG", NULL },
 };
 const size_t BallSize_MemberCount = sizeof(BallSize_Members) / sizeof(EnumMemberInfo);
 
 // --- Generated from readme_example.h ---
 const FieldInfo SensorData_Metadata[] = {
-    { "voltage", TYPE_FLOAT, offsetof(SensorData, voltage), sizeof(float), 1, FIELD_ACCESS_RW, NULL },
-    { "temp", TYPE_FLOAT, offsetof(SensorData, temp), sizeof(float), 1, FIELD_ACCESS_RW, NULL },
+    { "voltage", TYPE_FLOAT, offsetof(SensorData, voltage), sizeof(float), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "temp", TYPE_FLOAT, offsetof(SensorData, temp), sizeof(float), 1, FIELD_ACCESS_RW, NULL, NULL },
 };
 const size_t SensorData_FieldCount = sizeof(SensorData_Metadata) / sizeof(FieldInfo);
 
 const FieldInfo IoTDevice_Metadata[] = {
-    { "device_id", TYPE_CHAR_ARR, offsetof(IoTDevice, device_id), sizeof(char[32]), 32, FIELD_ACCESS_RW, NULL },
-    { "baud_rate", TYPE_INT, offsetof(IoTDevice, baud_rate), sizeof(int), 1, FIELD_ACCESS_RW, NULL },
-    { "data", TYPE_STRUCT_SENSORDATA, offsetof(IoTDevice, data), sizeof(SensorData), 1, FIELD_ACCESS_RW, NULL },
-    { "state", TYPE_ENUM_DEVICESTATE, offsetof(IoTDevice, state), sizeof(DeviceState), 1, FIELD_ACCESS_RW, NULL },
-    { "uuid", TYPE_UINT64_T, offsetof(IoTDevice, uuid), sizeof(uint64_t), 1, FIELD_ACCESS_READ, NULL },
+    { "device_id", TYPE_CHAR_ARR, offsetof(IoTDevice, device_id), sizeof(char[32]), 32, FIELD_ACCESS_RW, NULL, NULL },
+    { "baud_rate", TYPE_INT, offsetof(IoTDevice, baud_rate), sizeof(int), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "data", TYPE_STRUCT_SENSORDATA, offsetof(IoTDevice, data), sizeof(SensorData), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "state", TYPE_ENUM_DEVICESTATE, offsetof(IoTDevice, state), sizeof(DeviceState), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "uuid", TYPE_UINT64_T, offsetof(IoTDevice, uuid), sizeof(uint64_t), 1, FIELD_ACCESS_READ, NULL, NULL },
 };
 const size_t IoTDevice_FieldCount = sizeof(IoTDevice_Metadata) / sizeof(FieldInfo);
 
 const FieldInfo DeviceManager_Metadata[] = {
-    { "op_mode", TYPE_UNSIGNEDCHAR, offsetof(DeviceManager, op_mode), sizeof(unsigned char), 1, FIELD_ACCESS_RW, NULL },
-    { "permissions", TYPE_ENUM_MANAGERPERMISSIONS, offsetof(DeviceManager, permissions), sizeof(ManagerPermissions), 1, FIELD_ACCESS_RW, NULL },
-    { "device_location", TYPE_CHAR_ARR, offsetof(DeviceManager, device_location), sizeof(char[MAX_BUF_LEN]), MAX_BUF_LEN, FIELD_ACCESS_RW, NULL },
-    { "devices", TYPE_IOTDEVICE_ARR, offsetof(DeviceManager, devices), sizeof(IoTDevice[8]), 8, FIELD_ACCESS_RW, NULL },
+    { "op_mode", TYPE_UNSIGNEDCHAR, offsetof(DeviceManager, op_mode), sizeof(unsigned char), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "permissions", TYPE_ENUM_MANAGERPERMISSIONS, offsetof(DeviceManager, permissions), sizeof(ManagerPermissions), 1, FIELD_ACCESS_READ, NULL, NULL },
+    { "device_location", TYPE_CHAR_ARR, offsetof(DeviceManager, device_location), sizeof(char[MAX_BUF_LEN]), MAX_BUF_LEN, FIELD_ACCESS_RW, NULL, NULL },
+    { "devices", TYPE_IOTDEVICE_ARR, offsetof(DeviceManager, devices), sizeof(IoTDevice[8]), 8, FIELD_ACCESS_RW, NULL, NULL },
 };
 const size_t DeviceManager_FieldCount = sizeof(DeviceManager_Metadata) / sizeof(FieldInfo);
 
 const EnumMemberInfo DeviceState_Members[] = {
-   { DEVICE_RX, "DEVICE_RX" },
-   { DEVICE_TX, "DEVICE_TX" },
+   { DEVICE_RX, "DEVICE_RX", NULL },
+   { DEVICE_TX, "DEVICE_TX", NULL },
 };
 const size_t DeviceState_MemberCount = sizeof(DeviceState_Members) / sizeof(EnumMemberInfo);
 
 const EnumMemberInfo ManagerPermissions_Members[] = {
-   { MANAGER_NONE, "MANAGER_NONE" },
-   { MANAGER_READ, "MANAGER_READ" },
-   { MANAGER_WRITE, "MANAGER_WRITE" },
+   { MANAGER_NONE, "MANAGER_NONE", NULL },
+   { MANAGER_READ, "MANAGER_READ", NULL },
+   { MANAGER_WRITE, "MANAGER_WRITE", NULL },
 };
 const size_t ManagerPermissions_MemberCount = sizeof(ManagerPermissions_Members) / sizeof(EnumMemberInfo);
 
 // --- Generated from stuff.h ---
 const FieldInfo DamageComponent_Metadata[] = {
-    { "damage", TYPE_FLOAT, offsetof(DamageComponent, damage), sizeof(float), 1, FIELD_ACCESS_RW, NULL },
+    { "damage", TYPE_FLOAT, offsetof(DamageComponent, damage), sizeof(float), 1, FIELD_ACCESS_RW, NULL, NULL },
 };
 const size_t DamageComponent_FieldCount = sizeof(DamageComponent_Metadata) / sizeof(FieldInfo);
 

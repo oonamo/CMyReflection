@@ -2,6 +2,25 @@
 #include <stdint.h>
 #include <stddef.h>
 
+typedef struct
+{
+    char *format_str;
+    char *desc;
+} AdditionalData;
+
+/// @deftag description(desc)
+/// @sets (AdditionalData*)user_data->desc = {desc}
+
+/// @deftag format(format_str)
+/// @sets (AdditionalData*)user_data->format_str = {format_str}
+
+/// @ifhastag format
+/// @creates print_field_{{type}}
+/// @requires GET
+/// @calls
+///     printf((AdditionalData*)user_data->format_str, value);
+/// @endcall
+
 /// @reflect
 typedef enum
 {

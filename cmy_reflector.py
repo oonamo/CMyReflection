@@ -3,6 +3,66 @@ import re
 import sys
 from pathlib import Path
 
+_GENERATOR_HOOKS = []
+_FIELD_TAG_HANDLERS = {}
+_MEMBER_TAG_HANDLERS = {}
+_TYPE_TAG_HANDLERS = {}
+_TYPE_MAPPERS = []
+
+
+def register_generator_hook(func):
+    """Registers a global hook that executes during final code generation."""
+    _GENERATOR_HOOKS.append(func)
+    return func
+
+
+def register_type_mapper(signature: str, switch_var: str, default_case: str = "break;"):
+    """Registers a hook that executes per-type to build a generic switch statement."""
+
+    def decorator(func):
+        _TYPE_MAPPERS.append(
+            {
+                "signature": signature,
+                "switch_var": switch_var,
+                "func": func,
+                "default": default_case,
+            }
+        )
+        return func
+        return func
+
+    return decorator
+
+
+def register_field_tag(tag_name: str):
+    """Registers a handler for tags placed on specific struct fields (e.g., @description)."""
+
+    def decorator(func):
+        _FIELD_TAG_HANDLERS[tag_name] = func
+        return func
+
+    return decorator
+
+
+def register_enum_member_tag(tag_name: str):
+    """Registers a handler for tags placed on specific enum fields(e.g., @description)."""
+
+    def decorator(func):
+        _MEMBER_TAG_HANDLERS[tag_name] = func
+        return func
+
+    return decorator
+
+
+def register_type_tag(tag_name: str):
+    """Registers a handler for tags placed above a struct or enum (e.g., @format)."""
+
+    def decorator(func):
+        _FIELD_TAG_HANDLERS[tag_name] = func
+        return func
+
+    return decorator
+
 
 class Field:
     def __init__(
@@ -16,6 +76,7 @@ class Field:
         self.type_name = type_name
         self.array_bounds = array_bounds
         self.tags = tags
+        self.user_data_expr = "NULL"
 
         base_name = type_name.replace(" ", "")
 
@@ -48,7 +109,7 @@ class Field:
 
         length_field_name = f'"{self.length_field}"' if self.length_field else "NULL"
 
-        return f'    {{ "{self.name}", {self.type_enum}, offsetof({struct_name}, {self.name}), sizeof({self.type_name}{arr_suffix}), {count}, {flags}, {length_field_name} }}'
+        return f'    {{ "{self.name}", {self.type_enum}, offsetof({struct_name}, {self.name}), sizeof({self.type_name}{arr_suffix}), {count}, {flags}, {length_field_name}, {self.user_data_expr} }}'
 
 
 class CStruct:
@@ -92,9 +153,10 @@ class EnumMember:
     def __init__(self, name: str, tags: dict[str, str] = None):
         self.name = name
         self.tags = tags
+        self.user_data_expr = "NULL"
 
     def gen_member_str(self) -> str:
-        return f'   {{ {self.name}, "{self.name}" }}'
+        return f'   {{ {self.name}, "{self.name}", {self.user_data_expr} }}'
 
 
 class CEnum:
@@ -542,6 +604,82 @@ FieldType get_base_type(FieldType type) {{
 """
         return template
 
+    def generate_plugin_extensions(self) -> str:
+        extension_lines = ["// --- Plugin-Generated-Extensions ---"]
+
+        for hook in _GENERATOR_HOOKS:
+            snippet = hook(self)
+            if snippet:
+                extension_lines.append(snippet)
+
+        for mapper in _TYPE_MAPPERS:
+            hook_func = mapper["func"]
+
+            standalone_funcs = []
+            switch_cases = []
+
+            for type_name, type_enum in self.type_map.items():
+                ctype = self.ctypes.get(type_name, type_name)
+                suffix = self.get_type_suffix(type_name)
+
+                result = hook_func(type_name, type_enum, ctype, suffix)
+
+                if result:
+                    func_code, case_code = result
+                    if func_code:
+                        standalone_funcs.append(func_code)
+                    if case_code:
+                        switch_cases.append(f"      case {type_enum}: {case_code}")
+            if switch_cases:
+                switch_body = "\n".join(switch_cases)
+                router = f"""\
+static inline {mapper["signature"]} {{
+    switch({mapper['switch_var']}) {{
+{switch_body}
+        default: {mapper['default']}
+    }}
+}}
+"""
+                extension_lines.extend(standalone_funcs)
+                extension_lines.append(router)
+
+        # TODO: Flatten for loops
+        for struct in self.structs.values():
+            for tag_name, tag_value in struct.tags.items():
+                if tag_name in _TYPE_TAG_HANDLERS:
+                    snippet = _TYPE_TAG_HANDLERS[tag_name](struct, tag_value)
+                    if snippet:
+                        extension_lines.append(snippet)
+
+        for enum in self.enums.values():
+            for tag_name, tag_value in enum.tags.items():
+                if tag_name in _TYPE_TAG_HANDLERS:
+                    snippet = _TYPE_TAG_HANDLERS[tag_name](enum, tag_value)
+                    if snippet:
+                        extension_lines.append(snippet)
+
+        for struct in self.structs.values():
+            for field in struct.fields:
+                for tag_name, tag_value in field.tags.items():
+                    if tag_name in _FIELD_TAG_HANDLERS:
+                        snippet = _FIELD_TAG_HANDLERS[tag_name](
+                            struct, field, tag_value
+                        )
+                        if snippet:
+                            extension_lines.append(snippet)
+
+        for enum in self.enums.values():
+            for member in enum.members:
+                for tag_name, tag_value in member.tags.items():
+                    if tag_name in _MEMBER_TAG_HANDLERS:
+                        snippet = _MEMBER_TAG_HANDLERS[tag_name](
+                            enum, member, tag_value
+                        )
+                        if snippet:
+                            extension_lines.append(snippet)
+
+        return "\n\n".join(extension_lines)
+
     def __str__(self):
         lines = [
             self.generate_file_header(),
@@ -551,6 +689,7 @@ FieldType get_base_type(FieldType type) {{
             "#define CMYREFLECTION_REGISTRY",
             self.generate_types(),
             "#include <cmyreflection.h>",
+            self.generate_plugin_extensions(),
             self.generate_declarations(),
         ]
 

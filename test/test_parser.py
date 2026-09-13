@@ -4,7 +4,24 @@ from pathlib import Path
 
 import pytest
 
+import cmy_reflector
 from cmy_reflector import Reflector, generate_reflection
+
+
+@pytest.fixture(autouse=True)
+def reset_plugin_registries():
+    cmy_reflector._TYPE_TAG_HANDLERS.clear()
+    cmy_reflector._FIELD_TAG_HANDLERS.clear()
+    cmy_reflector._GENERATOR_HOOKS.clear()
+
+    cmy_reflector._TYPE_MAPPERS.clear()
+
+    yield
+
+    cmy_reflector._TYPE_TAG_HANDLERS.clear()
+    cmy_reflector._FIELD_TAG_HANDLERS.clear()
+    cmy_reflector._GENERATOR_HOOKS.clear()
+    cmy_reflector._TYPE_MAPPERS.clear()
 
 
 def test_array_setter_generation(tmp_path: Path):
@@ -42,7 +59,7 @@ def test_array_setter_generation(tmp_path: Path):
     assert "TYPE_FLOAT_ARR" in generated_content
 
     assert (
-        '{ "history", TYPE_FLOAT_ARR, offsetof(Game, history), sizeof(float[MAX_ARR_LEN]), MAX_ARR_LEN, FIELD_ACCESS_RW, NULL }'
+        '{ "history", TYPE_FLOAT_ARR, offsetof(Game, history), sizeof(float[MAX_ARR_LEN]), MAX_ARR_LEN, FIELD_ACCESS_RW, NULL, NULL }'
         in generated_content
     )
 
@@ -380,3 +397,149 @@ def test_parser_generates_correct_basetype(tmp_path: Path):
     )
     assert "case TYPE_UNSIGNEDINT_PTR: return TYPE_UNSIGNEDINT" in generated_content
     assert "case TYPE_SUPER_PTR: return TYPE_STRUCT_SUPER" in generated_content
+
+
+def test_can_create_description_func(tmp_path: Path):
+    @cmy_reflector.register_field_tag("description")
+    def handle_description_tag(struct, field, tag_value):
+        return f"""\
+static inline char* get_{struct.struct_name}_{field.name}_description(void)
+{{
+    return "{tag_value}";
+}}
+"""
+
+    c_code = """
+    /// @reflect
+    typedef struct
+    {
+        /// @description("process id")
+        const int id;
+    } x;
+    """
+
+    reflector = cmy_reflector.Reflector()
+    cmy_reflector.generate_reflection(reflector, "test_enum.h", c_code)
+    reflector.resolve()
+
+    generated_content = str(reflector)
+
+    assert "get_x_id_description" in generated_content
+
+
+def test_generic_type_mapper():
+    TYPES = {
+        "int": "%d",
+        "char*": "%s",
+        "constchar*": "%s",
+        "char_arr": "%s",
+        "float": "%f",
+        "double": "%f",
+        "char": "%c",
+    }
+
+    @cmy_reflector.register_type_mapper(
+        signature="ReflectResult print_field(const void* instance, const FieldInfo* field)",
+        switch_var="field->type",
+        default_case="return REFLECT_ERR_TYPE_MISMATCH;",
+    )
+    def handle_field_printer(type_name, type_enum, ctype, suffix):
+        if type_name in TYPES:
+            func_def = f"""\
+static inline ReflectResult print_field_{suffix}(const void* instance, const FieldInfo* field) {{
+    if (!instance || !field) {{ return REFLECT_ERR_NULL_PTR; }}
+    {ctype} v;
+    ReflectResult res = get_field_{ctype}(instance, field, &v);
+    if (res != REFLECT_OK) {{ return res; }}
+
+    printf("{TYPES[ctype]}", v);
+
+    return REFLECT_OK;
+}}
+"""
+            case_body = f"return print_field_{suffix}(instance, field);"
+            return (func_def, case_body)
+        return None
+
+    c_code = """
+    /// @reflect
+    typedef struct
+    {
+        int i;
+        char c;
+        float f;
+        double d;
+        char* cptr;
+        unknown x;
+    } x;
+    """
+
+    reflector = cmy_reflector.Reflector()
+    cmy_reflector.generate_reflection(reflector, "test_enum.h", c_code)
+    reflector.resolve()
+
+    generated_content = str(reflector)
+
+    assert "print_field_int" in generated_content
+    assert "print_field_char" in generated_content
+    assert "print_field_str" in generated_content
+    assert "print_field_float" in generated_content
+    assert "print_field_unknown" not in generated_content
+
+    assert "print_field" in generated_content
+
+
+def test_can_set_enum_userdata():
+    @cmy_reflector.register_enum_member_tag("color")
+    def handle_enum_color(enum, member, tag_value):
+        member.user_data_expr = f"(void*){tag_value}"
+
+        return ""
+
+    c_code = """
+    /// @reflect
+    typedef enum
+    {
+        /// @color(0x00FF00)
+        STATE_OK,
+
+        /// @color(0xFF0000)
+        STATE_ERROR,
+    } Status;
+    """
+
+    reflector = cmy_reflector.Reflector()
+    cmy_reflector.generate_reflection(reflector, "test_enum.h", c_code)
+    reflector.resolve()
+
+    generated_content = str(reflector)
+
+    assert '{ STATE_OK, "STATE_OK", (void*)0x00FF00 }' in generated_content
+    assert '{ STATE_ERROR, "STATE_ERROR", (void*)0xFF0000 }' in generated_content
+
+
+def test_can_set_stuct_userdata():
+    @cmy_reflector.register_field_tag("description")
+    def handle_field_description(struct, field, tag_value):
+        field.user_data_expr = f"(void*){tag_value}"
+        return f"// {struct.struct_name}"
+
+    c_code = """
+    /// @reflect
+    typedef struct
+    {
+        /// @description("cool")
+        int stuff;
+    } Options;
+    """
+
+    reflector = cmy_reflector.Reflector()
+    cmy_reflector.generate_reflection(reflector, "test_enum.h", c_code)
+    reflector.resolve()
+
+    generated_content = str(reflector)
+
+    assert (
+        '{ "stuff", TYPE_INT, offsetof(Options, stuff), sizeof(int), 1, FIELD_ACCESS_RW, NULL, (void*)"cool" }'
+        in generated_content
+    )

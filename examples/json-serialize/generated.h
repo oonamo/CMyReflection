@@ -25,6 +25,7 @@ typedef enum {
 } FieldType;
 
 #include <cmyreflection.h>
+// --- Plugin-Generated-Extensions ---
 // --- Metadata Declarations
 extern const FieldInfo Post_Metadata[];
 extern const size_t Post_FieldCount;
@@ -98,41 +99,41 @@ DEFINE_DYNAMIC_ARRAY_GETTER(User_posts, TYPE_POST_PTR, Post *, Post)
 
 // --- Generated from types.h ---
 const FieldInfo Post_Metadata[] = {
-    { "title", TYPE_CHAR_ARR, offsetof(Post, title), sizeof(char[MAX_TITLE_LEN]), MAX_TITLE_LEN, FIELD_ACCESS_RW, NULL },
-    { "likes", TYPE_UINT32_T, offsetof(Post, likes), sizeof(uint32_t), 1, FIELD_ACCESS_RW, NULL },
+    { "title", TYPE_CHAR_ARR, offsetof(Post, title), sizeof(char[MAX_TITLE_LEN]), MAX_TITLE_LEN, FIELD_ACCESS_RW, NULL, NULL },
+    { "likes", TYPE_UINT32_T, offsetof(Post, likes), sizeof(uint32_t), 1, FIELD_ACCESS_RW, NULL, NULL },
 };
 const size_t Post_FieldCount = sizeof(Post_Metadata) / sizeof(FieldInfo);
 
 const FieldInfo UserPrefernces_Metadata[] = {
-    { "language", TYPE_CHAR_ARR, offsetof(UserPrefernces, language), sizeof(char[32]), 32, FIELD_ACCESS_RW, NULL },
-    { "prefers_dark", TYPE_BOOL, offsetof(UserPrefernces, prefers_dark), sizeof(bool), 1, FIELD_ACCESS_RW, NULL },
+    { "language", TYPE_CHAR_ARR, offsetof(UserPrefernces, language), sizeof(char[32]), 32, FIELD_ACCESS_RW, NULL, NULL },
+    { "prefers_dark", TYPE_BOOL, offsetof(UserPrefernces, prefers_dark), sizeof(bool), 1, FIELD_ACCESS_RW, NULL, NULL },
 };
 const size_t UserPrefernces_FieldCount = sizeof(UserPrefernces_Metadata) / sizeof(FieldInfo);
 
 const FieldInfo User_Metadata[] = {
-    { "username", TYPE_CHAR_ARR, offsetof(User, username), sizeof(char[32]), 32, FIELD_ACCESS_RW, NULL },
-    { "email", TYPE_CHAR_ARR, offsetof(User, email), sizeof(char[64]), 64, FIELD_ACCESS_RW, NULL },
-    { "account_id", TYPE_UINT64_T, offsetof(User, account_id), sizeof(uint64_t), 1, FIELD_ACCESS_READ, NULL },
-    { "password_hash", TYPE_CHAR_ARR, offsetof(User, password_hash), sizeof(char[64]), 64, FIELD_ACCESS_WRITE, NULL },
-    { "permissions", TYPE_ENUM_PERMISSIONS, offsetof(User, permissions), sizeof(Permissions), 1, FIELD_ACCESS_RW, NULL },
-    { "state", TYPE_ENUM_ACCOUNTSTATE, offsetof(User, state), sizeof(AccountState), 1, FIELD_ACCESS_RW, NULL },
-    { "settings", TYPE_STRUCT_USERPREFERNCES, offsetof(User, settings), sizeof(UserPrefernces), 1, FIELD_ACCESS_RW, NULL },
-    { "post_count", TYPE_SIZE_T, offsetof(User, post_count), sizeof(size_t), 1, FIELD_ACCESS_RW, NULL },
-    { "posts", TYPE_POST_PTR, offsetof(User, posts), sizeof(Post *), 1, FIELD_ACCESS_RW, "post_count" },
+    { "username", TYPE_CHAR_ARR, offsetof(User, username), sizeof(char[32]), 32, FIELD_ACCESS_RW, NULL, NULL },
+    { "email", TYPE_CHAR_ARR, offsetof(User, email), sizeof(char[64]), 64, FIELD_ACCESS_RW, NULL, NULL },
+    { "account_id", TYPE_UINT64_T, offsetof(User, account_id), sizeof(uint64_t), 1, FIELD_ACCESS_READ, NULL, NULL },
+    { "password_hash", TYPE_CHAR_ARR, offsetof(User, password_hash), sizeof(char[64]), 64, FIELD_ACCESS_WRITE, NULL, NULL },
+    { "permissions", TYPE_ENUM_PERMISSIONS, offsetof(User, permissions), sizeof(Permissions), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "state", TYPE_ENUM_ACCOUNTSTATE, offsetof(User, state), sizeof(AccountState), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "settings", TYPE_STRUCT_USERPREFERNCES, offsetof(User, settings), sizeof(UserPrefernces), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "post_count", TYPE_SIZE_T, offsetof(User, post_count), sizeof(size_t), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "posts", TYPE_POST_PTR, offsetof(User, posts), sizeof(Post *), 1, FIELD_ACCESS_RW, "post_count", NULL },
 };
 const size_t User_FieldCount = sizeof(User_Metadata) / sizeof(FieldInfo);
 
 const EnumMemberInfo Permissions_Members[] = {
-   { PERM_CREATE, "PERM_CREATE" },
-   { PERM_DELETE, "PERM_DELETE" },
-   { PERM_UPDATE, "PERM_UPDATE" },
+   { PERM_CREATE, "PERM_CREATE", NULL },
+   { PERM_DELETE, "PERM_DELETE", NULL },
+   { PERM_UPDATE, "PERM_UPDATE", NULL },
 };
 const size_t Permissions_MemberCount = sizeof(Permissions_Members) / sizeof(EnumMemberInfo);
 
 const EnumMemberInfo AccountState_Members[] = {
-   { ACCOUNT_ACTIVE, "ACCOUNT_ACTIVE" },
-   { ACCOUNT_INACTIVE, "ACCOUNT_INACTIVE" },
-   { ACCOUNT_STALE, "ACCOUNT_STALE" },
+   { ACCOUNT_ACTIVE, "ACCOUNT_ACTIVE", NULL },
+   { ACCOUNT_INACTIVE, "ACCOUNT_INACTIVE", NULL },
+   { ACCOUNT_STALE, "ACCOUNT_STALE", NULL },
 };
 const size_t AccountState_MemberCount = sizeof(AccountState_Members) / sizeof(EnumMemberInfo);
 
