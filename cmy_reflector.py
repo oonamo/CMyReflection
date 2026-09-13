@@ -431,7 +431,7 @@ class Reflector:
         }
         self.base_types = {}
 
-        self.extensions_fields = {}
+        self.field_extension_members = {}
         self.active_field_tags = {}
         self.active_enum_member_tags = {}
         self.active_type_tags = {}
@@ -471,14 +471,23 @@ class Reflector:
 
             self.active_type_mappers.extend(p.type_mappers)
 
-    def register_extension(self, name: str, ctype: str, requires: str = None):
-        self.extensions_fields[name] = (ctype, requires)
+    def define_field_extension(self, name: str, ctype: str, requires: str = None):
+        self.field_extension_members[name] = (ctype, requires)
+
+    def set_field_extension(self, field: Field, name: str, value: str):
+        if name not in self.field_extension_members:
+            raise ValueError(
+                f"Validation Error: Cannot set extension '{name}' on field '{field.name}'. "
+                f"It must be registered first using reflector.define_field_extension()."
+            )
+
+        field.plugin_data[name] = value
 
     def generate_extension_struct(self):
-        if not self.extensions_fields:
+        if not self.field_extension_members:
             return "// No plugins"
         lines = ["typedef struct {"]
-        for name, (c_type, req) in self.extensions_fields.items():
+        for name, (c_type, req) in self.field_extension_members.items():
             if req:
                 lines.append(f"#ifdef {req}")
             lines.append(f"     {c_type} {name};")
@@ -622,7 +631,7 @@ class Reflector:
             if struct.fname not in files:
                 files[struct.fname] = []
             files[struct.fname].append(
-                struct.generate_definition(self.extensions_fields)
+                struct.generate_definition(self.field_extension_members)
             )
 
         for enum in self.enums.values():
@@ -925,14 +934,14 @@ static inline {mapper.signature} {{
         for struct in self.structs.values():
             for tag_name, tag_value in struct.tags.items():
                 if tag_name in self.active_type_tags:
-                    snippet = self.active_type_tags[tag_name](struct, tag_value)
+                    snippet = self.active_type_tags[tag_name](self, struct, tag_value)
                     if snippet:
                         extension_lines.append(snippet)
 
         for enum in self.enums.values():
             for tag_name, tag_value in enum.tags.items():
                 if tag_name in self.active_type_tags:
-                    snippet = self.active_type_tags[tag_name](enum, tag_value)
+                    snippet = self.active_type_tags[tag_name](self, enum, tag_value)
                     if snippet:
                         extension_lines.append(snippet)
 
@@ -941,7 +950,7 @@ static inline {mapper.signature} {{
                 for tag_name, tag_value in field.tags.items():
                     if tag_name in self.active_field_tags:
                         snippet = self.active_field_tags[tag_name](
-                            struct, field, tag_value
+                            self, struct, field, tag_value
                         )
                         if snippet:
                             extension_lines.append(snippet)
@@ -951,7 +960,7 @@ static inline {mapper.signature} {{
                 for tag_name, tag_value in member.tags.items():
                     if tag_name in self.active_type_mappers:
                         snippet = self.active_type_mappers[tag_name](
-                            enum, member, tag_value
+                            self, enum, member, tag_value
                         )
                         if snippet:
                             extension_lines.append(snippet)

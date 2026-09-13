@@ -17,7 +17,7 @@ printer = cmy_reflector.Plugin(
 
 @printer.setup
 def setup(reflector):
-    reflector.register_extension(
+    reflector.define_field_extension(
         "format", "const char*", requires="CMY_PLUGIN_PRINTER_ENABLED"
     )
 
@@ -25,7 +25,7 @@ def setup(reflector):
 
 
 @printer.field_tag("format")
-def handle_field_format(struct, field, tag_value):
+def handle_field_format(reflector, struct, field, tag_value):
     field.plugin_data["format"] = tag_value
 
 

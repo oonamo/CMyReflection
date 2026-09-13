@@ -397,11 +397,11 @@ def test_can_create_struct_field_tag():
 
     @test_plugin.setup
     def setup_description_hook(reflector):
-        reflector.register_extension("description", "const char*")
+        reflector.define_field_extension("description", "const char*")
 
     @test_plugin.field_tag("description")
-    def handle_field_description(struct, field, tag_value):
-        field.plugin_data["description"] = tag_value
+    def handle_field_description(reflector, struct, field, tag_value):
+        reflector.set_field_extension(field, "description", tag_value)
 
     @test_plugin.emit_code
     def inject_desc_getter(reflector):
@@ -409,7 +409,7 @@ def test_can_create_struct_field_tag():
 static inline const char* get_field_description(const FieldInfo* field)
 {
     if (!field || !field->user_data) { return NULL; }
-    return (FieldExtensions*)(field->user_data)->description;
+    return ((FieldExtensions*)(field->user_data))->description;
 }
 """
 
