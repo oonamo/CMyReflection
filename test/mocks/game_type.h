@@ -13,7 +13,7 @@ typedef enum
 } BallSize;
 
 /// @reflect
-/// @enum TYPE_VEC2
+/// @enum(TYPE_VEC2)
 typedef struct
 {
     float x;

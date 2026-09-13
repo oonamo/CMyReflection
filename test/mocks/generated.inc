@@ -172,34 +172,34 @@ DEFINE_ARRAY_GETTER(IoTDevice_arr, TYPE_IOTDEVICE_ARR, IoTDevice *, IoTDevice)
 
 // --- Generated from game_type.h ---
 const FieldInfo Vector2_Metadata[] = {
-    { "x", TYPE_FLOAT, offsetof(Vector2, x), sizeof(float), 1, FIELD_ACCESS_RW },
-    { "y", TYPE_FLOAT, offsetof(Vector2, y), sizeof(float), 1, FIELD_ACCESS_RW },
+    { "x", TYPE_FLOAT, offsetof(Vector2, x), sizeof(float), 1, FIELD_ACCESS_RW, NULL },
+    { "y", TYPE_FLOAT, offsetof(Vector2, y), sizeof(float), 1, FIELD_ACCESS_RW, NULL },
 };
 const size_t Vector2_FieldCount = sizeof(Vector2_Metadata) / sizeof(FieldInfo);
 
 const FieldInfo Ball_Metadata[] = {
-    { "speed", TYPE_VEC2, offsetof(Ball, speed), sizeof(Vector2), 1, FIELD_ACCESS_RW },
-    { "radius", TYPE_FLOAT, offsetof(Ball, radius), sizeof(float), 1, FIELD_ACCESS_RW },
-    { "size", TYPE_ENUM_BALLSIZE, offsetof(Ball, size), sizeof(BallSize), 1, FIELD_ACCESS_RW },
+    { "speed", TYPE_VEC2, offsetof(Ball, speed), sizeof(Vector2), 1, FIELD_ACCESS_RW, NULL },
+    { "radius", TYPE_FLOAT, offsetof(Ball, radius), sizeof(float), 1, FIELD_ACCESS_RW, NULL },
+    { "size", TYPE_ENUM_BALLSIZE, offsetof(Ball, size), sizeof(BallSize), 1, FIELD_ACCESS_RW, NULL },
 };
 const size_t Ball_FieldCount = sizeof(Ball_Metadata) / sizeof(FieldInfo);
 
 const FieldInfo Game_Metadata[] = {
-    { "player_pos", TYPE_VEC2, offsetof(Game, player_pos), sizeof(Vector2), 1, FIELD_ACCESS_RW },
-    { "ball", TYPE_STRUCT_BALL, offsetof(Game, ball), sizeof(Ball), 1, FIELD_ACCESS_RW },
-    { "health", TYPE_FLOAT, offsetof(Game, health), sizeof(float), 1, FIELD_ACCESS_RW },
-    { "level", TYPE_INT, offsetof(Game, level), sizeof(int), 1, FIELD_ACCESS_RW },
-    { "player_name", TYPE_STR, offsetof(Game, player_name), sizeof(char   *), 1, FIELD_ACCESS_RW },
-    { "damage", TYPE_DAMAGE_COMPONENT, offsetof(Game, damage), sizeof(DamageComponent), 1, FIELD_ACCESS_RW },
-    { "game_flags", TYPE_UINT8_T, offsetof(Game, game_flags), sizeof(uint8_t), 1, FIELD_ACCESS_READ },
-    { "hash", TYPE_UINT32_T, offsetof(Game, hash), sizeof(uint32_t), 1, FIELD_ACCESS_WRITE },
-    { "current_tile", TYPE_UNSIGNEDCHAR, offsetof(Game, current_tile), sizeof(unsigned char), 1, FIELD_ACCESS_RW },
-    { "score", TYPE_LONGLONG, offsetof(Game, score), sizeof(long long), 1, FIELD_ACCESS_RW },
-    { "grid", TYPE_UINT8_T_ARR, offsetof(Game, grid), sizeof(uint8_t[9]), 9, FIELD_ACCESS_RW },
-    { "sliding_window", TYPE_UNSIGNEDCHAR_ARR, offsetof(Game, sliding_window), sizeof(unsigned char[16]), 16, FIELD_ACCESS_RW },
-    { "history", TYPE_FLOAT_ARR, offsetof(Game, history), sizeof(float[MAX_ARR_LEN]), MAX_ARR_LEN, FIELD_ACCESS_RW },
-    { "waypoints", TYPE_VECTOR2_PTR_PTR, offsetof(Game, waypoints), sizeof(Vector2 **), 1, FIELD_ACCESS_RW },
-    { "enemy_positions", TYPE_VECTOR2_ARR, offsetof(Game, enemy_positions), sizeof(Vector2[20]), 20, FIELD_ACCESS_RW },
+    { "player_pos", TYPE_VEC2, offsetof(Game, player_pos), sizeof(Vector2), 1, FIELD_ACCESS_RW, NULL },
+    { "ball", TYPE_STRUCT_BALL, offsetof(Game, ball), sizeof(Ball), 1, FIELD_ACCESS_RW, NULL },
+    { "health", TYPE_FLOAT, offsetof(Game, health), sizeof(float), 1, FIELD_ACCESS_RW, NULL },
+    { "level", TYPE_INT, offsetof(Game, level), sizeof(int), 1, FIELD_ACCESS_RW, NULL },
+    { "player_name", TYPE_STR, offsetof(Game, player_name), sizeof(char   *), 1, FIELD_ACCESS_RW, NULL },
+    { "damage", TYPE_DAMAGE_COMPONENT, offsetof(Game, damage), sizeof(DamageComponent), 1, FIELD_ACCESS_RW, NULL },
+    { "game_flags", TYPE_UINT8_T, offsetof(Game, game_flags), sizeof(uint8_t), 1, FIELD_ACCESS_READ, NULL },
+    { "hash", TYPE_UINT32_T, offsetof(Game, hash), sizeof(uint32_t), 1, FIELD_ACCESS_WRITE, NULL },
+    { "current_tile", TYPE_UNSIGNEDCHAR, offsetof(Game, current_tile), sizeof(unsigned char), 1, FIELD_ACCESS_RW, NULL },
+    { "score", TYPE_LONGLONG, offsetof(Game, score), sizeof(long long), 1, FIELD_ACCESS_RW, NULL },
+    { "grid", TYPE_UINT8_T_ARR, offsetof(Game, grid), sizeof(uint8_t[9]), 9, FIELD_ACCESS_RW, NULL },
+    { "sliding_window", TYPE_UNSIGNEDCHAR_ARR, offsetof(Game, sliding_window), sizeof(unsigned char[16]), 16, FIELD_ACCESS_RW, NULL },
+    { "history", TYPE_FLOAT_ARR, offsetof(Game, history), sizeof(float[MAX_ARR_LEN]), MAX_ARR_LEN, FIELD_ACCESS_RW, NULL },
+    { "waypoints", TYPE_VECTOR2_PTR_PTR, offsetof(Game, waypoints), sizeof(Vector2 **), 1, FIELD_ACCESS_RW, NULL },
+    { "enemy_positions", TYPE_VECTOR2_ARR, offsetof(Game, enemy_positions), sizeof(Vector2[20]), 20, FIELD_ACCESS_RW, NULL },
 };
 const size_t Game_FieldCount = sizeof(Game_Metadata) / sizeof(FieldInfo);
 
@@ -212,25 +212,25 @@ const size_t BallSize_MemberCount = sizeof(BallSize_Members) / sizeof(EnumMember
 
 // --- Generated from readme_example.h ---
 const FieldInfo SensorData_Metadata[] = {
-    { "voltage", TYPE_FLOAT, offsetof(SensorData, voltage), sizeof(float), 1, FIELD_ACCESS_RW },
-    { "temp", TYPE_FLOAT, offsetof(SensorData, temp), sizeof(float), 1, FIELD_ACCESS_RW },
+    { "voltage", TYPE_FLOAT, offsetof(SensorData, voltage), sizeof(float), 1, FIELD_ACCESS_RW, NULL },
+    { "temp", TYPE_FLOAT, offsetof(SensorData, temp), sizeof(float), 1, FIELD_ACCESS_RW, NULL },
 };
 const size_t SensorData_FieldCount = sizeof(SensorData_Metadata) / sizeof(FieldInfo);
 
 const FieldInfo IoTDevice_Metadata[] = {
-    { "device_id", TYPE_CHAR_ARR, offsetof(IoTDevice, device_id), sizeof(char[32]), 32, FIELD_ACCESS_RW },
-    { "baud_rate", TYPE_INT, offsetof(IoTDevice, baud_rate), sizeof(int), 1, FIELD_ACCESS_RW },
-    { "data", TYPE_STRUCT_SENSORDATA, offsetof(IoTDevice, data), sizeof(SensorData), 1, FIELD_ACCESS_RW },
-    { "state", TYPE_ENUM_DEVICESTATE, offsetof(IoTDevice, state), sizeof(DeviceState), 1, FIELD_ACCESS_RW },
-    { "uuid", TYPE_UINT64_T, offsetof(IoTDevice, uuid), sizeof(uint64_t), 1, FIELD_ACCESS_READ },
+    { "device_id", TYPE_CHAR_ARR, offsetof(IoTDevice, device_id), sizeof(char[32]), 32, FIELD_ACCESS_RW, NULL },
+    { "baud_rate", TYPE_INT, offsetof(IoTDevice, baud_rate), sizeof(int), 1, FIELD_ACCESS_RW, NULL },
+    { "data", TYPE_STRUCT_SENSORDATA, offsetof(IoTDevice, data), sizeof(SensorData), 1, FIELD_ACCESS_RW, NULL },
+    { "state", TYPE_ENUM_DEVICESTATE, offsetof(IoTDevice, state), sizeof(DeviceState), 1, FIELD_ACCESS_RW, NULL },
+    { "uuid", TYPE_UINT64_T, offsetof(IoTDevice, uuid), sizeof(uint64_t), 1, FIELD_ACCESS_READ, NULL },
 };
 const size_t IoTDevice_FieldCount = sizeof(IoTDevice_Metadata) / sizeof(FieldInfo);
 
 const FieldInfo DeviceManager_Metadata[] = {
-    { "op_mode", TYPE_UNSIGNEDCHAR, offsetof(DeviceManager, op_mode), sizeof(unsigned char), 1, FIELD_ACCESS_RW },
-    { "permissions", TYPE_ENUM_MANAGERPERMISSIONS, offsetof(DeviceManager, permissions), sizeof(ManagerPermissions), 1, FIELD_ACCESS_RW },
-    { "device_location", TYPE_CHAR_ARR, offsetof(DeviceManager, device_location), sizeof(char[MAX_BUF_LEN]), MAX_BUF_LEN, FIELD_ACCESS_RW },
-    { "devices", TYPE_IOTDEVICE_ARR, offsetof(DeviceManager, devices), sizeof(IoTDevice[8]), 8, FIELD_ACCESS_RW },
+    { "op_mode", TYPE_UNSIGNEDCHAR, offsetof(DeviceManager, op_mode), sizeof(unsigned char), 1, FIELD_ACCESS_RW, NULL },
+    { "permissions", TYPE_ENUM_MANAGERPERMISSIONS, offsetof(DeviceManager, permissions), sizeof(ManagerPermissions), 1, FIELD_ACCESS_RW, NULL },
+    { "device_location", TYPE_CHAR_ARR, offsetof(DeviceManager, device_location), sizeof(char[MAX_BUF_LEN]), MAX_BUF_LEN, FIELD_ACCESS_RW, NULL },
+    { "devices", TYPE_IOTDEVICE_ARR, offsetof(DeviceManager, devices), sizeof(IoTDevice[8]), 8, FIELD_ACCESS_RW, NULL },
 };
 const size_t DeviceManager_FieldCount = sizeof(DeviceManager_Metadata) / sizeof(FieldInfo);
 
@@ -249,7 +249,7 @@ const size_t ManagerPermissions_MemberCount = sizeof(ManagerPermissions_Members)
 
 // --- Generated from stuff.h ---
 const FieldInfo DamageComponent_Metadata[] = {
-    { "damage", TYPE_FLOAT, offsetof(DamageComponent, damage), sizeof(float), 1, FIELD_ACCESS_RW },
+    { "damage", TYPE_FLOAT, offsetof(DamageComponent, damage), sizeof(float), 1, FIELD_ACCESS_RW, NULL },
 };
 const size_t DamageComponent_FieldCount = sizeof(DamageComponent_Metadata) / sizeof(FieldInfo);
 

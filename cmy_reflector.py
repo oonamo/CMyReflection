@@ -21,6 +21,16 @@ class Field:
 
         self.normalized_type_name = base_name + ("_arr" if array_bounds else "")
 
+        self.length_field = None
+
+        if "length" in self.tags:
+            if not isinstance(self.tags["length"], str):
+                raise ValueError(
+                    f"Error in field '{self.name}': @length tag requires a field name "
+                    f"in parentheses. Did you mean @length(count)?"
+                )
+            self.length_field = self.tags["length"]
+
         # set by reflector.resolve
         self.type_enum = "TYPE_UNKNOWN"
 
@@ -36,7 +46,9 @@ class Field:
         else:
             flags = "FIELD_ACCESS_RW"
 
-        return f'    {{ "{self.name}", {self.type_enum}, offsetof({struct_name}, {self.name}), sizeof({self.type_name}{arr_suffix}), {count}, {flags} }}'
+        length_field_name = f"{self.length_field}" if self.length_field else "NULL"
+
+        return f'    {{ "{self.name}", {self.type_enum}, offsetof({struct_name}, {self.name}), sizeof({self.type_name}{arr_suffix}), {count}, {flags}, {length_field_name} }}'
 
 
 class CStruct:
@@ -189,6 +201,8 @@ class Reflector:
     def resolve(self):
         """Resolves all fields and ensures that an enum exists for every type"""
         for key, struct in self.structs.items():
+            valid_field_names = {field.name for field in struct.fields}
+
             for field in struct.fields:
                 mapped_enum = self.type_map.get(
                     field.normalized_type_name, self.type_map["unknown"]
@@ -206,6 +220,13 @@ class Reflector:
                         self.ctypes[field.normalized_type_name] = field.type_name
 
                 field.type_enum = mapped_enum
+
+                if field.length_field and field.length_field not in valid_field_names:
+                    raise ValueError(
+                        f"Error in struct '{struct.struct_name}': Field '{field.name}' uses "
+                        f"@length({field.length_field}), but '{field.length_field}' "
+                        f"does not exist in the struct."
+                    )
 
     def generate_file_header(self) -> str:
         return """\
@@ -471,7 +492,7 @@ ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void*
 def extract_tags(comment_text: str) -> dict:
     tags = {}
 
-    for match in re.finditer(r"///\s*@([a-zA-Z0-9_]+)(?:\s+([^/\n]+))?", comment_text):
+    for match in re.finditer(r"///\s*@([a-zA-Z0-9_]+)(?:\(([^/\n]+)\))?", comment_text):
         tag_name = match.group(1)
         tag_value = match.group(2).strip() if match.group(2) else True
         tags[tag_name] = tag_value
@@ -493,8 +514,13 @@ def generate_reflection(reflector: Reflector, fname: str, code: str):
         block_name = match.group(4)
 
         if block_type == "struct":
-            if "enum" in block_tags:
-                reflector.type_map[block_name] = block_tags["enum"]
+            if "enum" in block_tags and block_tags:
+                if not isinstance(block_tags["enum"], str):
+                    raise ValueError(
+                        f"Error: Enum for {block_name} requires a value in parentheses."
+                    )
+                else:
+                    reflector.type_map[block_name] = block_tags["enum"]
             else:
                 reflector.type_map[block_name] = f"TYPE_STRUCT_{block_name.upper()}"
             current_block = CStruct(fname, block_name, tags=block_tags)
@@ -623,4 +649,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except ValueError as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)

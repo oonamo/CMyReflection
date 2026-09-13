@@ -1,5 +1,8 @@
+import re
 import subprocess
 from pathlib import Path
+
+import pytest
 
 from cmy_reflector import Reflector, generate_reflection
 
@@ -39,7 +42,7 @@ def test_array_setter_generation(tmp_path: Path):
     assert "TYPE_FLOAT_ARR" in generated_content
 
     assert (
-        '{ "history", TYPE_FLOAT_ARR, offsetof(Game, history), sizeof(float[MAX_ARR_LEN]), MAX_ARR_LEN, FIELD_ACCESS_RW }'
+        '{ "history", TYPE_FLOAT_ARR, offsetof(Game, history), sizeof(float[MAX_ARR_LEN]), MAX_ARR_LEN, FIELD_ACCESS_RW, NULL }'
         in generated_content
     )
 
@@ -265,3 +268,53 @@ def test_parser_does_not_generate_validator_for_unchecked_enums(tmp_path: Path):
 
     assert "DEFINE_ENUM_SETTER" not in generated_content
     assert "DEFINE_FIELD_SETTER" in generated_content
+
+
+def test_parser_extracts_length_tags():
+    c_code = """\
+    /// @reflect
+    typedef struct
+    {
+        uint32_t count;
+
+        /// @length(count)
+        float* data;
+    } Test;
+    """
+
+    ref = Reflector()
+    generate_reflection(ref, "test.h", c_code)
+    ref.resolve()
+
+    assert "Test" in ref.type_map
+
+    test = ref.structs["Test"]
+    assert test is not None
+
+    assert test.fields[0].name == "count"
+    assert test.fields[1].name == "data"
+
+    data = test.fields[1]
+    assert "length" in data.tags
+
+    assert data.tags["length"] == "count"
+
+
+def test_parser_fails_on_invalid_length_field():
+    c_code = """\
+    /// @reflect
+    typedef struct
+    {
+        uint32_t count;
+
+        /// @length(size)
+        float* data;
+    } Test;
+    """
+
+    ref = Reflector()
+
+    expected_err = "Error in struct 'Test': Field 'data' uses @length(size), but 'size' does not exist in the struct."
+    with pytest.raises(ValueError, match=re.escape(expected_err)):
+        generate_reflection(ref, "test.h", c_code)
+        ref.resolve()

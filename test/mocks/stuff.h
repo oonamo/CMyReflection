@@ -2,7 +2,7 @@
 #define _STUFF_H
 
 /// @reflect
-/// @enum TYPE_DAMAGE_COMPONENT
+/// @enum(TYPE_DAMAGE_COMPONENT)
 typedef struct
 {
     float damage;

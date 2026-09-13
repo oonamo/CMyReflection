@@ -55,12 +55,13 @@ typedef enum
 
 typedef struct
 {
-    const char      *name;   /*!< Name of field */
-    FIELD_TYPE       type;   /*!< Type of field */
-    size_t           offset; /*!< Struct offset of field */
-    size_t           size;   /*!< sizeof type */
-    size_t           count;  /*!< Number of array elements in field */
-    FieldAccessFlags flags;  /*!< Access flags */
+    const char      *name;              /*!< Name of field */
+    FIELD_TYPE       type;              /*!< Type of field */
+    size_t           offset;            /*!< Struct offset of field */
+    size_t           size;              /*!< sizeof type */
+    size_t           count;             /*!< Number of array elements in field */
+    FieldAccessFlags flags;             /*!< Access flags */
+    const char      *length_field_name; /*!< Associated field length string */
 } FieldInfo;
 
 typedef struct
