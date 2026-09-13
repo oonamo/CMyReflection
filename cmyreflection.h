@@ -113,6 +113,15 @@ typedef struct
 ReflectResult get_struct_metadata(FIELD_TYPE type, StructMetaData *out_meta);
 
 /**
+ * @brief Resolves the base type of a pointer or array enum.
+ *
+ * @param type [in] The pointer type (e.g., TYPE_POST_PTR)
+ * @return The underlying value type (e.g., TYPE_STRUCT_POST), or the original type if not a
+ * pointer.
+ */
+FIELD_TYPE get_base_type(FIELD_TYPE tyoe);
+
+/**
  * @brief Get's the enum's metadata
  *
  * @note Implemented in python generation script

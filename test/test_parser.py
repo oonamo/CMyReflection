@@ -318,3 +318,65 @@ def test_parser_fails_on_invalid_length_field():
     with pytest.raises(ValueError, match=re.escape(expected_err)):
         generate_reflection(ref, "test.h", c_code)
         ref.resolve()
+
+
+def test_parser_generates_correct_basetype(tmp_path: Path):
+    c_code = """
+    /// @reflect
+    typedef struct
+    {
+        void* data;
+    } super;
+
+    /// @reflect
+    typedef struct
+    {
+        a* aptr;
+
+        size_t blen;
+        b* dyn_arr; /// @length(blen)
+
+        char* str;
+
+        super* sptr;
+
+        char buf[32];
+
+        b** b_ref_ptr;
+
+        unsigned int** x;
+    } t;
+    """
+
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    mock_header = src_dir / "test_enum.h"
+
+    mock_header.write_text(c_code)
+
+    out_file = tmp_path / "generated.h"
+
+    script_path = Path(__file__).parent.parent / "cmy_reflector.py"
+
+    result = subprocess.run(
+        ["python3", str(script_path), str(src_dir), "-o", str(out_file)],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, f"Script failed: {result.stderr}"
+    assert out_file.exists(), "Output file was not generated"
+
+    generated_content = out_file.read_text()
+
+    assert "case TYPE_A_PTR: return TYPE_A" in generated_content
+    assert "case TYPE_B_PTR_PTR: return TYPE_B_PTR" in generated_content
+    assert "case TYPE_B_PTR: return TYPE_B" in generated_content
+    assert "case TYPE_CHAR_PTR: return TYPE_CHAR" in generated_content
+    assert "case TYPE_CHAR_ARR: return TYPE_CHAR" in generated_content
+    assert (
+        "case TYPE_UNSIGNEDINT_PTR_PTR: return TYPE_UNSIGNEDINT_PTR"
+        in generated_content
+    )
+    assert "case TYPE_UNSIGNEDINT_PTR: return TYPE_UNSIGNEDINT" in generated_content
+    assert "case TYPE_SUPER_PTR: return TYPE_STRUCT_SUPER" in generated_content

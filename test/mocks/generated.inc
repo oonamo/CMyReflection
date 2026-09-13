@@ -9,8 +9,9 @@
 #define CMYREFLECTION_AUTOGEN_H
 #define CMYREFLECTION_REGISTRY
 typedef enum {
+    TYPE_CHAR,
     TYPE_CHAR_ARR,
-    TYPE_CONSTSTR,
+    TYPE_CHAR_PTR,
     TYPE_DAMAGE_COMPONENT,
     TYPE_ENUM_BALLSIZE,
     TYPE_ENUM_DEVICESTATE,
@@ -21,7 +22,6 @@ typedef enum {
     TYPE_IOTDEVICE_ARR,
     TYPE_LONGLONG,
     TYPE_SIZE_T,
-    TYPE_STR,
     TYPE_STRUCT_BALL,
     TYPE_STRUCT_DEVICEMANAGER,
     TYPE_STRUCT_GAME,
@@ -88,12 +88,6 @@ static inline bool is_valid_DeviceState(DeviceState value) {
 
 
 // ManagerPermissions is unchecked
-DEFINE_FIELD_SETTER(str, TYPE_STR, char *)
-DEFINE_FIELD_GETTER(str, TYPE_STR, char *)
-
-DEFINE_FIELD_SETTER(conststr, TYPE_CONSTSTR, const char *)
-DEFINE_FIELD_GETTER(conststr, TYPE_CONSTSTR, const char *)
-
 DEFINE_ENUM_SETTER(BallSize, TYPE_ENUM_BALLSIZE, BallSize, is_valid_BallSize)
 DEFINE_FIELD_GETTER(BallSize, TYPE_ENUM_BALLSIZE, BallSize)
 
@@ -129,6 +123,12 @@ DEFINE_FIELD_GETTER(float, TYPE_FLOAT, float)
 
 DEFINE_FIELD_SETTER(int, TYPE_INT, int)
 DEFINE_FIELD_GETTER(int, TYPE_INT, int)
+
+DEFINE_FIELD_SETTER(str, TYPE_CHAR_PTR, char   *)
+DEFINE_FIELD_GETTER(str, TYPE_CHAR_PTR, char   *)
+
+DEFINE_FIELD_SETTER(char, TYPE_CHAR, char)
+DEFINE_FIELD_GETTER(char, TYPE_CHAR, char)
 
 DEFINE_FIELD_SETTER(u8, TYPE_UINT8_T, uint8_t)
 DEFINE_FIELD_GETTER(u8, TYPE_UINT8_T, uint8_t)
@@ -196,7 +196,7 @@ const FieldInfo Game_Metadata[] = {
     { "ball", TYPE_STRUCT_BALL, offsetof(Game, ball), sizeof(Ball), 1, FIELD_ACCESS_RW, NULL },
     { "health", TYPE_FLOAT, offsetof(Game, health), sizeof(float), 1, FIELD_ACCESS_RW, NULL },
     { "level", TYPE_INT, offsetof(Game, level), sizeof(int), 1, FIELD_ACCESS_RW, NULL },
-    { "player_name", TYPE_STR, offsetof(Game, player_name), sizeof(char   *), 1, FIELD_ACCESS_RW, NULL },
+    { "player_name", TYPE_CHAR_PTR, offsetof(Game, player_name), sizeof(char   *), 1, FIELD_ACCESS_RW, NULL },
     { "damage", TYPE_DAMAGE_COMPONENT, offsetof(Game, damage), sizeof(DamageComponent), 1, FIELD_ACCESS_RW, NULL },
     { "game_flags", TYPE_UINT8_T, offsetof(Game, game_flags), sizeof(uint8_t), 1, FIELD_ACCESS_READ, NULL },
     { "hash", TYPE_UINT32_T, offsetof(Game, hash), sizeof(uint32_t), 1, FIELD_ACCESS_WRITE, NULL },
@@ -324,8 +324,6 @@ ReflectResult get_enum_metadata(FieldType type, EnumMetaData* out_meta) {
 ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void* value, size_t element_count) {
     if (!instance || !field || !value) return false;
     switch(field->type) {
-      case TYPE_STR: return set_field_str(instance, field, *(char **)value);
-      case TYPE_CONSTSTR: return set_field_conststr(instance, field, *(const char **)value);
       case TYPE_ENUM_BALLSIZE: return set_field_BallSize(instance, field, *(BallSize*)value);
       case TYPE_VEC2: return set_field_Vector2(instance, field, *(Vector2*)value);
       case TYPE_STRUCT_BALL: return set_field_Ball(instance, field, *(Ball*)value);
@@ -338,6 +336,8 @@ ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void*
       case TYPE_DAMAGE_COMPONENT: return set_field_DamageComponent(instance, field, *(DamageComponent*)value);
       case TYPE_FLOAT: return set_field_float(instance, field, *(float*)value);
       case TYPE_INT: return set_field_int(instance, field, *(int*)value);
+      case TYPE_CHAR_PTR: return set_field_str(instance, field, *(char   **)value);
+      case TYPE_CHAR: return set_field_char(instance, field, *(char*)value);
       case TYPE_UINT8_T: return set_field_u8(instance, field, *(uint8_t*)value);
       case TYPE_UINT32_T: return set_field_u32(instance, field, *(uint32_t*)value);
       case TYPE_UNSIGNEDCHAR: return set_field_unsignedchar(instance, field, *(unsigned char*)value);
@@ -358,8 +358,9 @@ ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void*
 // --- Auto-Generated enum->name converter
 const char* get_name_of_type(FieldType type) {
     switch(type) {
+     case TYPE_CHAR: return "TYPE_CHAR";
      case TYPE_CHAR_ARR: return "TYPE_CHAR_ARR";
-     case TYPE_CONSTSTR: return "TYPE_CONSTSTR";
+     case TYPE_CHAR_PTR: return "TYPE_CHAR_PTR";
      case TYPE_DAMAGE_COMPONENT: return "TYPE_DAMAGE_COMPONENT";
      case TYPE_ENUM_BALLSIZE: return "TYPE_ENUM_BALLSIZE";
      case TYPE_ENUM_DEVICESTATE: return "TYPE_ENUM_DEVICESTATE";
@@ -370,7 +371,6 @@ const char* get_name_of_type(FieldType type) {
      case TYPE_IOTDEVICE_ARR: return "TYPE_IOTDEVICE_ARR";
      case TYPE_LONGLONG: return "TYPE_LONGLONG";
      case TYPE_SIZE_T: return "TYPE_SIZE_T";
-     case TYPE_STR: return "TYPE_STR";
      case TYPE_STRUCT_BALL: return "TYPE_STRUCT_BALL";
      case TYPE_STRUCT_DEVICEMANAGER: return "TYPE_STRUCT_DEVICEMANAGER";
      case TYPE_STRUCT_GAME: return "TYPE_STRUCT_GAME";
@@ -388,6 +388,20 @@ const char* get_name_of_type(FieldType type) {
      case TYPE_VECTOR2_PTR: return "TYPE_VECTOR2_PTR";
         default: return NULL;
     };
+}
+
+FieldType get_base_type(FieldType type) {
+    switch(type) {
+      case TYPE_CHAR_PTR: return TYPE_CHAR;
+      case TYPE_UINT8_T_ARR: return TYPE_UINT8_T;
+      case TYPE_UNSIGNEDCHAR_ARR: return TYPE_UNSIGNEDCHAR;
+      case TYPE_FLOAT_ARR: return TYPE_FLOAT;
+      case TYPE_VECTOR2_PTR: return TYPE_VEC2;
+      case TYPE_VECTOR2_ARR: return TYPE_VEC2;
+      case TYPE_CHAR_ARR: return TYPE_CHAR;
+      case TYPE_IOTDEVICE_ARR: return TYPE_STRUCT_IOTDEVICE;
+        default: return type;
+    }
 }
 
 #endif // REFLECTION_IMPLEMENTATION

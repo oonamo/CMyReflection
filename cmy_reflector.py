@@ -163,8 +163,6 @@ class Reflector:
         self.structs = structs if structs is not None else {}
         self.enums = enums if enums is not None else {}
         self.type_map = {
-            "char*": "TYPE_STR",
-            "constchar*": "TYPE_CONSTSTR",
             "unknown": "TYPE_UNKNOWN",
         }
         self.type_aliases = {
@@ -183,6 +181,7 @@ class Reflector:
             "unsignedint": "unsigned int",
             "longlong": "long long",
         }
+        self.base_types = {}
 
     def add_cstruct(self, struct: CStruct) -> bool:
         """Adds a CStruct if unique"""
@@ -220,6 +219,37 @@ class Reflector:
                         self.ctypes[field.normalized_type_name] = field.type_name
 
                 field.type_enum = mapped_enum
+
+                curr_norm = field.normalized_type_name
+                curr_ctype = field.type_name
+
+                while True:
+                    if curr_norm.endswith("_arr"):
+                        parent_norm = curr_norm[:-4]
+                        parent_ctype = (
+                            curr_ctype.rsplit("[", 1)[0].strip()
+                            if "[" in curr_ctype
+                            else curr_ctype
+                        )
+                    elif "*" in curr_norm:
+                        idx = curr_norm.rfind("*")
+                        parent_norm = curr_norm[:idx] + curr_norm[idx + 1 :]
+                        c_idx = curr_ctype.rfind("*")
+                        parent_ctype = (
+                            (curr_ctype[:c_idx] + curr_ctype[c_idx + 1 :]).strip()
+                            if c_idx != -1
+                            else curr_ctype
+                        )
+                    else:
+                        break
+
+                    if parent_norm and parent_norm not in self.type_map:
+                        safe_base_name = parent_norm.upper().replace("*", "_PTR")
+                        self.type_map[parent_norm] = f"TYPE_{safe_base_name}"
+                        self.ctypes[parent_norm] = parent_ctype
+
+                    curr_norm = parent_norm
+                    curr_ctype = parent_ctype
 
                 if field.length_field and field.length_field not in valid_field_names:
                     raise ValueError(
@@ -306,6 +336,8 @@ class Reflector:
         lines.append(self.generate_generic_type_setter())
 
         lines.append(self.generate_type_name_converter())
+
+        lines.append(self.generate_basetype_caster())
 
         lines.append("#endif // REFLECTION_IMPLEMENTATION")
 
@@ -472,6 +504,39 @@ ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void*
     switch(field->type) {{
 {switch_body}
         default: return REFLECT_ERR_TYPE_INVALID;
+    }}
+}}
+"""
+        return template
+
+    def generate_basetype_caster(self) -> str:
+        switch_cases = []
+
+        for type_name, type_enum in self.type_map.items():
+            if type_name == "unknown":
+                continue
+
+            parent_norm = None
+            if type_name.endswith("_arr"):
+                parent_norm = type_name[:-4]
+            elif "*" in type_name:
+                idx = type_name.rfind("*")
+                parent_norm = type_name[:idx] + type_name[idx + 1 :]
+
+            if parent_norm:
+                parent_enum = self.type_map.get(parent_norm)
+                if parent_enum and parent_enum != type_enum:
+                    switch_cases.append(
+                        f"      case {type_enum}: return {parent_enum};"
+                    )
+
+        switch_body = "\n".join(switch_cases)
+
+        template = f"""\
+FieldType get_base_type(FieldType type) {{
+    switch(type) {{
+{switch_body}
+        default: return type;
     }}
 }}
 """

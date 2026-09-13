@@ -10,13 +10,12 @@
 #define CMYREFLECTION_REGISTRY
 typedef enum {
     TYPE_BOOL,
+    TYPE_CHAR,
     TYPE_CHAR_ARR,
-    TYPE_CONSTSTR,
     TYPE_ENUM_ACCOUNTSTATE,
     TYPE_ENUM_PERMISSIONS,
     TYPE_POST_PTR,
     TYPE_SIZE_T,
-    TYPE_STR,
     TYPE_STRUCT_POST,
     TYPE_STRUCT_USER,
     TYPE_STRUCT_USERPREFERNCES,
@@ -53,12 +52,6 @@ static inline bool is_valid_AccountState(AccountState value) {
     }
 }
 
-DEFINE_FIELD_SETTER(str, TYPE_STR, char *)
-DEFINE_FIELD_GETTER(str, TYPE_STR, char *)
-
-DEFINE_FIELD_SETTER(conststr, TYPE_CONSTSTR, const char *)
-DEFINE_FIELD_GETTER(conststr, TYPE_CONSTSTR, const char *)
-
 DEFINE_FIELD_SETTER(Permissions, TYPE_ENUM_PERMISSIONS, Permissions)
 DEFINE_FIELD_GETTER(Permissions, TYPE_ENUM_PERMISSIONS, Permissions)
 
@@ -76,6 +69,9 @@ DEFINE_FIELD_GETTER(User, TYPE_STRUCT_USER, User)
 
 DEFINE_ARRAY_SETTER(char_arr, TYPE_CHAR_ARR, char *, char)
 DEFINE_ARRAY_GETTER(char_arr, TYPE_CHAR_ARR, char *, char)
+
+DEFINE_FIELD_SETTER(char, TYPE_CHAR, char)
+DEFINE_FIELD_GETTER(char, TYPE_CHAR, char)
 
 DEFINE_FIELD_SETTER(u32, TYPE_UINT32_T, uint32_t)
 DEFINE_FIELD_GETTER(u32, TYPE_UINT32_T, uint32_t)
@@ -181,14 +177,13 @@ ReflectResult get_enum_metadata(FieldType type, EnumMetaData* out_meta) {
 ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void* value, size_t element_count) {
     if (!instance || !field || !value) return false;
     switch(field->type) {
-      case TYPE_STR: return set_field_str(instance, field, *(char **)value);
-      case TYPE_CONSTSTR: return set_field_conststr(instance, field, *(const char **)value);
       case TYPE_ENUM_PERMISSIONS: return set_field_Permissions(instance, field, *(Permissions*)value);
       case TYPE_ENUM_ACCOUNTSTATE: return set_field_AccountState(instance, field, *(AccountState*)value);
       case TYPE_STRUCT_POST: return set_field_Post(instance, field, *(Post*)value);
       case TYPE_STRUCT_USERPREFERNCES: return set_field_UserPrefernces(instance, field, *(UserPrefernces*)value);
       case TYPE_STRUCT_USER: return set_field_User(instance, field, *(User*)value);
       case TYPE_CHAR_ARR: return set_field_char_arr(instance, field, (char*)value, element_count);
+      case TYPE_CHAR: return set_field_char(instance, field, *(char*)value);
       case TYPE_UINT32_T: return set_field_u32(instance, field, *(uint32_t*)value);
       case TYPE_BOOL: return set_field_bool(instance, field, *(bool*)value);
       case TYPE_UINT64_T: return set_field_uint64_t(instance, field, *(uint64_t*)value);
@@ -202,13 +197,12 @@ ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void*
 const char* get_name_of_type(FieldType type) {
     switch(type) {
      case TYPE_BOOL: return "TYPE_BOOL";
+     case TYPE_CHAR: return "TYPE_CHAR";
      case TYPE_CHAR_ARR: return "TYPE_CHAR_ARR";
-     case TYPE_CONSTSTR: return "TYPE_CONSTSTR";
      case TYPE_ENUM_ACCOUNTSTATE: return "TYPE_ENUM_ACCOUNTSTATE";
      case TYPE_ENUM_PERMISSIONS: return "TYPE_ENUM_PERMISSIONS";
      case TYPE_POST_PTR: return "TYPE_POST_PTR";
      case TYPE_SIZE_T: return "TYPE_SIZE_T";
-     case TYPE_STR: return "TYPE_STR";
      case TYPE_STRUCT_POST: return "TYPE_STRUCT_POST";
      case TYPE_STRUCT_USER: return "TYPE_STRUCT_USER";
      case TYPE_STRUCT_USERPREFERNCES: return "TYPE_STRUCT_USERPREFERNCES";
@@ -217,6 +211,14 @@ const char* get_name_of_type(FieldType type) {
      case TYPE_UNKNOWN: return "TYPE_UNKNOWN";
         default: return NULL;
     };
+}
+
+FieldType get_base_type(FieldType type) {
+    switch(type) {
+      case TYPE_CHAR_ARR: return TYPE_CHAR;
+      case TYPE_POST_PTR: return TYPE_STRUCT_POST;
+        default: return type;
+    }
 }
 
 #endif // REFLECTION_IMPLEMENTATION

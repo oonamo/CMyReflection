@@ -92,16 +92,14 @@ void json_account_serializer(const void *base_instance, const FieldInfo *field, 
         const void *data_ptr = base_instance ? ((const char *)base_instance + field->offset) : NULL;
         if (data_ptr == NULL)
         {
-            // printf("\"%s\"", get_name_of_type(field->type));
+            const char *base_type = get_name_of_type(get_base_type(field->type));
             if (field->length_field_name != NULL)
             {
-                printf("[\"%s (dynamic: %s)\"]",
-                       get_name_of_type(field->type),
-                       field->length_field_name);
+                printf("[\"%s (dynamic: %s)\"]", base_type, field->length_field_name);
             }
             else if (field->count > 1)
             {
-                printf("\"%s (max: %zu)\"", get_name_of_type(field->type), field->count);
+                printf("\"%s (max: %zu)\"", base_type, field->count);
             }
             else
             {
