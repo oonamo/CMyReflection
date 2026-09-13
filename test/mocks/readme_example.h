@@ -44,7 +44,10 @@ typedef enum
 typedef struct
 {
     unsigned char      op_mode;
+
+    /// @readonly
     ManagerPermissions permissions;
+
     char               device_location[MAX_BUF_LEN];
     IoTDevice          devices[8];
 } DeviceManager;
