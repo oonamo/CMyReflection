@@ -5,6 +5,30 @@ def print_specifier(type: str) -> str:
     return f'"%" PRI{type}'
 
 
+printer = cmy_reflector.Plugin(
+    name="Printer",
+    version="0.0.0",
+    maintainers=["oonamo"],
+    description="Provides run time type printing (enums unsupprted)",
+    includes=["<stdio.h>", "<stdlib.h>", "<inttypes.h>"],
+    macros=["#define CMY_PLUGIN_PRINTER_ENABLED 1"],
+)
+
+
+@printer.setup
+def setup(reflector):
+    reflector.register_extension(
+        "format", "const char*", requires="CMY_PLUGIN_PRINTER_ENABLED"
+    )
+
+    return "// I generated this plugin!"
+
+
+@printer.field_tag("format")
+def handle_field_format(struct, field, tag_value):
+    field.plugin_data["format"] = tag_value
+
+
 _PRIMITIVE_FORMATS = {
     "int": '"%d"',
     "float": '"%f"',
@@ -24,26 +48,7 @@ _PRIMITIVE_FORMATS = {
 }
 
 
-@cmy_reflector.register_plugin(
-    name="Printer",
-    version="0.0.0",
-    maintainers=["oonamo"],
-    description="Provides run time print_field routers, and @format() tag",
-    includes=["<stdio.h>", "<stdlib.h>", "<inttypes.h>"],
-    macros=["#define CMY_PLUGIN_PRINTER_ENABLED 1"],
-)
-def register_format_plugin(reflector):
-    reflector.register_extension(
-        "format", "const char*", requires="CMY_PLUGIN_PRINTER_ENABLED"
-    )
-
-
-@cmy_reflector.register_field_tag("format")
-def handle_field_format(struct, field, tag_value):
-    field.plugin_data["format"] = tag_value
-
-
-@cmy_reflector.register_type_mapper(
+@printer.type_mapper(
     signature="ReflectResult print_field(const void* instance, const FieldInfo* field)",
     switch_var="field->type",
     default_case="return REFLECT_ERR_TYPE_MISMATCH;",
@@ -113,3 +118,6 @@ static inline ReflectResult print_field_{suffix}(const void* instance, const Fie
 """
         case_code = f"return print_field_{suffix}(instance, field);"
         return (func_def, case_code)
+
+
+cmy_reflector.add_plugin(printer)

@@ -40,6 +40,7 @@ typedef enum {
 } FieldType;
 
 #include <cmyreflection.h>
+
 // No plugins active
 // No plugins
 // --- Metadata Declarations

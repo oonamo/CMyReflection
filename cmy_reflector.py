@@ -5,7 +5,17 @@ import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Callable
+
+
+@dataclass
+class TypeMapper:
+    func: Callable
+    signature: str
+    switch_var: str
+    default_case: str
+    requires: str | None = None
 
 
 @dataclass
@@ -19,25 +29,109 @@ class Plugin:
     macros: list[str] = dataclasses.field(default_factory=list)
     depends_on: list[str] = dataclasses.field(default_factory=list)
 
-    setup_hook: Callable[[Any], None] = None
+    _setup_hook: Callable[[Any], None] = dataclasses.field(default=None, init=False)
+    _field_tags: dict = dataclasses.field(default_factory=dict, init=False)
+    _type_tags: dict = dataclasses.field(default_factory=dict, init=False)
+    _enum_member_tags: dict = dataclasses.field(default_factory=dict, init=False)
+    _type_mappers: list[TypeMapper] = dataclasses.field(
+        default_factory=list, init=False
+    )
+    _code_emitters: list[Callable] = dataclasses.field(default_factory=list, init=False)
 
+    @property
+    def setup_hook(self) -> Callable:
+        return self._setup_hook
 
-@dataclass
-class TypeMapping:
-    signature: str
-    switch_var: str
-    default_case: str = "break;"
-    requires: str | None = None
+    @property
+    def field_tags(self) -> dict:
+        return MappingProxyType(self._field_tags)
+
+    @property
+    def enum_member_tags(self) -> dict:
+        return MappingProxyType(self._enum_member_tags)
+
+    @property
+    def type_tags(self) -> dict:
+        return MappingProxyType(self._type_tags)
+
+    @property
+    def type_mappers(self) -> tuple:
+        return tuple(self._type_mappers)
+
+    @property
+    def code_emitters(self) -> tuple:
+        return tuple(self._code_emitters)
+
+    def setup(self, func):
+        """Decorator to register the plugin setup"""
+        self._setup_hook = func
+        return func
+
+    def emit_code(self, func):
+        """Decorator for functions that return raw C code strings."""
+        self._code_emitters.append(func)
+        return func
+
+    def field_tag(self, tag_name: str):
+        """Decorator to register a field tag"""
+
+        def decorator(func):
+            self._field_tags[tag_name] = func
+            self.description += f"\n *    - Provides tag: @{tag_name} (Struct Fields)"
+            return func
+
+        return decorator
+
+    def enum_member_tag(self, tag_name: str):
+        """Decorator for tags applied to enum members."""
+
+        def decorator(func):
+            self._enum_member_tags[tag_name] = func
+            self.description += f"\n *    - Provides tag: @{tag_name} (Enum Members)"
+            return func
+
+        return decorator
+
+    def type_tag(self, tag_name: str):
+        """Decorator for tags applied to enum members."""
+
+        def decorator(func):
+            self._type_tags[tag_name] = func
+            self.description += f"\n *    - Provides tag: @{tag_name} (Types)"
+            return func
+
+        return decorator
+
+    def type_mapper(
+        self,
+        signature: str,
+        switch_var: str,
+        default_case: str = "break;",
+        requires=None,
+    ):
+        def decorator(func):
+            mapper = TypeMapper(
+                func=func,
+                signature=signature,
+                switch_var=switch_var,
+                default_case=default_case,
+                requires=requires,
+            )
+            self._type_mappers.append(mapper)
+
+            # TODO: Maybe cutoff actual signature?
+            func_name = signature
+            self.description += f"\n *    - Provides router: {func_name}"
+            return func
+
+        return decorator
 
 
 _PLUGINS: list[Plugin] = []
-_GENERATOR_HOOKS = []
-_EXTENSION_HOOKS = []
-_FIELD_TAG_HANDLERS = {}
-_MEMBER_TAG_HANDLERS = {}
-_TYPE_TAG_HANDLERS = {}
-# _TYPE_MAPPERS: list[TypeMapping] = []
-_TYPE_MAPPERS = []
+
+
+def add_plugin(plugin: Plugin):
+    _PLUGINS.append(plugin)
 
 
 def register_plugin(
@@ -49,6 +143,8 @@ def register_plugin(
     macros=None,
     depends_on=None,
 ):
+    """Registers a plugin"""
+
     def decorator(func):
         plugin = Plugin(
             name,
@@ -336,6 +432,44 @@ class Reflector:
         self.base_types = {}
 
         self.extensions_fields = {}
+        self.active_field_tags = {}
+        self.active_enum_member_tags = {}
+        self.active_type_tags = {}
+        self.active_type_mappers = []
+
+    def load_plugins(self):
+        active_plugin_names = {p.name for p in _PLUGINS}
+
+        for p in _PLUGINS:
+            for dep in p.depends_on:
+                if dep not in active_plugin_names:
+                    raise RuntimeError(f"'{p.name}' requires '{dep}'")
+
+            if p.setup_hook:
+                p.setup_hook(self)
+
+            for tag_name, handler in p.field_tags.items():
+                if tag_name in self.active_field_tags:
+                    raise ValueError(
+                        f"Tag collision: '@{tag_name}' (Struct Fields) is defined multiple times."
+                    )
+                self.active_field_tags[tag_name] = handler
+
+            for tag_name, handler in p.enum_member_tags.items():
+                if tag_name in self.active_enum_member_tags:
+                    raise ValueError(
+                        f"Tag collision: '@{tag_name}' (Enum Member) is defined multiple times."
+                    )
+                self.active_enum_member_tags[tag_name] = handler
+
+            for tag_name, handler in p.type_tags.items():
+                if tag_name in self.active_type_tags:
+                    raise ValueError(
+                        f"Tag collision: '@{tag_name}' (Type) is defined multiple times."
+                    )
+                self.active_type_tags[tag_name] = handler
+
+            self.active_type_mappers.extend(p.type_mappers)
 
     def register_extension(self, name: str, ctype: str, requires: str = None):
         self.extensions_fields[name] = (ctype, requires)
@@ -730,7 +864,7 @@ FieldType get_base_type(FieldType type) {{
             includes.update(p.includes)
             macros.extend(p.macros)
 
-        lines.append(" */")
+        lines.append(" */\n")
 
         for inc in sorted(includes):
             if not inc.startswith("<") and not inc.startwith('"'):
@@ -746,25 +880,14 @@ FieldType get_base_type(FieldType type) {{
     def generate_plugin_extensions(self) -> str:
         extension_lines = ["// --- Plugin-Generated-Extensions ---"]
 
-        active_plugin_names = {p.name for p in _PLUGINS}
-
         for p in _PLUGINS:
-            for dep in p.depends_on:
-                if dep not in active_plugin_names:
-                    raise RuntimeError(
-                        f"Plugin Validation Error: '{p['name']}' requires '{dep}', but '{dep}' is not loaded"
-                    )
-        for p in _PLUGINS:
-            if p.setup_hook:
-                p.setup_hook(self)
+            for emitter in p.code_emitters:
+                snippet = emitter(self)
+                if snippet:
+                    extension_lines.append(snippet)
 
-        for hook in _GENERATOR_HOOKS:
-            snippet = hook(self)
-            if snippet:
-                extension_lines.append(snippet)
-
-        for mapper in _TYPE_MAPPERS:
-            hook_func = mapper["func"]
+        for mapper in self.active_type_mappers:
+            hook_func = mapper.func
 
             standalone_funcs = []
             switch_cases = []
@@ -784,36 +907,40 @@ FieldType get_base_type(FieldType type) {{
             if switch_cases:
                 switch_body = "\n".join(switch_cases)
                 router = f"""\
-static inline {mapper["signature"]} {{
-    switch({mapper['switch_var']}) {{
+static inline {mapper.signature} {{
+    switch({mapper.switch_var}) {{
 {switch_body}
-        default: {mapper['default']}
+        default: {mapper.default_case}
     }}
 }}
 """
+                if mapper.requires:
+                    extension_lines.append(f"#ifdef {mapper.requires}")
                 extension_lines.extend(standalone_funcs)
                 extension_lines.append(router)
+                if mapper.requires:
+                    extension_lines.append(f"#endif // {mapper.requires}")
 
         # TODO: Flatten for loops
         for struct in self.structs.values():
             for tag_name, tag_value in struct.tags.items():
-                if tag_name in _TYPE_TAG_HANDLERS:
-                    snippet = _TYPE_TAG_HANDLERS[tag_name](struct, tag_value)
+                if tag_name in self.active_type_tags:
+                    snippet = self.active_type_tags[tag_name](struct, tag_value)
                     if snippet:
                         extension_lines.append(snippet)
 
         for enum in self.enums.values():
             for tag_name, tag_value in enum.tags.items():
-                if tag_name in _TYPE_TAG_HANDLERS:
-                    snippet = _TYPE_TAG_HANDLERS[tag_name](enum, tag_value)
+                if tag_name in self.active_type_tags:
+                    snippet = self.active_type_tags[tag_name](enum, tag_value)
                     if snippet:
                         extension_lines.append(snippet)
 
         for struct in self.structs.values():
             for field in struct.fields:
                 for tag_name, tag_value in field.tags.items():
-                    if tag_name in _FIELD_TAG_HANDLERS:
-                        snippet = _FIELD_TAG_HANDLERS[tag_name](
+                    if tag_name in self.active_field_tags:
+                        snippet = self.active_field_tags[tag_name](
                             struct, field, tag_value
                         )
                         if snippet:
@@ -822,8 +949,8 @@ static inline {mapper["signature"]} {{
         for enum in self.enums.values():
             for member in enum.members:
                 for tag_name, tag_value in member.tags.items():
-                    if tag_name in _MEMBER_TAG_HANDLERS:
-                        snippet = _MEMBER_TAG_HANDLERS[tag_name](
+                    if tag_name in self.active_type_mappers:
+                        snippet = self.active_type_mappers[tag_name](
                             enum, member, tag_value
                         )
                         if snippet:
@@ -832,6 +959,7 @@ static inline {mapper["signature"]} {{
         return "\n\n".join(extension_lines)
 
     def __str__(self):
+        self.load_plugins()
         plugin_code = self.generate_plugin_extensions()
 
         ext_struct_code = self.generate_extension_struct()
@@ -843,6 +971,7 @@ static inline {mapper["signature"]} {{
             "#define CMYREFLECTION_REGISTRY",
             self.generate_types(),
             "#include <cmyreflection.h>",
+            "",
             self.generate_plugin_headers(),
             ext_struct_code,
             self.generate_declarations(),

@@ -25,10 +25,14 @@ typedef enum {
 } FieldType;
 
 #include <cmyreflection.h>
+
 /*
  * CMyReflection Active Plugins
- *  -> Printer (v0.0.0) by oonamo - Provides run time print_field routers, and @format() tag
+ *  -> Printer (v0.0.0) by oonamo - Provides run time type printing (enums unsupprted)
+ *    - Provides tag: @format (Struct Fields)
+ *    - Provides router: ReflectResult print_field(const void* instance, const FieldInfo* field)
  */
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -108,6 +112,8 @@ DEFINE_DYNAMIC_ARRAY_SETTER(User_posts, TYPE_POST_PTR, Post *, Post, TYPE_STRUCT
 DEFINE_DYNAMIC_ARRAY_GETTER(User_posts, TYPE_POST_PTR, Post *, Post)
 
 // --- Plugin-Generated-Extensions ---
+
+#ifdef CMY_PLUGIN_PRINTER_ENABLED
 
 static inline ReflectResult print_field_char_arr(const void* instance, const FieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
@@ -223,6 +229,8 @@ static inline ReflectResult print_field(const void* instance, const FieldInfo* f
     }
 }
 
+
+#endif // CMY_PLUGIN_PRINTER_ENABLED
 
 #endif // CMYREFLECTION_AUTOGEN_H
 // --- Metadata Definitions
