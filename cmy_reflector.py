@@ -1,15 +1,70 @@
 import argparse
+import dataclasses
 import importlib.util
 import re
 import sys
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Callable
 
+
+@dataclass
+class Plugin:
+    name: str
+    version: str = "1.0.0"
+    description: str = ""
+
+    maintainers: list[str] = dataclasses.field(default_factory=list)
+    includes: list[str] = dataclasses.field(default_factory=list)
+    macros: list[str] = dataclasses.field(default_factory=list)
+    depends_on: list[str] = dataclasses.field(default_factory=list)
+
+    setup_hook: Callable[[Any], None] = None
+
+
+@dataclass
+class TypeMapping:
+    signature: str
+    switch_var: str
+    default_case: str = "break;"
+    requires: str | None = None
+
+
+_PLUGINS: list[Plugin] = []
 _GENERATOR_HOOKS = []
 _EXTENSION_HOOKS = []
 _FIELD_TAG_HANDLERS = {}
 _MEMBER_TAG_HANDLERS = {}
 _TYPE_TAG_HANDLERS = {}
+# _TYPE_MAPPERS: list[TypeMapping] = []
 _TYPE_MAPPERS = []
+
+
+def register_plugin(
+    name,
+    version="1.0.0",
+    maintainers=None,
+    description="",
+    includes=None,
+    macros=None,
+    depends_on=None,
+):
+    def decorator(func):
+        plugin = Plugin(
+            name,
+            version,
+            description,
+            maintainers or [],
+            includes or [],
+            macros or [],
+            depends_on or [],
+            func,
+        )
+        _PLUGINS.append(plugin)
+        _GENERATOR_HOOKS.append(func)
+        return func
+
+    return decorator
 
 
 def register_generator_hook(func):
@@ -18,7 +73,9 @@ def register_generator_hook(func):
     return func
 
 
-def register_type_mapper(signature: str, switch_var: str, default_case: str = "break;"):
+def register_type_mapper(
+    signature: str, switch_var: str, default_case: str = "break;", requires=None
+):
     """Registers a hook that executes per-type to build a generic switch statement."""
 
     def decorator(func):
@@ -145,20 +202,23 @@ class CStruct:
 
         return "\n".join(lines)
 
-    def generate_definition(self) -> str:
+    def generate_definition(self, extensions: dict[str, (str, str | None)]) -> str:
         """Generates a definition for the struct metadata"""
         lines = []
 
         for field in self.fields:
             if field.plugin_data:
                 ext_var_name = f"ext_{self.struct_name}_{field.name}"
-                init_lines = []
+                lines.append(f"const FieldExtensions {ext_var_name} = {{")
 
                 for key, val in field.plugin_data.items():
-                    init_lines.append(f".{key} = {val}")
-                init_str = ", ".join(init_lines)
-                lines.append(f"const FieldExtensions {ext_var_name} = {{ {init_str} }};")
-
+                    _, req = extensions.get(key, (None, None))
+                    if req:
+                        lines.append(f"#ifdef {req}")
+                    lines.append(f".{key} = {val},")
+                    if req:
+                        lines.append(f"#endif // {req}")
+                lines.append("};")
                 field.user_data_expr = f"(void*)&{ext_var_name}"
             else:
                 field.user_data_expr = "NULL"
@@ -277,15 +337,19 @@ class Reflector:
 
         self.extensions_fields = {}
 
-    def register_extension(self, name: str, ctype: str):
-        self.extensions_fields[name] = ctype
+    def register_extension(self, name: str, ctype: str, requires: str = None):
+        self.extensions_fields[name] = (ctype, requires)
 
     def generate_extension_struct(self):
         if not self.extensions_fields:
             return "// No plugins"
         lines = ["typedef struct {"]
-        for name, c_type in self.extensions_fields.items():
+        for name, (c_type, req) in self.extensions_fields.items():
+            if req:
+                lines.append(f"#ifdef {req}")
             lines.append(f"     {c_type} {name};")
+            if req:
+                lines.append(f"#endif // {req}")
         lines.append("} FieldExtensions;")
         return "\n".join(lines)
 
@@ -423,7 +487,9 @@ class Reflector:
         for struct in self.structs.values():
             if struct.fname not in files:
                 files[struct.fname] = []
-            files[struct.fname].append(struct.generate_definition())
+            files[struct.fname].append(
+                struct.generate_definition(self.extensions_fields)
+            )
 
         for enum in self.enums.values():
             if enum.fname not in files:
@@ -648,8 +714,49 @@ FieldType get_base_type(FieldType type) {{
 """
         return template
 
+    def generate_plugin_headers(self) -> str:
+        if not _PLUGINS:
+            return "// No plugins active"
+        lines = ["/*", " * CMyReflection Active Plugins"]
+
+        includes = set()
+        macros = []
+
+        for p in _PLUGINS:
+            m_str = f" by {', '.join(p.maintainers)}" if p.maintainers else ""
+            desc = f" - {p.description}" if p.description else ""
+            lines.append(f" *  -> {p.name} (v{p.version}){m_str}{desc}")
+
+            includes.update(p.includes)
+            macros.extend(p.macros)
+
+        lines.append(" */")
+
+        for inc in sorted(includes):
+            if not inc.startswith("<") and not inc.startwith('"'):
+                inc = f"<{inc}>"
+            lines.append(f"#include {inc}")
+
+        if macros:
+            lines.append("")
+            lines.extend(macros)
+
+        return "\n".join(lines)
+
     def generate_plugin_extensions(self) -> str:
         extension_lines = ["// --- Plugin-Generated-Extensions ---"]
+
+        active_plugin_names = {p.name for p in _PLUGINS}
+
+        for p in _PLUGINS:
+            for dep in p.depends_on:
+                if dep not in active_plugin_names:
+                    raise RuntimeError(
+                        f"Plugin Validation Error: '{p['name']}' requires '{dep}', but '{dep}' is not loaded"
+                    )
+        for p in _PLUGINS:
+            if p.setup_hook:
+                p.setup_hook(self)
 
         for hook in _GENERATOR_HOOKS:
             snippet = hook(self)
@@ -736,6 +843,7 @@ static inline {mapper["signature"]} {{
             "#define CMYREFLECTION_REGISTRY",
             self.generate_types(),
             "#include <cmyreflection.h>",
+            self.generate_plugin_headers(),
             ext_struct_code,
             self.generate_declarations(),
         ]

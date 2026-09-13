@@ -25,8 +25,19 @@ typedef enum {
 } FieldType;
 
 #include <cmyreflection.h>
+/*
+ * CMyReflection Active Plugins
+ *  -> Printer (v0.0.0) by oonamo - Provides run time print_field routers, and @format() tag
+ */
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define CMY_PLUGIN_PRINTER_ENABLED 1
 typedef struct {
+#ifdef CMY_PLUGIN_PRINTER_ENABLED
      const char* format;
+#endif // CMY_PLUGIN_PRINTER_ENABLED
 } FieldExtensions;
 // --- Metadata Declarations
 extern const FieldInfo Post_Metadata[];
@@ -98,8 +109,6 @@ DEFINE_DYNAMIC_ARRAY_GETTER(User_posts, TYPE_POST_PTR, Post *, Post)
 
 // --- Plugin-Generated-Extensions ---
 
-// Using print plugin v0.0.0
-
 static inline ReflectResult print_field_char_arr(const void* instance, const FieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
@@ -147,7 +156,7 @@ static inline ReflectResult print_field_u32(const void* instance, const FieldInf
     if (res != REFLECT_OK) { return res; }
 
     const FieldExtensions* ext = (const FieldExtensions*)field->user_data;
-    const char* fmt = (ext && ext->format) ? ext->format : "%u";
+    const char* fmt = (ext && ext->format) ? ext->format : "%" PRIu32;
 
     printf(fmt, v);
     return REFLECT_OK;
@@ -179,7 +188,7 @@ static inline ReflectResult print_field_u64(const void* instance, const FieldInf
     if (res != REFLECT_OK) { return res; }
 
     const FieldExtensions* ext = (const FieldExtensions*)field->user_data;
-    const char* fmt = (ext && ext->format) ? ext->format : "%llu";
+    const char* fmt = (ext && ext->format) ? ext->format : "%" PRIu64;
 
     printf(fmt, v);
     return REFLECT_OK;
@@ -232,8 +241,16 @@ const FieldInfo UserPrefernces_Metadata[] = {
 };
 const size_t UserPrefernces_FieldCount = sizeof(UserPrefernces_Metadata) / sizeof(FieldInfo);
 
-const FieldExtensions ext_User_username = { .format = "%s" };
-const FieldExtensions ext_User_email = { .format = "%s" };
+const FieldExtensions ext_User_username = {
+#ifdef CMY_PLUGIN_PRINTER_ENABLED
+.format = "%s",
+#endif // CMY_PLUGIN_PRINTER_ENABLED
+};
+const FieldExtensions ext_User_email = {
+#ifdef CMY_PLUGIN_PRINTER_ENABLED
+.format = "%s",
+#endif // CMY_PLUGIN_PRINTER_ENABLED
+};
 
 const FieldInfo User_Metadata[] = {
     { "username", TYPE_CHAR_ARR, offsetof(User, username), sizeof(char[32]), 32, FIELD_ACCESS_RW, NULL, (void*)&ext_User_username },
