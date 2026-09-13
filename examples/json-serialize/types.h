@@ -1,5 +1,6 @@
 #ifndef _TYPES_H
 #define _TYPES_H
+#include <stdbool.h>
 #include <stdint.h>
 
 #define MAX_TITLE_LEN 124
@@ -24,10 +25,16 @@ typedef enum
 /// @reflect
 typedef struct Post
 {
-    char         title[MAX_TITLE_LEN];
-    uint32_t     likes;
-    struct Post *references;
+    char     title[MAX_TITLE_LEN];
+    uint32_t likes;
 } Post;
+
+/// @reflect
+typedef struct
+{
+    char language[32];
+    bool prefers_dark;
+} UserPrefernces;
 
 #define PERMISSIONS_DEFAULT (PERM_CREATE | PERM_UPDATE)
 
@@ -43,13 +50,17 @@ typedef struct
     /// @writeonly
     char password_hash[64];
 
-    Permissions permissions;
-
+    Permissions  permissions;
     AccountState state;
+
+    UserPrefernces settings;
 
     /// @private
     void *active_session_ptr;
 
+    size_t post_count;
+
+    /// @length(post_count)
     Post *posts;
 } User;
 

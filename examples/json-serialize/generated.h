@@ -9,15 +9,17 @@
 #define CMYREFLECTION_AUTOGEN_H
 #define CMYREFLECTION_REGISTRY
 typedef enum {
+    TYPE_BOOL,
     TYPE_CHAR_ARR,
     TYPE_CONSTSTR,
     TYPE_ENUM_ACCOUNTSTATE,
     TYPE_ENUM_PERMISSIONS,
     TYPE_POST_PTR,
+    TYPE_SIZE_T,
     TYPE_STR,
-    TYPE_STRUCTPOST_PTR,
     TYPE_STRUCT_POST,
     TYPE_STRUCT_USER,
+    TYPE_STRUCT_USERPREFERNCES,
     TYPE_UINT32_T,
     TYPE_UINT64_T,
     TYPE_UNKNOWN,
@@ -27,6 +29,8 @@ typedef enum {
 // --- Metadata Declarations
 extern const FieldInfo Post_Metadata[];
 extern const size_t Post_FieldCount;
+extern const FieldInfo UserPrefernces_Metadata[];
+extern const size_t UserPrefernces_FieldCount;
 extern const FieldInfo User_Metadata[];
 extern const size_t User_FieldCount;
 extern const EnumMemberInfo Permissions_Members[];
@@ -64,6 +68,9 @@ DEFINE_FIELD_GETTER(AccountState, TYPE_ENUM_ACCOUNTSTATE, AccountState)
 DEFINE_FIELD_SETTER(Post, TYPE_STRUCT_POST, Post)
 DEFINE_FIELD_GETTER(Post, TYPE_STRUCT_POST, Post)
 
+DEFINE_FIELD_SETTER(UserPrefernces, TYPE_STRUCT_USERPREFERNCES, UserPrefernces)
+DEFINE_FIELD_GETTER(UserPrefernces, TYPE_STRUCT_USERPREFERNCES, UserPrefernces)
+
 DEFINE_FIELD_SETTER(User, TYPE_STRUCT_USER, User)
 DEFINE_FIELD_GETTER(User, TYPE_STRUCT_USER, User)
 
@@ -73,14 +80,20 @@ DEFINE_ARRAY_GETTER(char_arr, TYPE_CHAR_ARR, char *, char)
 DEFINE_FIELD_SETTER(u32, TYPE_UINT32_T, uint32_t)
 DEFINE_FIELD_GETTER(u32, TYPE_UINT32_T, uint32_t)
 
-DEFINE_FIELD_SETTER(structPost_ptr, TYPE_STRUCTPOST_PTR, struct Post *)
-DEFINE_FIELD_GETTER(structPost_ptr, TYPE_STRUCTPOST_PTR, struct Post *)
+DEFINE_FIELD_SETTER(bool, TYPE_BOOL, bool)
+DEFINE_FIELD_GETTER(bool, TYPE_BOOL, bool)
 
 DEFINE_FIELD_SETTER(uint64_t, TYPE_UINT64_T, uint64_t)
 DEFINE_FIELD_GETTER(uint64_t, TYPE_UINT64_T, uint64_t)
 
+DEFINE_FIELD_SETTER(size_t, TYPE_SIZE_T, size_t)
+DEFINE_FIELD_GETTER(size_t, TYPE_SIZE_T, size_t)
+
 DEFINE_FIELD_SETTER(Post_ptr, TYPE_POST_PTR, Post *)
 DEFINE_FIELD_GETTER(Post_ptr, TYPE_POST_PTR, Post *)
+
+DEFINE_DYNAMIC_ARRAY_SETTER(User_posts, TYPE_POST_PTR, Post *, Post, TYPE_STRUCT_USER)
+DEFINE_DYNAMIC_ARRAY_GETTER(User_posts, TYPE_POST_PTR, Post *, Post)
 
 
 #endif // CMYREFLECTION_AUTOGEN_H
@@ -91,9 +104,14 @@ DEFINE_FIELD_GETTER(Post_ptr, TYPE_POST_PTR, Post *)
 const FieldInfo Post_Metadata[] = {
     { "title", TYPE_CHAR_ARR, offsetof(Post, title), sizeof(char[MAX_TITLE_LEN]), MAX_TITLE_LEN, FIELD_ACCESS_RW, NULL },
     { "likes", TYPE_UINT32_T, offsetof(Post, likes), sizeof(uint32_t), 1, FIELD_ACCESS_RW, NULL },
-    { "references", TYPE_STRUCTPOST_PTR, offsetof(Post, references), sizeof(struct Post *), 1, FIELD_ACCESS_RW, NULL },
 };
 const size_t Post_FieldCount = sizeof(Post_Metadata) / sizeof(FieldInfo);
+
+const FieldInfo UserPrefernces_Metadata[] = {
+    { "language", TYPE_CHAR_ARR, offsetof(UserPrefernces, language), sizeof(char[32]), 32, FIELD_ACCESS_RW, NULL },
+    { "prefers_dark", TYPE_BOOL, offsetof(UserPrefernces, prefers_dark), sizeof(bool), 1, FIELD_ACCESS_RW, NULL },
+};
+const size_t UserPrefernces_FieldCount = sizeof(UserPrefernces_Metadata) / sizeof(FieldInfo);
 
 const FieldInfo User_Metadata[] = {
     { "username", TYPE_CHAR_ARR, offsetof(User, username), sizeof(char[32]), 32, FIELD_ACCESS_RW, NULL },
@@ -102,7 +120,9 @@ const FieldInfo User_Metadata[] = {
     { "password_hash", TYPE_CHAR_ARR, offsetof(User, password_hash), sizeof(char[64]), 64, FIELD_ACCESS_WRITE, NULL },
     { "permissions", TYPE_ENUM_PERMISSIONS, offsetof(User, permissions), sizeof(Permissions), 1, FIELD_ACCESS_RW, NULL },
     { "state", TYPE_ENUM_ACCOUNTSTATE, offsetof(User, state), sizeof(AccountState), 1, FIELD_ACCESS_RW, NULL },
-    { "posts", TYPE_POST_PTR, offsetof(User, posts), sizeof(Post *), 1, FIELD_ACCESS_RW, NULL },
+    { "settings", TYPE_STRUCT_USERPREFERNCES, offsetof(User, settings), sizeof(UserPrefernces), 1, FIELD_ACCESS_RW, NULL },
+    { "post_count", TYPE_SIZE_T, offsetof(User, post_count), sizeof(size_t), 1, FIELD_ACCESS_RW, NULL },
+    { "posts", TYPE_POST_PTR, offsetof(User, posts), sizeof(Post *), 1, FIELD_ACCESS_RW, "post_count" },
 };
 const size_t User_FieldCount = sizeof(User_Metadata) / sizeof(FieldInfo);
 
@@ -127,6 +147,10 @@ ReflectResult get_struct_metadata(FieldType type, StructMetaData* out_meta) {
       case TYPE_STRUCT_POST:
           out_meta->fields = Post_Metadata;
           out_meta->count = Post_FieldCount;
+          return REFLECT_OK;
+      case TYPE_STRUCT_USERPREFERNCES:
+          out_meta->fields = UserPrefernces_Metadata;
+          out_meta->count = UserPrefernces_FieldCount;
           return REFLECT_OK;
       case TYPE_STRUCT_USER:
           out_meta->fields = User_Metadata;
@@ -162,11 +186,13 @@ ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void*
       case TYPE_ENUM_PERMISSIONS: return set_field_Permissions(instance, field, *(Permissions*)value);
       case TYPE_ENUM_ACCOUNTSTATE: return set_field_AccountState(instance, field, *(AccountState*)value);
       case TYPE_STRUCT_POST: return set_field_Post(instance, field, *(Post*)value);
+      case TYPE_STRUCT_USERPREFERNCES: return set_field_UserPrefernces(instance, field, *(UserPrefernces*)value);
       case TYPE_STRUCT_USER: return set_field_User(instance, field, *(User*)value);
       case TYPE_CHAR_ARR: return set_field_char_arr(instance, field, (char*)value, element_count);
       case TYPE_UINT32_T: return set_field_u32(instance, field, *(uint32_t*)value);
-      case TYPE_STRUCTPOST_PTR: return set_field_structPost_ptr(instance, field, *(struct Post **)value);
+      case TYPE_BOOL: return set_field_bool(instance, field, *(bool*)value);
       case TYPE_UINT64_T: return set_field_uint64_t(instance, field, *(uint64_t*)value);
+      case TYPE_SIZE_T: return set_field_size_t(instance, field, *(size_t*)value);
       case TYPE_POST_PTR: return set_field_Post_ptr(instance, field, *(Post **)value);
         default: return REFLECT_ERR_TYPE_INVALID;
     }
@@ -175,15 +201,17 @@ ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void*
 // --- Auto-Generated enum->name converter
 const char* get_name_of_type(FieldType type) {
     switch(type) {
+     case TYPE_BOOL: return "TYPE_BOOL";
      case TYPE_CHAR_ARR: return "TYPE_CHAR_ARR";
      case TYPE_CONSTSTR: return "TYPE_CONSTSTR";
      case TYPE_ENUM_ACCOUNTSTATE: return "TYPE_ENUM_ACCOUNTSTATE";
      case TYPE_ENUM_PERMISSIONS: return "TYPE_ENUM_PERMISSIONS";
      case TYPE_POST_PTR: return "TYPE_POST_PTR";
+     case TYPE_SIZE_T: return "TYPE_SIZE_T";
      case TYPE_STR: return "TYPE_STR";
-     case TYPE_STRUCTPOST_PTR: return "TYPE_STRUCTPOST_PTR";
      case TYPE_STRUCT_POST: return "TYPE_STRUCT_POST";
      case TYPE_STRUCT_USER: return "TYPE_STRUCT_USER";
+     case TYPE_STRUCT_USERPREFERNCES: return "TYPE_STRUCT_USERPREFERNCES";
      case TYPE_UINT32_T: return "TYPE_UINT32_T";
      case TYPE_UINT64_T: return "TYPE_UINT64_T";
      case TYPE_UNKNOWN: return "TYPE_UNKNOWN";
