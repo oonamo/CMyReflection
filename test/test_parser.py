@@ -140,7 +140,7 @@ def test_parser_handles_bad_c_formatting():
 
     assert len(ref.structs) == 1
     parsed_struct = ref.structs["UglyStruct"]
-    assert parsed_struct.struct_name == "UglyStruct"
+    assert parsed_struct.name == "UglyStruct"
 
     fields = {f.name: f for f in parsed_struct.fields}
 

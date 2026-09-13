@@ -134,90 +134,6 @@ def add_plugin(plugin: Plugin):
     _PLUGINS.append(plugin)
 
 
-def register_plugin(
-    name,
-    version="1.0.0",
-    maintainers=None,
-    description="",
-    includes=None,
-    macros=None,
-    depends_on=None,
-):
-    """Registers a plugin"""
-
-    def decorator(func):
-        plugin = Plugin(
-            name,
-            version,
-            description,
-            maintainers or [],
-            includes or [],
-            macros or [],
-            depends_on or [],
-            func,
-        )
-        _PLUGINS.append(plugin)
-        _GENERATOR_HOOKS.append(func)
-        return func
-
-    return decorator
-
-
-def register_generator_hook(func):
-    """Registers a global hook that executes during final code generation."""
-    _GENERATOR_HOOKS.append(func)
-    return func
-
-
-def register_type_mapper(
-    signature: str, switch_var: str, default_case: str = "break;", requires=None
-):
-    """Registers a hook that executes per-type to build a generic switch statement."""
-
-    def decorator(func):
-        _TYPE_MAPPERS.append(
-            {
-                "signature": signature,
-                "switch_var": switch_var,
-                "func": func,
-                "default": default_case,
-            }
-        )
-        return func
-
-    return decorator
-
-
-def register_field_tag(tag_name: str):
-    """Registers a handler for tags placed on specific struct fields (e.g., @description)."""
-
-    def decorator(func):
-        _FIELD_TAG_HANDLERS[tag_name] = func
-        return func
-
-    return decorator
-
-
-def register_enum_member_tag(tag_name: str):
-    """Registers a handler for tags placed on specific enum fields(e.g., @description)."""
-
-    def decorator(func):
-        _MEMBER_TAG_HANDLERS[tag_name] = func
-        return func
-
-    return decorator
-
-
-def register_type_tag(tag_name: str):
-    """Registers a handler for tags placed above a struct or enum (e.g., @format)."""
-
-    def decorator(func):
-        _FIELD_TAG_HANDLERS[tag_name] = func
-        return func
-
-    return decorator
-
-
 class Field:
     def __init__(
         self,
@@ -271,12 +187,12 @@ class CStruct:
     def __init__(
         self,
         fname: str,
-        struct_name: str,
+        name: str,
         fields: list[Field] = None,
         tags: dict[str, str] = {},
     ):
         self.fname = fname
-        self.struct_name = struct_name
+        self.name = name
         self.fields = fields if fields is not None else []
         self.tags = tags
         pass
@@ -287,13 +203,13 @@ class CStruct:
     def generate_declaration(self) -> str:
         """Generates a declaration for the struct metadata"""
         lines = [
-            f"extern const FieldInfo {self.struct_name}_Metadata[];",
-            f"extern const size_t {self.struct_name}_FieldCount;",
+            f"extern const FieldInfo {self.name}_Metadata[];",
+            f"extern const size_t {self.name}_FieldCount;",
         ]
 
         for field in self.fields:
             if field.plugin_data:
-                ext_var_name = f"ext_{self.struct_name}_{field.name}"
+                ext_var_name = f"ext_{self.name}_{field.name}"
                 lines.append(f"extern const FieldExtensions {ext_var_name};")
 
         return "\n".join(lines)
@@ -304,7 +220,7 @@ class CStruct:
 
         for field in self.fields:
             if field.plugin_data:
-                ext_var_name = f"ext_{self.struct_name}_{field.name}"
+                ext_var_name = f"ext_{self.name}_{field.name}"
                 lines.append(f"const FieldExtensions {ext_var_name} = {{")
 
                 for key, val in field.plugin_data.items():
@@ -322,12 +238,12 @@ class CStruct:
         if any(f.plugin_data for f in self.fields):
             lines.append("")
 
-        lines.append(f"const FieldInfo {self.struct_name}_Metadata[] = {{")
+        lines.append(f"const FieldInfo {self.name}_Metadata[] = {{")
         for field in self.fields:
-            lines.append(field.gen_field_str(self.struct_name) + ",")
+            lines.append(field.gen_field_str(self.name) + ",")
         lines.append("};")
         lines.append(
-            f"const size_t {self.struct_name}_FieldCount = sizeof({self.struct_name}_Metadata) / sizeof(FieldInfo);"
+            f"const size_t {self.name}_FieldCount = sizeof({self.name}_Metadata) / sizeof(FieldInfo);"
         )
 
         return "\n".join(lines)
@@ -498,10 +414,10 @@ class Reflector:
 
     def add_cstruct(self, struct: CStruct) -> bool:
         """Adds a CStruct if unique"""
-        if struct.struct_name in self.structs:
+        if struct.name in self.structs:
             return False
 
-        self.structs[struct.struct_name] = struct
+        self.structs[struct.name] = struct
         return True
 
     def add_cenum(self, enum: CEnum) -> bool:
@@ -566,7 +482,7 @@ class Reflector:
 
                 if field.length_field and field.length_field not in valid_field_names:
                     raise ValueError(
-                        f"Error in struct '{struct.struct_name}': Field '{field.name}' uses "
+                        f"Error in struct '{struct.name}': Field '{field.name}' uses "
                         f"@length({field.length_field}), but '{field.length_field}' "
                         f"does not exist in the struct."
                     )
@@ -704,7 +620,7 @@ ReflectResult get_enum_metadata(FieldType type, EnumMetaData* out_meta) {{
     def generate_struct_registry_definition(self) -> str:
         switch_cases = []
         for struct in self.structs.values():
-            normalized = struct.struct_name.replace(" ", "")
+            normalized = struct.name.replace(" ", "")
             type_enum = self.type_map.get(normalized)
             type_enum_arr = self.type_map.get(normalized + "_arr")
 
@@ -715,10 +631,10 @@ ReflectResult get_enum_metadata(FieldType type, EnumMetaData* out_meta) {{
 
             if type_enum or type_enum_arr:
                 switch_cases.append(
-                    f"          out_meta->fields = {struct.struct_name}_Metadata;"
+                    f"          out_meta->fields = {struct.name}_Metadata;"
                 )
                 switch_cases.append(
-                    f"          out_meta->count = {struct.struct_name}_FieldCount;"
+                    f"          out_meta->count = {struct.name}_FieldCount;"
                 )
                 switch_cases.append("          return REFLECT_OK;")
 
@@ -996,11 +912,11 @@ static inline {mapper.signature} {{
         for struct in self.structs.values():
             for field in struct.fields:
                 gen_str = self.generate_dynamic_array_accessors(
-                    struct.struct_name, field
+                    struct.name, field
                 )
                 if gen_str != "":
                     lines.append(
-                        self.generate_dynamic_array_accessors(struct.struct_name, field)
+                        self.generate_dynamic_array_accessors(struct.name, field)
                     )
 
         lines.append(plugin_code)
