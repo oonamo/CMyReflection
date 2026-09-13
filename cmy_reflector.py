@@ -30,7 +30,7 @@ class Plugin:
     depends_on: list[str] = dataclasses.field(default_factory=list)
 
     _setup_hook: Callable[[Any], None] = dataclasses.field(default=None, init=False)
-    _field_tags: dict = dataclasses.field(default_factory=dict, init=False)
+    _struct_field_tags: dict = dataclasses.field(default_factory=dict, init=False)
     _type_tags: dict = dataclasses.field(default_factory=dict, init=False)
     _enum_member_tags: dict = dataclasses.field(default_factory=dict, init=False)
     _type_mappers: list[TypeMapper] = dataclasses.field(
@@ -43,8 +43,8 @@ class Plugin:
         return self._setup_hook
 
     @property
-    def field_tags(self) -> dict:
-        return MappingProxyType(self._field_tags)
+    def struct_field_tags(self) -> dict:
+        return MappingProxyType(self._struct_field_tags)
 
     @property
     def enum_member_tags(self) -> dict:
@@ -76,7 +76,7 @@ class Plugin:
         """Decorator to register a field tag"""
 
         def decorator(func):
-            self._field_tags[tag_name] = func
+            self._struct_field_tags[tag_name] = func
             self.description += f"\n *    - Provides tag: @{tag_name} (Struct Fields)"
             return func
 
@@ -348,7 +348,7 @@ class Reflector:
         self.base_types = {}
 
         self.field_extension_members = {}
-        self.active_field_tags = {}
+        self.active_struct_field_tags = {}
         self.active_enum_member_tags = {}
         self.active_type_tags = {}
         self.active_type_mappers = []
@@ -364,12 +364,12 @@ class Reflector:
             if p.setup_hook:
                 p.setup_hook(self)
 
-            for tag_name, handler in p.field_tags.items():
-                if tag_name in self.active_field_tags:
+            for tag_name, handler in p.struct_field_tags.items():
+                if tag_name in self.active_struct_field_tags:
                     raise ValueError(
                         f"Tag collision: '@{tag_name}' (Struct Fields) is defined multiple times."
                     )
-                self.active_field_tags[tag_name] = handler
+                self.active_struct_field_tags[tag_name] = handler
 
             for tag_name, handler in p.enum_member_tags.items():
                 if tag_name in self.active_enum_member_tags:
@@ -864,8 +864,8 @@ static inline {mapper.signature} {{
         for struct in self.structs.values():
             for field in struct.fields:
                 for tag_name, tag_value in field.tags.items():
-                    if tag_name in self.active_field_tags:
-                        snippet = self.active_field_tags[tag_name](
+                    if tag_name in self.active_struct_field_tags:
+                        snippet = self.active_struct_field_tags[tag_name](
                             self, struct, field, tag_value
                         )
                         if snippet:
