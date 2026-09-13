@@ -493,7 +493,6 @@ def test_can_set_enum_userdata():
     @cmy_reflector.register_enum_member_tag("color")
     def handle_enum_color(enum, member, tag_value):
         member.user_data_expr = f"(void*){tag_value}"
-
         return ""
 
     c_code = """
@@ -519,9 +518,14 @@ def test_can_set_enum_userdata():
 
 
 def test_can_set_stuct_userdata():
+    @cmy_reflector.register_generator_hook
+    def setup_description_hook(reflector):
+        reflector.register_extension("description", "const char*")
+        return "// Using format plugin v0.0"
+
     @cmy_reflector.register_field_tag("description")
     def handle_field_description(struct, field, tag_value):
-        field.user_data_expr = f"(void*){tag_value}"
+        field.plugin_data["description"] = tag_value
         return f"// {struct.struct_name}"
 
     c_code = """
@@ -539,7 +543,9 @@ def test_can_set_stuct_userdata():
 
     generated_content = str(reflector)
 
+    assert "} FieldExtensions;" in generated_content
+
     assert (
-        '{ "stuff", TYPE_INT, offsetof(Options, stuff), sizeof(int), 1, FIELD_ACCESS_RW, NULL, (void*)"cool" }'
+        '{ "stuff", TYPE_INT, offsetof(Options, stuff), sizeof(int), 1, FIELD_ACCESS_RW, NULL, (void*)&ext_Options_stuff }'
         in generated_content
     )

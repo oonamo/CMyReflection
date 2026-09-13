@@ -25,7 +25,9 @@ typedef enum {
 } FieldType;
 
 #include <cmyreflection.h>
-// --- Plugin-Generated-Extensions ---
+typedef struct {
+     const char* format;
+} FieldExtensions;
 // --- Metadata Declarations
 extern const FieldInfo Post_Metadata[];
 extern const size_t Post_FieldCount;
@@ -33,6 +35,8 @@ extern const FieldInfo UserPrefernces_Metadata[];
 extern const size_t UserPrefernces_FieldCount;
 extern const FieldInfo User_Metadata[];
 extern const size_t User_FieldCount;
+extern const FieldExtensions ext_User_username;
+extern const FieldExtensions ext_User_email;
 extern const EnumMemberInfo Permissions_Members[];
 extern const size_t Permissions_MemberCount;
 extern const EnumMemberInfo AccountState_Members[];
@@ -80,8 +84,8 @@ DEFINE_FIELD_GETTER(u32, TYPE_UINT32_T, uint32_t)
 DEFINE_FIELD_SETTER(bool, TYPE_BOOL, bool)
 DEFINE_FIELD_GETTER(bool, TYPE_BOOL, bool)
 
-DEFINE_FIELD_SETTER(uint64_t, TYPE_UINT64_T, uint64_t)
-DEFINE_FIELD_GETTER(uint64_t, TYPE_UINT64_T, uint64_t)
+DEFINE_FIELD_SETTER(u64, TYPE_UINT64_T, uint64_t)
+DEFINE_FIELD_GETTER(u64, TYPE_UINT64_T, uint64_t)
 
 DEFINE_FIELD_SETTER(size_t, TYPE_SIZE_T, size_t)
 DEFINE_FIELD_GETTER(size_t, TYPE_SIZE_T, size_t)
@@ -91,6 +95,124 @@ DEFINE_FIELD_GETTER(Post_ptr, TYPE_POST_PTR, Post *)
 
 DEFINE_DYNAMIC_ARRAY_SETTER(User_posts, TYPE_POST_PTR, Post *, Post, TYPE_STRUCT_USER)
 DEFINE_DYNAMIC_ARRAY_GETTER(User_posts, TYPE_POST_PTR, Post *, Post)
+
+// --- Plugin-Generated-Extensions ---
+
+// Using print plugin v0.0.0
+
+static inline ReflectResult print_field_char_arr(const void* instance, const FieldInfo* field) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    char* val = (char*)malloc(field->size);
+    if (!val) { return REFLECT_ERR_NULL_PTR; } // Protect against allocation failure
+
+    ReflectResult res = get_field_char_arr(instance, field, val, field->count);
+    if (res != REFLECT_OK) {
+        free(val); // Ensure memory is freed on error
+        return res;
+    }
+
+    const FieldExtensions* ext = (const FieldExtensions*)field->user_data;
+    const char* fmt = (ext && ext->format) ? ext->format : "%s";
+
+    printf(fmt, val);
+    free(val);
+
+    return REFLECT_OK;
+}
+
+
+
+static inline ReflectResult print_field_char(const void* instance, const FieldInfo* field) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    char v;
+    ReflectResult res = get_field_char(instance, field, &v);
+    if (res != REFLECT_OK) { return res; }
+
+    const FieldExtensions* ext = (const FieldExtensions*)field->user_data;
+    const char* fmt = (ext && ext->format) ? ext->format : "%c";
+
+    printf(fmt, v);
+    return REFLECT_OK;
+}
+
+
+
+static inline ReflectResult print_field_u32(const void* instance, const FieldInfo* field) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    uint32_t v;
+    ReflectResult res = get_field_u32(instance, field, &v);
+    if (res != REFLECT_OK) { return res; }
+
+    const FieldExtensions* ext = (const FieldExtensions*)field->user_data;
+    const char* fmt = (ext && ext->format) ? ext->format : "%u";
+
+    printf(fmt, v);
+    return REFLECT_OK;
+}
+
+
+
+static inline ReflectResult print_field_bool(const void* instance, const FieldInfo* field) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    bool v;
+    ReflectResult res = get_field_bool(instance, field, &v);
+    if (res != REFLECT_OK) { return res; }
+
+    const FieldExtensions* ext = (const FieldExtensions*)field->user_data;
+    const char* fmt = (ext && ext->format) ? ext->format : "%s";
+
+    printf(fmt, v ? "true" : "false");
+    return REFLECT_OK;
+}
+
+
+
+static inline ReflectResult print_field_u64(const void* instance, const FieldInfo* field) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    uint64_t v;
+    ReflectResult res = get_field_u64(instance, field, &v);
+    if (res != REFLECT_OK) { return res; }
+
+    const FieldExtensions* ext = (const FieldExtensions*)field->user_data;
+    const char* fmt = (ext && ext->format) ? ext->format : "%llu";
+
+    printf(fmt, v);
+    return REFLECT_OK;
+}
+
+
+
+static inline ReflectResult print_field_size_t(const void* instance, const FieldInfo* field) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    size_t v;
+    ReflectResult res = get_field_size_t(instance, field, &v);
+    if (res != REFLECT_OK) { return res; }
+
+    const FieldExtensions* ext = (const FieldExtensions*)field->user_data;
+    const char* fmt = (ext && ext->format) ? ext->format : "%zu";
+
+    printf(fmt, v);
+    return REFLECT_OK;
+}
+
+
+static inline ReflectResult print_field(const void* instance, const FieldInfo* field) {
+    switch(field->type) {
+      case TYPE_CHAR_ARR: return print_field_char_arr(instance, field);
+      case TYPE_CHAR: return print_field_char(instance, field);
+      case TYPE_UINT32_T: return print_field_u32(instance, field);
+      case TYPE_BOOL: return print_field_bool(instance, field);
+      case TYPE_UINT64_T: return print_field_u64(instance, field);
+      case TYPE_SIZE_T: return print_field_size_t(instance, field);
+        default: return REFLECT_ERR_TYPE_MISMATCH;
+    }
+}
 
 
 #endif // CMYREFLECTION_AUTOGEN_H
@@ -110,9 +232,12 @@ const FieldInfo UserPrefernces_Metadata[] = {
 };
 const size_t UserPrefernces_FieldCount = sizeof(UserPrefernces_Metadata) / sizeof(FieldInfo);
 
+const FieldExtensions ext_User_username = { .format = "%s" };
+const FieldExtensions ext_User_email = { .format = "%s" };
+
 const FieldInfo User_Metadata[] = {
-    { "username", TYPE_CHAR_ARR, offsetof(User, username), sizeof(char[32]), 32, FIELD_ACCESS_RW, NULL, NULL },
-    { "email", TYPE_CHAR_ARR, offsetof(User, email), sizeof(char[64]), 64, FIELD_ACCESS_RW, NULL, NULL },
+    { "username", TYPE_CHAR_ARR, offsetof(User, username), sizeof(char[32]), 32, FIELD_ACCESS_RW, NULL, (void*)&ext_User_username },
+    { "email", TYPE_CHAR_ARR, offsetof(User, email), sizeof(char[64]), 64, FIELD_ACCESS_RW, NULL, (void*)&ext_User_email },
     { "account_id", TYPE_UINT64_T, offsetof(User, account_id), sizeof(uint64_t), 1, FIELD_ACCESS_READ, NULL, NULL },
     { "password_hash", TYPE_CHAR_ARR, offsetof(User, password_hash), sizeof(char[64]), 64, FIELD_ACCESS_WRITE, NULL, NULL },
     { "permissions", TYPE_ENUM_PERMISSIONS, offsetof(User, permissions), sizeof(Permissions), 1, FIELD_ACCESS_RW, NULL, NULL },
@@ -187,7 +312,7 @@ ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void*
       case TYPE_CHAR: return set_field_char(instance, field, *(char*)value);
       case TYPE_UINT32_T: return set_field_u32(instance, field, *(uint32_t*)value);
       case TYPE_BOOL: return set_field_bool(instance, field, *(bool*)value);
-      case TYPE_UINT64_T: return set_field_uint64_t(instance, field, *(uint64_t*)value);
+      case TYPE_UINT64_T: return set_field_u64(instance, field, *(uint64_t*)value);
       case TYPE_SIZE_T: return set_field_size_t(instance, field, *(size_t*)value);
       case TYPE_POST_PTR: return set_field_Post_ptr(instance, field, *(Post **)value);
         default: return REFLECT_ERR_TYPE_INVALID;

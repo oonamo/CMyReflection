@@ -5,10 +5,16 @@ set(REFLECTION_SOURCE_FILES "types.h")
 
 set(GENERATED_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/generated.h")
 
+file(GLOB_RECURSE PLUGIN_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/plugins/*.py")
+
+set(PLUGINS
+  "${PROJECT_SOURCE_DIR}/plugins/print.py"
+)
+
 add_custom_command(
   OUTPUT ${GENERATED_HEADER}
-  COMMAND Python3::Interpreter "${PROJECT_SOURCE_DIR}/cmy_reflector.py" "${CMAKE_CURRENT_SOURCE_DIR}" -o "${GENERATED_HEADER}"
-  DEPENDS "${PROJECT_SOURCE_DIR}/cmy_reflector.py" ${REFLECTION_SOURCE_FILES}
+  COMMAND Python3::Interpreter "${PROJECT_SOURCE_DIR}/cmy_reflector.py" "${CMAKE_CURRENT_SOURCE_DIR}" -o "${GENERATED_HEADER}" --plugin ${PLUGINS}
+  DEPENDS "${PROJECT_SOURCE_DIR}/cmy_reflector.py" ${REFLECTION_SOURCE_FILES} ${PLUGIN_FILES}
   COMMENT "Generating C reflection data for json-serializer..."
 )
 

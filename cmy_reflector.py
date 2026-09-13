@@ -1,9 +1,11 @@
 import argparse
+import importlib.util
 import re
 import sys
 from pathlib import Path
 
 _GENERATOR_HOOKS = []
+_EXTENSION_HOOKS = []
 _FIELD_TAG_HANDLERS = {}
 _MEMBER_TAG_HANDLERS = {}
 _TYPE_TAG_HANDLERS = {}
@@ -28,7 +30,6 @@ def register_type_mapper(signature: str, switch_var: str, default_case: str = "b
                 "default": default_case,
             }
         )
-        return func
         return func
 
     return decorator
@@ -77,6 +78,7 @@ class Field:
         self.array_bounds = array_bounds
         self.tags = tags
         self.user_data_expr = "NULL"
+        self.plugin_data = {}
 
         base_name = type_name.replace(" ", "")
 
@@ -131,14 +133,40 @@ class CStruct:
 
     def generate_declaration(self) -> str:
         """Generates a declaration for the struct metadata"""
-        return (
-            f"extern const FieldInfo {self.struct_name}_Metadata[];\n"
-            f"extern const size_t {self.struct_name}_FieldCount;"
-        )
+        lines = [
+            f"extern const FieldInfo {self.struct_name}_Metadata[];",
+            f"extern const size_t {self.struct_name}_FieldCount;",
+        ]
+
+        for field in self.fields:
+            if field.plugin_data:
+                ext_var_name = f"ext_{self.struct_name}_{field.name}"
+                lines.append(f"extern const FieldExtensions {ext_var_name};")
+
+        return "\n".join(lines)
 
     def generate_definition(self) -> str:
         """Generates a definition for the struct metadata"""
-        lines = [f"const FieldInfo {self.struct_name}_Metadata[] = {{"]
+        lines = []
+
+        for field in self.fields:
+            if field.plugin_data:
+                ext_var_name = f"ext_{self.struct_name}_{field.name}"
+                init_lines = []
+
+                for key, val in field.plugin_data.items():
+                    init_lines.append(f".{key} = {val}")
+                init_str = ", ".join(init_lines)
+                lines.append(f"const FieldExtensions {ext_var_name} = {{ {init_str} }};")
+
+                field.user_data_expr = f"(void*)&{ext_var_name}"
+            else:
+                field.user_data_expr = "NULL"
+
+        if any(f.plugin_data for f in self.fields):
+            lines.append("")
+
+        lines.append(f"const FieldInfo {self.struct_name}_Metadata[] = {{")
         for field in self.fields:
             lines.append(field.gen_field_str(self.struct_name) + ",")
         lines.append("};")
@@ -154,6 +182,7 @@ class EnumMember:
         self.name = name
         self.tags = tags
         self.user_data_expr = "NULL"
+        self.plugin_data = {}
 
     def gen_member_str(self) -> str:
         return f'   {{ {self.name}, "{self.name}", {self.user_data_expr} }}'
@@ -233,6 +262,7 @@ class Reflector:
             "uint8_t": "u8",
             "uint16_t": "u16",
             "uint32_t": "u32",
+            "uint64_t": "u64",
             # NOTE: If the original type has a space, ensure that it is also added to CTYPES with the appropiate type
             "unsignedint": "uint",
             "longlong": "ll",
@@ -244,6 +274,20 @@ class Reflector:
             "longlong": "long long",
         }
         self.base_types = {}
+
+        self.extensions_fields = {}
+
+    def register_extension(self, name: str, ctype: str):
+        self.extensions_fields[name] = ctype
+
+    def generate_extension_struct(self):
+        if not self.extensions_fields:
+            return "// No plugins"
+        lines = ["typedef struct {"]
+        for name, c_type in self.extensions_fields.items():
+            lines.append(f"     {c_type} {name};")
+        lines.append("} FieldExtensions;")
+        return "\n".join(lines)
 
     def add_cstruct(self, struct: CStruct) -> bool:
         """Adds a CStruct if unique"""
@@ -681,6 +725,9 @@ static inline {mapper["signature"]} {{
         return "\n\n".join(extension_lines)
 
     def __str__(self):
+        plugin_code = self.generate_plugin_extensions()
+
+        ext_struct_code = self.generate_extension_struct()
         lines = [
             self.generate_file_header(),
             "#define CMYREFLECTION_PARSED",
@@ -689,7 +736,7 @@ static inline {mapper["signature"]} {{
             "#define CMYREFLECTION_REGISTRY",
             self.generate_types(),
             "#include <cmyreflection.h>",
-            self.generate_plugin_extensions(),
+            ext_struct_code,
             self.generate_declarations(),
         ]
 
@@ -710,6 +757,7 @@ static inline {mapper["signature"]} {{
                         self.generate_dynamic_array_accessors(struct.struct_name, field)
                     )
 
+        lines.append(plugin_code)
         lines.append("\n#endif // CMYREFLECTION_AUTOGEN_H")
         lines.append(self.generate_definitions())
 
@@ -832,6 +880,19 @@ def gather_source_files(input_paths: list[str]) -> list[Path]:
     return sorted(list(valid_files))
 
 
+def load_plugin(file_path: Path):
+    if not file_path.exists() or file_path.suffix != ".py":
+        return
+
+    module_name = f"cmy_plugin_{file_path.stem}"
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+
+    if spec and spec.loader:
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="A tool for generating reflection metadata"
@@ -847,6 +908,20 @@ def main():
         help="The file to write the generated C code to. Prints to stdout if omitted",
     )
 
+    parser.add_argument(
+        "--plugin",
+        action="append",
+        type=Path,
+        help="Path to a specific plugin file (can be used multiple times)",
+    )
+
+    parser.add_argument(
+        "--plugin-dir",
+        action="append",
+        type=Path,
+        help="Path to a directory containing a plugin file (can be used multiple times)",
+    )
+
     args = parser.parse_args()
 
     target_files = gather_source_files(args.input_files)
@@ -856,6 +931,16 @@ def main():
         exit(1)
 
     reflector = Reflector()
+
+    if args.plugin:
+        for plugin_file in args.plugin:
+            load_plugin(plugin_file)
+
+    if args.plugin_dir:
+        for plugin_dir in args.plugin_dir:
+            if plugin_dir.is_dir():
+                for plugin_file in plugin_dir.glob("*.py"):
+                    load_plugin(plugin_file)
 
     for file in target_files:
         try:
@@ -880,6 +965,7 @@ def main():
 
 if __name__ == "__main__":
     try:
+        sys.modules["cmy_reflector"] = sys.modules[__name__]
         main()
     except ValueError as e:
         print(e, file=sys.stderr)

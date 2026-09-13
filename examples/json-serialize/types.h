@@ -2,6 +2,7 @@
 #define _TYPES_H
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #define MAX_TITLE_LEN 124
 
@@ -41,7 +42,10 @@ typedef struct
 /// @reflect
 typedef struct
 {
+    /// @format("%s")
     char username[32];
+
+    /// @format("%s")
     char email[64];
 
     /// @readonly

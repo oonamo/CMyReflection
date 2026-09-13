@@ -107,137 +107,108 @@ void json_account_serializer(const void *base_instance, const FieldInfo *field, 
             }
             return;
         }
-        switch (field->type)
-        {
-        case TYPE_CHAR_ARR:
-        {
-            char *val = malloc(field->size);
-            get_field_char_arr(base_instance, field, val, field->count);
-            printf("\"%s\"", val);
-            free(val);
-            break;
-        }
-        case TYPE_ENUM_PERMISSIONS:
-        {
-            char   perm_str[4];
-            int    permissions = *(int *)data_ptr;
-            size_t i           = 0;
+        ReflectResult res = print_field(base_instance, field);
 
-            if (permissions & PERM_CREATE)
-            {
-                perm_str[i++] = 'c';
-            }
-            if (permissions & PERM_DELETE)
-            {
-                perm_str[i++] = 'x';
-            }
-            if (permissions & PERM_UPDATE)
-            {
-                perm_str[i++] = 'u';
-            }
-            if (i < 3)
-            {
-                perm_str[i] = '\0';
-            }
-            printf("\"%s\"", perm_str);
-            break;
-        }
-        case TYPE_ENUM_ACCOUNTSTATE:
+        if (res != REFLECT_OK)
         {
-            const char *val = get_enum_member_name(
-                AccountState_Members, AccountState_MemberCount, *(int *)data_ptr);
-            printf("\"%s\"", val);
-            break;
-        }
-        case TYPE_UINT64_T:
-        {
-            uint64_t val = 0;
-            get_field_uint64_t(base_instance, field, &val);
-            printf("%llu", val);
-            break;
-        }
-        case TYPE_SIZE_T:
-        {
-            size_t val = 0;
-            get_field_size_t(base_instance, field, &val);
-            printf("%zu", val);
-            break;
-        }
-        case TYPE_POST_PTR:
-        {
-            Post *post_array = NULL;
-            if (get_field_Post_ptr(base_instance, field, &post_array) != REFLECT_OK ||
-                post_array == NULL)
+            switch (field->type)
             {
-                printf("NULL");
-                return;
-            }
+            case TYPE_ENUM_PERMISSIONS:
+            {
+                char   perm_str[4];
+                int    permissions = *(int *)data_ptr;
+                size_t i           = 0;
 
-            if (field->length_field_name != NULL)
+                if (permissions & PERM_CREATE)
+                {
+                    perm_str[i++] = 'c';
+                }
+                if (permissions & PERM_DELETE)
+                {
+                    perm_str[i++] = 'x';
+                }
+                if (permissions & PERM_UPDATE)
+                {
+                    perm_str[i++] = 'u';
+                }
+                if (i < 3)
+                {
+                    perm_str[i] = '\0';
+                }
+                printf("\"%s\"", perm_str);
+                break;
+            }
+            case TYPE_ENUM_ACCOUNTSTATE:
             {
-                size_t array_len = 0;
-                if (get_dynamic_array_length(
-                        base_instance, state->current_parent_type, field, &array_len) != REFLECT_OK)
+                const char *val = get_enum_member_name(
+                    AccountState_Members, AccountState_MemberCount, *(int *)data_ptr);
+                printf("\"%s\"", val);
+                break;
+            }
+            case TYPE_POST_PTR:
+            {
+                Post *post_array = NULL;
+                if (get_field_Post_ptr(base_instance, field, &post_array) != REFLECT_OK ||
+                    post_array == NULL)
                 {
                     printf("NULL");
                     return;
                 }
-                printf("[\n");
-                for (size_t i = 0; i < array_len; i++)
-                {
-                    printf("%*s{\n", state->indent + 4, "");
 
-                    JsonState nested_state = {.indent              = state->indent + 8,
+                if (field->length_field_name != NULL)
+                {
+                    size_t array_len = 0;
+                    if (get_dynamic_array_length(
+                            base_instance, state->current_parent_type, field, &array_len) !=
+                        REFLECT_OK)
+                    {
+                        printf("NULL");
+                        return;
+                    }
+                    printf("[\n");
+                    for (size_t i = 0; i < array_len; i++)
+                    {
+                        printf("%*s{\n", state->indent + 4, "");
+
+                        JsonState nested_state = {.indent              = state->indent + 8,
+                                                  .is_first_field      = true,
+                                                  .current_parent_type = TYPE_STRUCT_POST};
+
+                        // Native C iteration using the safely extracted pointer
+                        visit_struct_fields(&post_array[i],
+                                            TYPE_STRUCT_POST,
+                                            json_account_serializer,
+                                            &nested_state);
+
+                        printf("\n%*s}", state->indent + 4, "");
+                        if (i < array_len - 1)
+                        {
+                            printf(",\n");
+                        }
+                    }
+                    printf("\n%*s]", state->indent, "");
+                }
+                else
+                {
+                    printf("{\n");
+                    JsonState nested_state = {.indent              = state->indent + 4,
                                               .is_first_field      = true,
                                               .current_parent_type = TYPE_STRUCT_POST};
 
-                    // Native C iteration using the safely extracted pointer
                     visit_struct_fields(
-                        &post_array[i], TYPE_STRUCT_POST, json_account_serializer, &nested_state);
-
-                    printf("\n%*s}", state->indent + 4, "");
-                    if (i < array_len - 1)
-                    {
-                        printf(",\n");
-                    }
+                        post_array, TYPE_STRUCT_POST, json_account_serializer, &nested_state);
+                    printf("\n%*s}", state->indent, "");
                 }
-                printf("\n%*s]", state->indent, "");
+                break;
             }
-            else
-            {
-                printf("{\n");
-                JsonState nested_state = {.indent              = state->indent + 4,
-                                          .is_first_field      = true,
-                                          .current_parent_type = TYPE_STRUCT_POST};
+            default:
 
-                visit_struct_fields(
-                    post_array, TYPE_STRUCT_POST, json_account_serializer, &nested_state);
-                printf("\n%*s}", state->indent, "");
+                fprintf(stderr,
+                        "\n\nError: Could not serialize type %s\n",
+                        get_name_of_type(field->type));
+                exit(1);
+                break;
             }
-            break;
-        }
-        case TYPE_UINT32_T:
-        {
-            uint32_t val = 0;
-            get_field_u32(base_instance, field, &val);
-            printf("%u", val);
-            break;
-        }
-        case TYPE_BOOL:
-        {
-            bool val = false;
-            get_field_bool(base_instance, field, &val);
-            printf("\"%s\"", val ? "true" : "false");
-            break;
-        }
-        case TYPE_STRUCT_POST:
-        case TYPE_STRUCT_USER:
-        default:
-
-            fprintf(
-                stderr, "\n\nError: Could not serialize type %s\n", get_name_of_type(field->type));
-            exit(1);
-            break;
         }
     }
 }
@@ -252,6 +223,6 @@ int main()
     };
 
     printf("{");
-    visit_struct_fields(NULL, TYPE_STRUCT_USER, json_account_serializer, &state);
+    visit_struct_fields(&user, TYPE_STRUCT_USER, json_account_serializer, &state);
     printf("\n}\n");
 }

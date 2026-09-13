@@ -40,7 +40,7 @@ typedef enum {
 } FieldType;
 
 #include <cmyreflection.h>
-// --- Plugin-Generated-Extensions ---
+// No plugins
 // --- Metadata Declarations
 extern const FieldInfo Vector2_Metadata[];
 extern const size_t Vector2_FieldCount;
@@ -164,8 +164,8 @@ DEFINE_ARRAY_GETTER(Vector2_arr, TYPE_VECTOR2_ARR, Vector2 *, Vector2)
 DEFINE_ARRAY_SETTER(char_arr, TYPE_CHAR_ARR, char *, char)
 DEFINE_ARRAY_GETTER(char_arr, TYPE_CHAR_ARR, char *, char)
 
-DEFINE_FIELD_SETTER(uint64_t, TYPE_UINT64_T, uint64_t)
-DEFINE_FIELD_GETTER(uint64_t, TYPE_UINT64_T, uint64_t)
+DEFINE_FIELD_SETTER(u64, TYPE_UINT64_T, uint64_t)
+DEFINE_FIELD_GETTER(u64, TYPE_UINT64_T, uint64_t)
 
 DEFINE_ARRAY_SETTER(IoTDevice_arr, TYPE_IOTDEVICE_ARR, IoTDevice *, IoTDevice)
 DEFINE_ARRAY_GETTER(IoTDevice_arr, TYPE_IOTDEVICE_ARR, IoTDevice *, IoTDevice)
@@ -173,6 +173,7 @@ DEFINE_ARRAY_GETTER(IoTDevice_arr, TYPE_IOTDEVICE_ARR, IoTDevice *, IoTDevice)
 DEFINE_DYNAMIC_ARRAY_SETTER(Game_waypoints, TYPE_VECTOR2_PTR, Vector2 *, Vector2, TYPE_STRUCT_GAME)
 DEFINE_DYNAMIC_ARRAY_GETTER(Game_waypoints, TYPE_VECTOR2_PTR, Vector2 *, Vector2)
 
+// --- Plugin-Generated-Extensions ---
 
 #endif // CMYREFLECTION_AUTOGEN_H
 // --- Metadata Definitions
@@ -350,7 +351,7 @@ ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void*
       case TYPE_VECTOR2_PTR: return set_field_Vector2_ptr(instance, field, *(Vector2 **)value);
       case TYPE_VECTOR2_ARR: return set_field_Vector2_arr(instance, field, (Vector2*)value, element_count);
       case TYPE_CHAR_ARR: return set_field_char_arr(instance, field, (char*)value, element_count);
-      case TYPE_UINT64_T: return set_field_uint64_t(instance, field, *(uint64_t*)value);
+      case TYPE_UINT64_T: return set_field_u64(instance, field, *(uint64_t*)value);
       case TYPE_IOTDEVICE_ARR: return set_field_IoTDevice_arr(instance, field, (IoTDevice*)value, element_count);
         default: return REFLECT_ERR_TYPE_INVALID;
     }
