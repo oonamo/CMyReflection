@@ -410,6 +410,8 @@ DEFINE_FIELD_GETTER(str, TYPE_STR, char *)
 
     #include <stdlib.h>
 
+    #include <stddef.h>
+
 static ReflectResult resolve_path_internal(void             *base_instance,
                                            const FieldInfo  *base_meta,
                                            size_t            base_count,
