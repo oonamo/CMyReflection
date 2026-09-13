@@ -41,9 +41,9 @@ typedef enum
     REFLECT_ERR_TYPE_MISMATCH, /*!< A type mismatch occured */
     REFLECT_ERR_OUT_OF_BOUNDS, /*!< Memory requested was out of bounds */
     REFLECT_ERR_ENUM_INVALID,  /*!< Checked enum is not a member of the enum */
-    REFLECT_ERR_TYPE_INVALID,
-    REFLECT_ERR_ACCESS_DENIED,
-    REFLECT_ERR_NOT_FOUND,
+    REFLECT_ERR_TYPE_INVALID,  /*!< Type is invalid */
+    REFLECT_ERR_ACCESS_DENIED, /*!< Attempted to access field without sufficient permissions */
+    REFLECT_ERR_NOT_FOUND,     /*!< Item was not found */
 } ReflectResult;
 
 typedef enum
@@ -108,7 +108,7 @@ typedef struct
  * @param type     [in] Type of struct
  * @param out_meta [out] The returned struct metadata
  *
- * @return true if found, false otherwise
+ * @return REFLECT_OK on success, or an error code otherwise
  */
 ReflectResult get_struct_metadata(FIELD_TYPE type, StructMetaData *out_meta);
 
@@ -120,7 +120,7 @@ ReflectResult get_struct_metadata(FIELD_TYPE type, StructMetaData *out_meta);
  * @param type     [in] Type of enum
  * @param out_meta [out] The returned enum metadata
  *
- * @return true if found, false otherwise
+ * @return REFLECT_OK on success, or an error code otherwise
  */
 ReflectResult get_enum_metadata(FIELD_TYPE type, EnumMetaData *out_meta);
 
@@ -134,7 +134,7 @@ ReflectResult get_enum_metadata(FIELD_TYPE type, EnumMetaData *out_meta);
  * @param value         [in]  Value to write to
  * @param element_count [in]  elements to write (if array)
  *
- * @return true if found, false otherwise
+ * @return REFLECT_OK on success, or an error code otherwise
  */
 ReflectResult
 safe_set_field(void *instance, const FieldInfo *field, const void *value, size_t element_count);
@@ -153,13 +153,13 @@ const char *get_name_of_type(FIELD_TYPE type);
 /**
  * @brief Finds the struct containing the path
  *
- * @param base_instance [in] Struct to begin traversal
- * @param base_meta     [in] FieldInfo of root struct
- * @param base_count    [in] Number of fields in root struct
- * @param path          [in] string path to look for
+ * @param base_instance  [in] Struct to begin traversal
+ * @param base_meta      [in] FieldInfo of root struct
+ * @param base_count     [in] Number of fields in root struct
+ * @param path           [in] string path to look for
  * @param out_leaf_field [out] FieldInfo returned if found
  *
- * @return Pointer to the resolved struct
+ * @return Pointer to the resolved struct, or NULL if not found
  */
 void *resolve_field_path(void             *base_instance,
                          const FieldInfo  *base_meta,
@@ -167,9 +167,28 @@ void *resolve_field_path(void             *base_instance,
                          const char       *path,
                          const FieldInfo **out_leaf_field);
 
+/**
+ * @brief Resolves metadata for a specific field path without an instance.
+ *
+ * @param base_meta  [in] Array of FieldInfo representing the root struct
+ * @param base_count [in] Number of elements in base_meta
+ * @param path       [in] String path to the field (e.g., "nested.field[0]")
+ *
+ * @return Pointer to the resolved field's metadata, or NULL if not found
+ */
 const FieldInfo *
 resolve_field_metadata(const FieldInfo *base_meta, size_t base_count, const char *path);
 
+/**
+ * @brief Queries an instance for a field. Can be nested
+ *
+ * @param instance  [in] Pointer to the root struct instance
+ * @param meta      [in] Metadata of the root struct
+ * @param query     [in] Field name or dot-delimited string path to look for
+ * @param out_field [out] Pointer to the resolved FieldInfo
+ *
+ * @return Pointer to the resolved struct/field data, or NULL if not found
+ */
 void *reflect_query(void                 *instance,
                     const StructMetaData *meta,
                     const char           *query,
@@ -217,7 +236,7 @@ const char *get_enum_member_name(const EnumMemberInfo *meta, size_t member_count
  * @param new_value  [in] Value to set
  * @param write_size [in] Number of bytes to write
  *
- * @return true if successful, false otherwise
+ * @return REFLECT_OK on success, or an error code otherwise
  */
 ReflectResult
 set_field_value(void *instance, const FieldInfo *field, const void *new_value, size_t write_size);
@@ -230,27 +249,67 @@ set_field_value(void *instance, const FieldInfo *field, const void *new_value, s
  * @param out_value [out] Buffer to copy data into
  * @param read_size [in]  Number of bytes expected
  *
- * @return true if successful, false otherwise
+ * @return REFLECT_OK if successful, or an error code otherwise
  */
 ReflectResult
 get_field_value(const void *instance, const FieldInfo *field, void *out_value, size_t read_size);
 
+/**
+ * @brief Retrieves a specific element from a statically allocated inline array.
+ *
+ * @param instance     [in] Pointer to the struct instance
+ * @param field        [in] Metadata of the inline array field
+ * @param index        [in] The array index to retrieve
+ * @param out_value    [out] Buffer to copy the retrieved element into
+ * @param element_size [in] Expected byte size of a single array element
+ *
+ * @return REFLECT_OK on success, or an error code otherwise
+ */
 ReflectResult get_array_element(const void      *instance,
                                 const FieldInfo *field,
                                 size_t           index,
                                 void            *out_value,
                                 size_t           element_size);
 
+/**
+ * @brief Resolves the runtime length of a tagged dynamic array pointer.
+ *
+ * @param base_instance [in] Pointer to the parent struct instance
+ * @param parent_type   [in] Type enum of the parent struct
+ * @param field         [in] Metadata of the dynamically allocated array field
+ * @param out_length    [out] Extracted runtime length of the array
+ *
+ * @return REFLECT_OK on success, or an error code otherwise
+ */
 ReflectResult get_dynamic_array_length(const void      *base_instance,
                                        FIELD_TYPE       parent_type,
                                        const FieldInfo *field,
                                        size_t          *out_length);
-
+/**
+ * @brief Safely writes data to a dynamically allocated array
+ *
+ * @param instance   [in] Pointer to the parent struct instance
+ * @param field      [in] Metadata of the tagged pointer field
+ * @param new_data   [in] Pointer to the data to write
+ * @param write_size [in] Number of bytes to copy into the dynamic array memory
+ *
+ * @return REFLECT_OK on success, or an error code otherwise
+ */
 ReflectResult set_dynamic_array_data(void            *instance,
                                      const FieldInfo *field,
                                      const void      *new_data,
                                      size_t           write_size);
 
+/**
+ * @brief Safely reads data from a dynamically allocated array
+ *
+ * @param instance  [in] Pointer to the parent struct instance
+ * @param field     [in] Metadata of the tagged pointer field
+ * @param out_data  [out] Buffer to copy the retrieved array data into
+ * @param read_size [in] Number of bytes expected to read
+ *
+ * @return REFLECT_OK on success, or an error code otherwise
+ */
 ReflectResult get_dynamic_array_data(const void      *instance,
                                      const FieldInfo *field,
                                      void            *out_data,
@@ -299,8 +358,25 @@ ReflectResult get_dynamic_array_data(const void      *instance,
             instance, field, new_data, element_count * sizeof(DownCastType));                      \
     }
 
+/**
+ * @brief Callback function type for iterating over struct fields.
+ *
+ * @param base_instance [in] Pointer to the struct instance being visited
+ * @param field         [in] Metadata of the current field being visited
+ * @param user_data     [in] User data passed through the traversal
+ */
 typedef void (*FieldVisitor)(const void *base_instance, const FieldInfo *field, void *user_data);
 
+/**
+ * @brief Iterates over all fields of a struct and invokes a callback for each.
+ *
+ * @param instance  [in] Pointer to the struct instance
+ * @param type      [in] Type enum of the struct to visit
+ * @param visitor   [in] Callback function to execute per field
+ * @param user_data [in] Pointer to arbitrary state data for the callback
+ *
+ * @return REFLECT_OK on success, or an error code otherwise
+ */
 ReflectResult
 visit_struct_fields(const void *instance, FIELD_TYPE type, FieldVisitor visitor, void *user_data);
 
@@ -405,6 +481,7 @@ DEFINE_FIELD_GETTER(str, TYPE_STR, char *)
 #endif // _CMYREFLECTION_H
 
 #ifdef CMYREFLECTION_IMPLEMENTATION
+#include <stdint.h>
 
 #ifdef CMYREFLECTION_REGISTRY
 
@@ -599,9 +676,10 @@ ReflectResult get_dynamic_array_length(const void      *base_instance,
     }
 
     StructMetaData parent_meta;
-    if (get_struct_metadata(parent_type, &parent_meta) != REFLECT_OK)
+    ReflectResult  meta_res = get_struct_metadata(parent_type, &parent_meta);
+    if (meta_res != REFLECT_OK)
     {
-        return REFLECT_ERR_TYPE_INVALID;
+        return meta_res;
     }
 
     const FieldInfo *len_field =
