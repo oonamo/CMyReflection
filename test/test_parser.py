@@ -437,3 +437,47 @@ static inline const char* get_field_description(const FieldInfo* field)
         '{ "stuff", TYPE_INT, offsetof(Options, stuff), sizeof(int), 1, FIELD_ACCESS_RW, NULL, (void*)&ext_Options_stuff }'
         in generated_content
     )
+
+
+def test_type_mapper_creates_guard_clause():
+    test_plugin = cmy_reflector.Plugin(name="test plugin")
+
+    @test_plugin.setup
+    def setup_description_hook(reflector):
+        pass
+
+    @test_plugin.type_mapper(
+        signature="void do_a(const void* a, FIELD_TYPE a)",
+        switch_var="a",
+        default_case="return;",
+        guard_clause="if (!a) return;",
+    )
+    def type_mapper(type_name, type_enum, ctype, suffix):
+        func_def = f"""
+static inline void foo_{suffix}(const void* a)
+{{
+    (void)a;
+    return;
+}}
+"""
+        case_code = f"foo_{suffix}(a); return;"
+        return (func_def, case_code)
+
+    c_code = """
+    /// @reflect
+    typedef struct
+    {
+        type_a a;
+        type_b b;
+        type_c b;
+    } types;
+    """
+
+    cmy_reflector.add_plugin(test_plugin)
+
+    reflector = cmy_reflector.Reflector()
+    cmy_reflector.generate_reflection(reflector, "test_enum.h", c_code)
+    reflector.resolve()
+
+    generated_content = str(reflector)
+    assert "if (!a) return;" in generated_content

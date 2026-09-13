@@ -16,6 +16,7 @@ class TypeMapper:
     switch_var: str
     default_case: str
     requires: str | None = None
+    guard_clause: str | None = ""
 
 
 @dataclass
@@ -107,6 +108,7 @@ class Plugin:
         signature: str,
         switch_var: str,
         default_case: str = "break;",
+        guard_clause: str = "",
         requires=None,
     ):
         def decorator(func):
@@ -115,6 +117,7 @@ class Plugin:
                 signature=signature,
                 switch_var=switch_var,
                 default_case=default_case,
+                guard_clause=guard_clause,
                 requires=requires,
             )
             self._type_mappers.append(mapper)
@@ -833,6 +836,7 @@ FieldType get_base_type(FieldType type) {{
                 switch_body = "\n".join(switch_cases)
                 router = f"""\
 static inline {mapper.signature} {{
+    {mapper.guard_clause}
     switch({mapper.switch_var}) {{
 {switch_body}
         default: {mapper.default_case}
@@ -911,9 +915,7 @@ static inline {mapper.signature} {{
 
         for struct in self.structs.values():
             for field in struct.fields:
-                gen_str = self.generate_dynamic_array_accessors(
-                    struct.name, field
-                )
+                gen_str = self.generate_dynamic_array_accessors(struct.name, field)
                 if gen_str != "":
                     lines.append(
                         self.generate_dynamic_array_accessors(struct.name, field)

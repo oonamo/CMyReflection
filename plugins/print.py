@@ -26,7 +26,7 @@ def setup(reflector):
 
 @printer.field_tag("format")
 def handle_field_format(reflector, struct, field, tag_value):
-    field.plugin_data["format"] = tag_value
+    reflector.set_field_extension(field, "format", tag_value)
 
 
 _PRIMITIVE_FORMATS = {
@@ -52,6 +52,7 @@ _PRIMITIVE_FORMATS = {
     signature="ReflectResult print_field(const void* instance, const StructFieldInfo* field)",
     switch_var="field->type",
     default_case="return REFLECT_ERR_TYPE_MISMATCH;",
+    guard_clause="if (!field) { return REFLECT_ERR_NULL_PTR; }",
     requires="CMY_PLUGIN_PRINTER_ENABLED",
 )
 def handle_primitive_printers(type_name, type_enum, ctype, suffix):

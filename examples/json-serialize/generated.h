@@ -218,6 +218,7 @@ static inline ReflectResult print_field_size_t(const void* instance, const Struc
 
 
 static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field) {
+    if (!field) { return REFLECT_ERR_NULL_PTR; }
     switch(field->type) {
       case TYPE_CHAR_ARR: return print_field_char_arr(instance, field);
       case TYPE_CHAR: return print_field_char(instance, field);
