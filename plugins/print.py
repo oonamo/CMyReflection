@@ -49,7 +49,7 @@ _PRIMITIVE_FORMATS = {
 
 
 @printer.type_mapper(
-    signature="ReflectResult print_field(const void* instance, const FieldInfo* field)",
+    signature="ReflectResult print_field(const void* instance, const StructFieldInfo* field)",
     switch_var="field->type",
     default_case="return REFLECT_ERR_TYPE_MISMATCH;",
     requires="CMY_PLUGIN_PRINTER_ENABLED",
@@ -59,7 +59,7 @@ def handle_primitive_printers(type_name, type_enum, ctype, suffix):
         default_fmt = _PRIMITIVE_FORMATS[type_name]
 
         func_def = f"""
-static inline ReflectResult print_field_{suffix}(const void* instance, const FieldInfo* field) {{
+static inline ReflectResult print_field_{suffix}(const void* instance, const StructFieldInfo* field) {{
     if (!instance || !field) {{ return REFLECT_ERR_NULL_PTR; }}
 
     {ctype} v;
@@ -77,7 +77,7 @@ static inline ReflectResult print_field_{suffix}(const void* instance, const Fie
         return (func_def, case_code)
     elif type_name == "bool":
         func_def = f"""
-static inline ReflectResult print_field_{suffix}(const void* instance, const FieldInfo* field) {{
+static inline ReflectResult print_field_{suffix}(const void* instance, const StructFieldInfo* field) {{
     if (!instance || !field) {{ return REFLECT_ERR_NULL_PTR; }}
 
     {ctype} v;
@@ -95,7 +95,7 @@ static inline ReflectResult print_field_{suffix}(const void* instance, const Fie
         return (func_def, case_code)
     elif type_name == "char_arr":
         func_def = f"""\
-static inline ReflectResult print_field_{suffix}(const void* instance, const FieldInfo* field) {{
+static inline ReflectResult print_field_{suffix}(const void* instance, const StructFieldInfo* field) {{
     if (!instance || !field) {{ return REFLECT_ERR_NULL_PTR; }}
 
     char* val = (char*)malloc(field->size);

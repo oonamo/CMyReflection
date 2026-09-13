@@ -44,19 +44,19 @@ typedef enum {
 // No plugins active
 // No plugins
 // --- Metadata Declarations
-extern const FieldInfo Vector2_Metadata[];
+extern const StructFieldInfo Vector2_Metadata[];
 extern const size_t Vector2_FieldCount;
-extern const FieldInfo Ball_Metadata[];
+extern const StructFieldInfo Ball_Metadata[];
 extern const size_t Ball_FieldCount;
-extern const FieldInfo Game_Metadata[];
+extern const StructFieldInfo Game_Metadata[];
 extern const size_t Game_FieldCount;
-extern const FieldInfo SensorData_Metadata[];
+extern const StructFieldInfo SensorData_Metadata[];
 extern const size_t SensorData_FieldCount;
-extern const FieldInfo IoTDevice_Metadata[];
+extern const StructFieldInfo IoTDevice_Metadata[];
 extern const size_t IoTDevice_FieldCount;
-extern const FieldInfo DeviceManager_Metadata[];
+extern const StructFieldInfo DeviceManager_Metadata[];
 extern const size_t DeviceManager_FieldCount;
-extern const FieldInfo DamageComponent_Metadata[];
+extern const StructFieldInfo DamageComponent_Metadata[];
 extern const size_t DamageComponent_FieldCount;
 extern const EnumMemberInfo BallSize_Members[];
 extern const size_t BallSize_MemberCount;
@@ -182,20 +182,20 @@ DEFINE_DYNAMIC_ARRAY_GETTER(Game_waypoints, TYPE_VECTOR2_PTR, Vector2 *, Vector2
 #ifdef REFLECTION_IMPLEMENTATION
 
 // --- Generated from game_type.h ---
-const FieldInfo Vector2_Metadata[] = {
+const StructFieldInfo Vector2_Metadata[] = {
     { "x", TYPE_FLOAT, offsetof(Vector2, x), sizeof(float), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "y", TYPE_FLOAT, offsetof(Vector2, y), sizeof(float), 1, FIELD_ACCESS_RW, NULL, NULL },
 };
-const size_t Vector2_FieldCount = sizeof(Vector2_Metadata) / sizeof(FieldInfo);
+const size_t Vector2_FieldCount = sizeof(Vector2_Metadata) / sizeof(StructFieldInfo);
 
-const FieldInfo Ball_Metadata[] = {
+const StructFieldInfo Ball_Metadata[] = {
     { "speed", TYPE_VEC2, offsetof(Ball, speed), sizeof(Vector2), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "radius", TYPE_FLOAT, offsetof(Ball, radius), sizeof(float), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "size", TYPE_ENUM_BALLSIZE, offsetof(Ball, size), sizeof(BallSize), 1, FIELD_ACCESS_RW, NULL, NULL },
 };
-const size_t Ball_FieldCount = sizeof(Ball_Metadata) / sizeof(FieldInfo);
+const size_t Ball_FieldCount = sizeof(Ball_Metadata) / sizeof(StructFieldInfo);
 
-const FieldInfo Game_Metadata[] = {
+const StructFieldInfo Game_Metadata[] = {
     { "player_pos", TYPE_VEC2, offsetof(Game, player_pos), sizeof(Vector2), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "ball", TYPE_STRUCT_BALL, offsetof(Game, ball), sizeof(Ball), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "health", TYPE_FLOAT, offsetof(Game, health), sizeof(float), 1, FIELD_ACCESS_RW, NULL, NULL },
@@ -213,7 +213,7 @@ const FieldInfo Game_Metadata[] = {
     { "waypoints", TYPE_VECTOR2_PTR, offsetof(Game, waypoints), sizeof(Vector2 *), 1, FIELD_ACCESS_RW, "num_waypoints", NULL },
     { "enemy_positions", TYPE_VECTOR2_ARR, offsetof(Game, enemy_positions), sizeof(Vector2[20]), 20, FIELD_ACCESS_RW, NULL, NULL },
 };
-const size_t Game_FieldCount = sizeof(Game_Metadata) / sizeof(FieldInfo);
+const size_t Game_FieldCount = sizeof(Game_Metadata) / sizeof(StructFieldInfo);
 
 const EnumMemberInfo BallSize_Members[] = {
    { BALL_TYPE_SMALL, "BALL_TYPE_SMALL", NULL },
@@ -223,28 +223,28 @@ const EnumMemberInfo BallSize_Members[] = {
 const size_t BallSize_MemberCount = sizeof(BallSize_Members) / sizeof(EnumMemberInfo);
 
 // --- Generated from readme_example.h ---
-const FieldInfo SensorData_Metadata[] = {
+const StructFieldInfo SensorData_Metadata[] = {
     { "voltage", TYPE_FLOAT, offsetof(SensorData, voltage), sizeof(float), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "temp", TYPE_FLOAT, offsetof(SensorData, temp), sizeof(float), 1, FIELD_ACCESS_RW, NULL, NULL },
 };
-const size_t SensorData_FieldCount = sizeof(SensorData_Metadata) / sizeof(FieldInfo);
+const size_t SensorData_FieldCount = sizeof(SensorData_Metadata) / sizeof(StructFieldInfo);
 
-const FieldInfo IoTDevice_Metadata[] = {
+const StructFieldInfo IoTDevice_Metadata[] = {
     { "device_id", TYPE_CHAR_ARR, offsetof(IoTDevice, device_id), sizeof(char[32]), 32, FIELD_ACCESS_RW, NULL, NULL },
     { "baud_rate", TYPE_INT, offsetof(IoTDevice, baud_rate), sizeof(int), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "data", TYPE_STRUCT_SENSORDATA, offsetof(IoTDevice, data), sizeof(SensorData), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "state", TYPE_ENUM_DEVICESTATE, offsetof(IoTDevice, state), sizeof(DeviceState), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "uuid", TYPE_UINT64_T, offsetof(IoTDevice, uuid), sizeof(uint64_t), 1, FIELD_ACCESS_READ, NULL, NULL },
 };
-const size_t IoTDevice_FieldCount = sizeof(IoTDevice_Metadata) / sizeof(FieldInfo);
+const size_t IoTDevice_FieldCount = sizeof(IoTDevice_Metadata) / sizeof(StructFieldInfo);
 
-const FieldInfo DeviceManager_Metadata[] = {
+const StructFieldInfo DeviceManager_Metadata[] = {
     { "op_mode", TYPE_UNSIGNEDCHAR, offsetof(DeviceManager, op_mode), sizeof(unsigned char), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "permissions", TYPE_ENUM_MANAGERPERMISSIONS, offsetof(DeviceManager, permissions), sizeof(ManagerPermissions), 1, FIELD_ACCESS_READ, NULL, NULL },
     { "device_location", TYPE_CHAR_ARR, offsetof(DeviceManager, device_location), sizeof(char[MAX_BUF_LEN]), MAX_BUF_LEN, FIELD_ACCESS_RW, NULL, NULL },
     { "devices", TYPE_IOTDEVICE_ARR, offsetof(DeviceManager, devices), sizeof(IoTDevice[8]), 8, FIELD_ACCESS_RW, NULL, NULL },
 };
-const size_t DeviceManager_FieldCount = sizeof(DeviceManager_Metadata) / sizeof(FieldInfo);
+const size_t DeviceManager_FieldCount = sizeof(DeviceManager_Metadata) / sizeof(StructFieldInfo);
 
 const EnumMemberInfo DeviceState_Members[] = {
    { DEVICE_RX, "DEVICE_RX", NULL },
@@ -260,10 +260,10 @@ const EnumMemberInfo ManagerPermissions_Members[] = {
 const size_t ManagerPermissions_MemberCount = sizeof(ManagerPermissions_Members) / sizeof(EnumMemberInfo);
 
 // --- Generated from stuff.h ---
-const FieldInfo DamageComponent_Metadata[] = {
+const StructFieldInfo DamageComponent_Metadata[] = {
     { "damage", TYPE_FLOAT, offsetof(DamageComponent, damage), sizeof(float), 1, FIELD_ACCESS_RW, NULL, NULL },
 };
-const size_t DamageComponent_FieldCount = sizeof(DamageComponent_Metadata) / sizeof(FieldInfo);
+const size_t DamageComponent_FieldCount = sizeof(DamageComponent_Metadata) / sizeof(StructFieldInfo);
 
 // --- Auto-Generated Type Registry
 ReflectResult get_struct_metadata(FieldType type, StructMetaData* out_meta) {
@@ -325,7 +325,7 @@ ReflectResult get_enum_metadata(FieldType type, EnumMetaData* out_meta) {
 
 
 // --- Auto-Generated Safe Type Setter
-ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void* value, size_t element_count) {
+ReflectResult safe_set_field(void* instance, const StructFieldInfo* field, const void* value, size_t element_count) {
     if (!instance || !field || !value) return false;
     switch(field->type) {
       case TYPE_ENUM_BALLSIZE: return set_field_BallSize(instance, field, *(BallSize*)value);

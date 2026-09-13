@@ -19,7 +19,7 @@ TEST(IoT, Can_Do_Readme_Things)
 {
     DeviceManager manager = {0};
 
-    const FieldInfo *leaf   = NULL;
+    const StructFieldInfo *leaf   = NULL;
     void            *target = resolve_field_path(&manager,
                                       DeviceManager_Metadata,
                                       DeviceManager_FieldCount,
@@ -32,7 +32,7 @@ TEST(IoT, Can_Do_Readme_Things)
     set_field_float(target, leaf, 240.5f);
     TEST_ASSERT_EQUAL_FLOAT(240.5f, manager.devices[2].data.voltage);
 
-    const FieldInfo *location_field =
+    const StructFieldInfo *location_field =
         find_field(DeviceManager_Metadata, DeviceManager_FieldCount, "device_location");
 
     char *location = "bedroom1";

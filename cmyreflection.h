@@ -63,12 +63,12 @@ typedef struct
     FieldAccessFlags flags;             /*!< Access flags */
     const char      *length_field_name; /*!< Associated field length string */
     void            *user_data;         /*!< User data */
-} FieldInfo;
+} StructFieldInfo;
 
 typedef struct
 {
-    const FieldInfo *fields; /*!< Members of struct  */
-    size_t           count;  /*!< Number of members in struct */
+    const StructFieldInfo *fields; /*!< Members of struct  */
+    size_t                 count;  /*!< Number of members in struct */
 } StructMetaData;
 
 #define MetaData_FromName(StructName)                                                              \
@@ -147,8 +147,10 @@ ReflectResult get_enum_metadata(FIELD_TYPE type, EnumMetaData *out_meta);
  *
  * @return REFLECT_OK on success, or an error code otherwise
  */
-ReflectResult
-safe_set_field(void *instance, const FieldInfo *field, const void *value, size_t element_count);
+ReflectResult safe_set_field(void                  *instance,
+                             const StructFieldInfo *field,
+                             const void            *value,
+                             size_t                 element_count);
 
 /**
  * @brief Gets the name of the type given
@@ -172,11 +174,11 @@ const char *get_name_of_type(FIELD_TYPE type);
  *
  * @return Pointer to the resolved struct, or NULL if not found
  */
-void *resolve_field_path(void             *base_instance,
-                         const FieldInfo  *base_meta,
-                         size_t            base_count,
-                         const char       *path,
-                         const FieldInfo **out_leaf_field);
+void *resolve_field_path(void                   *base_instance,
+                         const StructFieldInfo  *base_meta,
+                         size_t                  base_count,
+                         const char             *path,
+                         const StructFieldInfo **out_leaf_field);
 
 /**
  * @brief Resolves metadata for a specific field path without an instance.
@@ -187,8 +189,8 @@ void *resolve_field_path(void             *base_instance,
  *
  * @return Pointer to the resolved field's metadata, or NULL if not found
  */
-const FieldInfo *
-resolve_field_metadata(const FieldInfo *base_meta, size_t base_count, const char *path);
+const StructFieldInfo *
+resolve_field_metadata(const StructFieldInfo *base_meta, size_t base_count, const char *path);
 
 /**
  * @brief Queries an instance for a field. Can be nested
@@ -200,10 +202,10 @@ resolve_field_metadata(const FieldInfo *base_meta, size_t base_count, const char
  *
  * @return Pointer to the resolved struct/field data, or NULL if not found
  */
-void *reflect_query(void                 *instance,
-                    const StructMetaData *meta,
-                    const char           *query,
-                    const FieldInfo     **out_field);
+void *reflect_query(void                   *instance,
+                    const StructMetaData   *meta,
+                    const char             *query,
+                    const StructFieldInfo **out_field);
 
 /**
  * @brief Find's a field in a struct
@@ -214,7 +216,7 @@ void *reflect_query(void                 *instance,
  *
  * @return Pointer to the field, NULL if not found
  */
-const FieldInfo *find_field(const FieldInfo *meta, size_t count, const char *name);
+const StructFieldInfo *find_field(const StructFieldInfo *meta, size_t count, const char *name);
 
 /**
  * @brief Find's a member in a struct
@@ -249,8 +251,10 @@ const char *get_enum_member_name(const EnumMemberInfo *meta, size_t member_count
  *
  * @return REFLECT_OK on success, or an error code otherwise
  */
-ReflectResult
-set_field_value(void *instance, const FieldInfo *field, const void *new_value, size_t write_size);
+ReflectResult set_field_value(void                  *instance,
+                              const StructFieldInfo *field,
+                              const void            *new_value,
+                              size_t                 write_size);
 
 /**
  * @brief Safely gets a field value
@@ -262,8 +266,10 @@ set_field_value(void *instance, const FieldInfo *field, const void *new_value, s
  *
  * @return REFLECT_OK if successful, or an error code otherwise
  */
-ReflectResult
-get_field_value(const void *instance, const FieldInfo *field, void *out_value, size_t read_size);
+ReflectResult get_field_value(const void            *instance,
+                              const StructFieldInfo *field,
+                              void                  *out_value,
+                              size_t                 read_size);
 
 /**
  * @brief Retrieves a specific element from a statically allocated inline array.
@@ -276,11 +282,11 @@ get_field_value(const void *instance, const FieldInfo *field, void *out_value, s
  *
  * @return REFLECT_OK on success, or an error code otherwise
  */
-ReflectResult get_array_element(const void      *instance,
-                                const FieldInfo *field,
-                                size_t           index,
-                                void            *out_value,
-                                size_t           element_size);
+ReflectResult get_array_element(const void            *instance,
+                                const StructFieldInfo *field,
+                                size_t                 index,
+                                void                  *out_value,
+                                size_t                 element_size);
 
 /**
  * @brief Resolves the runtime length of a tagged dynamic array pointer.
@@ -292,10 +298,10 @@ ReflectResult get_array_element(const void      *instance,
  *
  * @return REFLECT_OK on success, or an error code otherwise
  */
-ReflectResult get_dynamic_array_length(const void      *base_instance,
-                                       FIELD_TYPE       parent_type,
-                                       const FieldInfo *field,
-                                       size_t          *out_length);
+ReflectResult get_dynamic_array_length(const void            *base_instance,
+                                       FIELD_TYPE             parent_type,
+                                       const StructFieldInfo *field,
+                                       size_t                *out_length);
 /**
  * @brief Safely writes data to a dynamically allocated array
  *
@@ -306,10 +312,10 @@ ReflectResult get_dynamic_array_length(const void      *base_instance,
  *
  * @return REFLECT_OK on success, or an error code otherwise
  */
-ReflectResult set_dynamic_array_data(void            *instance,
-                                     const FieldInfo *field,
-                                     const void      *new_data,
-                                     size_t           write_size);
+ReflectResult set_dynamic_array_data(void                  *instance,
+                                     const StructFieldInfo *field,
+                                     const void            *new_data,
+                                     size_t                 write_size);
 
 /**
  * @brief Safely reads data from a dynamically allocated array
@@ -321,14 +327,14 @@ ReflectResult set_dynamic_array_data(void            *instance,
  *
  * @return REFLECT_OK on success, or an error code otherwise
  */
-ReflectResult get_dynamic_array_data(const void      *instance,
-                                     const FieldInfo *field,
-                                     void            *out_data,
-                                     size_t           read_size);
+ReflectResult get_dynamic_array_data(const void            *instance,
+                                     const StructFieldInfo *field,
+                                     void                  *out_data,
+                                     size_t                 read_size);
 
 #define DEFINE_DYNAMIC_ARRAY_GETTER(Suffix, EnumVal, CType, DownCastType)                          \
     static inline ReflectResult get_dynamic_##Suffix(                                              \
-        const void *instance, const FieldInfo *field, CType out_data, size_t element_count)        \
+        const void *instance, const StructFieldInfo *field, CType out_data, size_t element_count)  \
     {                                                                                              \
         if (!instance || !field)                                                                   \
         {                                                                                          \
@@ -344,7 +350,7 @@ ReflectResult get_dynamic_array_data(const void      *instance,
 
 #define DEFINE_DYNAMIC_ARRAY_SETTER(Suffix, EnumVal, CType, DownCastType, ParentEnumVal)           \
     static inline ReflectResult set_dynamic_##Suffix(                                              \
-        void *instance, const FieldInfo *field, CType new_data, size_t element_count)              \
+        void *instance, const StructFieldInfo *field, CType new_data, size_t element_count)        \
     {                                                                                              \
         if (!instance || !field)                                                                   \
         {                                                                                          \
@@ -376,7 +382,9 @@ ReflectResult get_dynamic_array_data(const void      *instance,
  * @param field         [in] Metadata of the current field being visited
  * @param user_data     [in] User data passed through the traversal
  */
-typedef void (*FieldVisitor)(const void *base_instance, const FieldInfo *field, void *user_data);
+typedef void (*StructFieldVisitor)(const void            *base_instance,
+                                   const StructFieldInfo *field,
+                                   void                  *user_data);
 
 /**
  * @brief Iterates over all fields of a struct and invokes a callback for each.
@@ -388,12 +396,14 @@ typedef void (*FieldVisitor)(const void *base_instance, const FieldInfo *field, 
  *
  * @return REFLECT_OK on success, or an error code otherwise
  */
-ReflectResult
-visit_struct_fields(const void *instance, FIELD_TYPE type, FieldVisitor visitor, void *user_data);
+ReflectResult visit_struct_fields(const void        *instance,
+                                  FIELD_TYPE         type,
+                                  StructFieldVisitor visitor,
+                                  void              *user_data);
 
 #define DEFINE_FIELD_SETTER(Suffix, EnumVal, CType)                                                \
     static inline ReflectResult set_field_##Suffix(                                                \
-        void *instance, const FieldInfo *field, CType value)                                       \
+        void *instance, const StructFieldInfo *field, CType value)                                 \
     {                                                                                              \
         if (!instance || !field)                                                                   \
         {                                                                                          \
@@ -408,7 +418,7 @@ visit_struct_fields(const void *instance, FIELD_TYPE type, FieldVisitor visitor,
 
 #define DEFINE_FIELD_GETTER(Suffix, EnumVal, CType)                                                \
     static inline ReflectResult get_field_##Suffix(                                                \
-        const void *instance, const FieldInfo *field, CType *out_value)                            \
+        const void *instance, const StructFieldInfo *field, CType *out_value)                      \
     {                                                                                              \
         if (!instance || !field)                                                                   \
         {                                                                                          \
@@ -423,7 +433,7 @@ visit_struct_fields(const void *instance, FIELD_TYPE type, FieldVisitor visitor,
 
 #define DEFINE_ENUM_SETTER(Suffix, EnumVal, CType, validator)                                      \
     static inline ReflectResult set_field_##Suffix(                                                \
-        void *instance, const FieldInfo *field, CType value)                                       \
+        void *instance, const StructFieldInfo *field, CType value)                                 \
     {                                                                                              \
         if (!instance || !field)                                                                   \
         {                                                                                          \
@@ -442,7 +452,7 @@ visit_struct_fields(const void *instance, FIELD_TYPE type, FieldVisitor visitor,
 
 #define DEFINE_ARRAY_SETTER(Suffix, EnumVal, CType, DownCastType)                                  \
     static inline ReflectResult set_field_##Suffix(                                                \
-        void *instance, const FieldInfo *field, CType value, size_t element_count)                 \
+        void *instance, const StructFieldInfo *field, CType value, size_t element_count)           \
     {                                                                                              \
         if (!instance || !field)                                                                   \
         {                                                                                          \
@@ -461,7 +471,7 @@ visit_struct_fields(const void *instance, FIELD_TYPE type, FieldVisitor visitor,
 
 #define DEFINE_ARRAY_GETTER(Suffix, EnumVal, CType, DownCastType)                                  \
     static inline bool get_field_##Suffix(                                                         \
-        const void *instance, const FieldInfo *field, CType value, size_t element_count)           \
+        const void *instance, const StructFieldInfo *field, CType value, size_t element_count)     \
     {                                                                                              \
         if (!instance || !field)                                                                   \
         {                                                                                          \
@@ -500,12 +510,12 @@ DEFINE_FIELD_GETTER(str, TYPE_STR, char *)
 
     #include <stddef.h>
 
-static ReflectResult resolve_path_internal(void             *base_instance,
-                                           const FieldInfo  *base_meta,
-                                           size_t            base_count,
-                                           const char       *path,
-                                           void            **out_instance,
-                                           const FieldInfo **out_leaf_field)
+static ReflectResult resolve_path_internal(void                   *base_instance,
+                                           const StructFieldInfo  *base_meta,
+                                           size_t                  base_count,
+                                           const char             *path,
+                                           void                  **out_instance,
+                                           const StructFieldInfo **out_leaf_field)
 {
     if (!base_meta || !path || !out_leaf_field)
     {
@@ -519,10 +529,10 @@ static ReflectResult resolve_path_internal(void             *base_instance,
     char *token = buffer;
     char *next  = strchr(token, '.');
 
-    void            *current_instance = base_instance;
-    const FieldInfo *current_meta     = base_meta;
-    size_t           current_count    = base_count;
-    const FieldInfo *current_field    = NULL;
+    void                  *current_instance = base_instance;
+    const StructFieldInfo *current_meta     = base_meta;
+    size_t                 current_count    = base_count;
+    const StructFieldInfo *current_field    = NULL;
 
     while (token)
     {
@@ -587,11 +597,11 @@ static ReflectResult resolve_path_internal(void             *base_instance,
     return REFLECT_OK;
 }
 
-void *resolve_field_path(void             *base_instance,
-                         const FieldInfo  *base_meta,
-                         size_t            base_count,
-                         const char       *path,
-                         const FieldInfo **out_leaf_field)
+void *resolve_field_path(void                   *base_instance,
+                         const StructFieldInfo  *base_meta,
+                         size_t                  base_count,
+                         const char             *path,
+                         const StructFieldInfo **out_leaf_field)
 {
     if (!base_instance)
     {
@@ -609,10 +619,10 @@ void *resolve_field_path(void             *base_instance,
     return NULL;
 }
 
-const FieldInfo *
-resolve_field_metadata(const FieldInfo *base_meta, size_t base_count, const char *path)
+const StructFieldInfo *
+resolve_field_metadata(const StructFieldInfo *base_meta, size_t base_count, const char *path)
 {
-    const FieldInfo *leaf = NULL;
+    const StructFieldInfo *leaf = NULL;
 
     if (resolve_path_internal(NULL, base_meta, base_count, path, NULL, &leaf) == REFLECT_OK)
     {
@@ -622,10 +632,10 @@ resolve_field_metadata(const FieldInfo *base_meta, size_t base_count, const char
     return NULL;
 }
 
-void *reflect_query(void                 *instance,
-                    const StructMetaData *meta,
-                    const char           *query,
-                    const FieldInfo     **out_field)
+void *reflect_query(void                   *instance,
+                    const StructMetaData   *meta,
+                    const char             *query,
+                    const StructFieldInfo **out_field)
 {
     if (!instance || !meta || !query || !out_field)
     {
@@ -647,8 +657,10 @@ void *reflect_query(void                 *instance,
     return resolve_field_path(instance, meta->fields, meta->count, query, out_field);
 }
 
-ReflectResult
-visit_struct_fields(const void *instance, FIELD_TYPE type, FieldVisitor visitor, void *user_data)
+ReflectResult visit_struct_fields(const void        *instance,
+                                  FIELD_TYPE         type,
+                                  StructFieldVisitor visitor,
+                                  void              *user_data)
 {
     if (!visitor)
     {
@@ -663,7 +675,7 @@ visit_struct_fields(const void *instance, FIELD_TYPE type, FieldVisitor visitor,
 
     for (size_t i = 0; i < meta.count; i++)
     {
-        const FieldInfo *field = &meta.fields[i];
+        const StructFieldInfo *field = &meta.fields[i];
 
         visitor(instance, field, user_data);
     }
@@ -671,10 +683,10 @@ visit_struct_fields(const void *instance, FIELD_TYPE type, FieldVisitor visitor,
     return REFLECT_OK;
 }
 
-ReflectResult get_dynamic_array_length(const void      *base_instance,
-                                       FIELD_TYPE       parent_type,
-                                       const FieldInfo *field,
-                                       size_t          *out_length)
+ReflectResult get_dynamic_array_length(const void            *base_instance,
+                                       FIELD_TYPE             parent_type,
+                                       const StructFieldInfo *field,
+                                       size_t                *out_length)
 {
     if (!base_instance || !field || !out_length)
     {
@@ -693,7 +705,7 @@ ReflectResult get_dynamic_array_length(const void      *base_instance,
         return meta_res;
     }
 
-    const FieldInfo *len_field =
+    const StructFieldInfo *len_field =
         find_field(parent_meta.fields, parent_meta.count, field->length_field_name);
     if (!len_field)
     {
@@ -725,7 +737,7 @@ ReflectResult get_dynamic_array_length(const void      *base_instance,
 
 #endif // CMYREFLECTION_REGISTRY
 
-const FieldInfo *find_field(const FieldInfo *meta, size_t count, const char *name)
+const StructFieldInfo *find_field(const StructFieldInfo *meta, size_t count, const char *name)
 {
     for (size_t i = 0; i < count; i++)
     {
@@ -763,8 +775,10 @@ const char *get_enum_member_name(const EnumMemberInfo *meta, size_t member_count
     return NULL;
 }
 
-ReflectResult
-set_field_value(void *instance, const FieldInfo *field, const void *new_value, size_t write_size)
+ReflectResult set_field_value(void                  *instance,
+                              const StructFieldInfo *field,
+                              const void            *new_value,
+                              size_t                 write_size)
 {
     if (!instance || !field || !new_value)
     {
@@ -787,8 +801,10 @@ set_field_value(void *instance, const FieldInfo *field, const void *new_value, s
     return REFLECT_OK;
 }
 
-ReflectResult
-get_field_value(const void *instance, const FieldInfo *field, void *out_value, size_t read_size)
+ReflectResult get_field_value(const void            *instance,
+                              const StructFieldInfo *field,
+                              void                  *out_value,
+                              size_t                 read_size)
 {
     if (!instance || !field || !out_value)
     {
@@ -811,11 +827,11 @@ get_field_value(const void *instance, const FieldInfo *field, void *out_value, s
     return REFLECT_OK;
 }
 
-ReflectResult get_array_element(const void      *instance,
-                                const FieldInfo *field,
-                                size_t           index,
-                                void            *out_value,
-                                size_t           element_size)
+ReflectResult get_array_element(const void            *instance,
+                                const StructFieldInfo *field,
+                                size_t                 index,
+                                void                  *out_value,
+                                size_t                 element_size)
 {
     if (!instance || !field || !out_value)
     {
@@ -841,10 +857,10 @@ ReflectResult get_array_element(const void      *instance,
     return REFLECT_OK;
 }
 
-ReflectResult set_dynamic_array_data(void            *instance,
-                                     const FieldInfo *field,
-                                     const void      *new_data,
-                                     size_t           write_size)
+ReflectResult set_dynamic_array_data(void                  *instance,
+                                     const StructFieldInfo *field,
+                                     const void            *new_data,
+                                     size_t                 write_size)
 {
     if (!instance || !field || !new_data)
     {
@@ -871,10 +887,10 @@ ReflectResult set_dynamic_array_data(void            *instance,
     return REFLECT_OK;
 }
 
-ReflectResult get_dynamic_array_data(const void      *instance,
-                                     const FieldInfo *field,
-                                     void            *out_data,
-                                     size_t           read_size)
+ReflectResult get_dynamic_array_data(const void            *instance,
+                                     const StructFieldInfo *field,
+                                     void                  *out_data,
+                                     size_t                 read_size)
 {
     if (!instance || !field || !out_data)
     {

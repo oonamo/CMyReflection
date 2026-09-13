@@ -80,7 +80,7 @@ python3 cmy_reflector.py ./src/ -o reflection.generated.h
 // ...
 DeviceManager manager = {0};
 
-const FieldInfo *leaf   = NULL;
+const StructFieldInfo *leaf   = NULL;
 void            *target = resolve_field_path(&manager,
                                   DeviceManager_Metadata,
                                   DeviceManager_FieldCount,
@@ -93,7 +93,7 @@ if (target && leaf)
     set_field_float(target, leaf, 240.5f);
 }
 
-const FieldInfo *location_field =
+const StructFieldInfo *location_field =
     find_field(DeviceManager_MetaData, DeviceManager_FieldCount, "device_location");
 char *location = "bedroom1";
 
@@ -140,7 +140,7 @@ typedef struct
 // Creates:
 // set_field_int()
 // get_field_int()
-// const FieldInfo MyStuct_Metadata[]
+// const StructFieldInfo MyStuct_Metadata[]
 // const size_t MyStuct_FieldCount
 // TYPE_STRUCT_MYSTRUCT
 ```

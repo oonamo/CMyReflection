@@ -203,7 +203,7 @@ class CStruct:
     def generate_declaration(self) -> str:
         """Generates a declaration for the struct metadata"""
         lines = [
-            f"extern const FieldInfo {self.name}_Metadata[];",
+            f"extern const StructFieldInfo {self.name}_Metadata[];",
             f"extern const size_t {self.name}_FieldCount;",
         ]
 
@@ -238,12 +238,12 @@ class CStruct:
         if any(f.plugin_data for f in self.fields):
             lines.append("")
 
-        lines.append(f"const FieldInfo {self.name}_Metadata[] = {{")
+        lines.append(f"const StructFieldInfo {self.name}_Metadata[] = {{")
         for field in self.fields:
             lines.append(field.gen_field_str(self.name) + ",")
         lines.append("};")
         lines.append(
-            f"const size_t {self.name}_FieldCount = sizeof({self.name}_Metadata) / sizeof(FieldInfo);"
+            f"const size_t {self.name}_FieldCount = sizeof({self.name}_Metadata) / sizeof(StructFieldInfo);"
         )
 
         return "\n".join(lines)
@@ -730,7 +730,7 @@ const char* get_name_of_type(FieldType type) {{
 
         template = f"""\
 // --- Auto-Generated Safe Type Setter
-ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void* value, size_t element_count) {{
+ReflectResult safe_set_field(void* instance, const StructFieldInfo* field, const void* value, size_t element_count) {{
     if (!instance || !field || !value) return false;
     switch(field->type) {{
 {switch_body}

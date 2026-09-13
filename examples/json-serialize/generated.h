@@ -30,7 +30,7 @@ typedef enum {
  * CMyReflection Active Plugins
  *  -> Printer (v0.0.0) by oonamo - Provides run time type printing (enums unsupprted)
  *    - Provides tag: @format (Struct Fields)
- *    - Provides router: ReflectResult print_field(const void* instance, const FieldInfo* field)
+ *    - Provides router: ReflectResult print_field(const void* instance, const StructFieldInfo* field)
  */
 
 #include <inttypes.h>
@@ -44,11 +44,11 @@ typedef struct {
 #endif // CMY_PLUGIN_PRINTER_ENABLED
 } FieldExtensions;
 // --- Metadata Declarations
-extern const FieldInfo Post_Metadata[];
+extern const StructFieldInfo Post_Metadata[];
 extern const size_t Post_FieldCount;
-extern const FieldInfo UserPrefernces_Metadata[];
+extern const StructFieldInfo UserPrefernces_Metadata[];
 extern const size_t UserPrefernces_FieldCount;
-extern const FieldInfo User_Metadata[];
+extern const StructFieldInfo User_Metadata[];
 extern const size_t User_FieldCount;
 extern const FieldExtensions ext_User_username;
 extern const FieldExtensions ext_User_email;
@@ -115,7 +115,7 @@ DEFINE_DYNAMIC_ARRAY_GETTER(User_posts, TYPE_POST_PTR, Post *, Post)
 
 #ifdef CMY_PLUGIN_PRINTER_ENABLED
 
-static inline ReflectResult print_field_char_arr(const void* instance, const FieldInfo* field) {
+static inline ReflectResult print_field_char_arr(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
     char* val = (char*)malloc(field->size);
@@ -138,7 +138,7 @@ static inline ReflectResult print_field_char_arr(const void* instance, const Fie
 
 
 
-static inline ReflectResult print_field_char(const void* instance, const FieldInfo* field) {
+static inline ReflectResult print_field_char(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
     char v;
@@ -154,7 +154,7 @@ static inline ReflectResult print_field_char(const void* instance, const FieldIn
 
 
 
-static inline ReflectResult print_field_u32(const void* instance, const FieldInfo* field) {
+static inline ReflectResult print_field_u32(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
     uint32_t v;
@@ -170,7 +170,7 @@ static inline ReflectResult print_field_u32(const void* instance, const FieldInf
 
 
 
-static inline ReflectResult print_field_bool(const void* instance, const FieldInfo* field) {
+static inline ReflectResult print_field_bool(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
     bool v;
@@ -186,7 +186,7 @@ static inline ReflectResult print_field_bool(const void* instance, const FieldIn
 
 
 
-static inline ReflectResult print_field_u64(const void* instance, const FieldInfo* field) {
+static inline ReflectResult print_field_u64(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
     uint64_t v;
@@ -202,7 +202,7 @@ static inline ReflectResult print_field_u64(const void* instance, const FieldInf
 
 
 
-static inline ReflectResult print_field_size_t(const void* instance, const FieldInfo* field) {
+static inline ReflectResult print_field_size_t(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
     size_t v;
@@ -217,7 +217,7 @@ static inline ReflectResult print_field_size_t(const void* instance, const Field
 }
 
 
-static inline ReflectResult print_field(const void* instance, const FieldInfo* field) {
+static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field) {
     switch(field->type) {
       case TYPE_CHAR_ARR: return print_field_char_arr(instance, field);
       case TYPE_CHAR: return print_field_char(instance, field);
@@ -237,17 +237,17 @@ static inline ReflectResult print_field(const void* instance, const FieldInfo* f
 #ifdef REFLECTION_IMPLEMENTATION
 
 // --- Generated from types.h ---
-const FieldInfo Post_Metadata[] = {
+const StructFieldInfo Post_Metadata[] = {
     { "title", TYPE_CHAR_ARR, offsetof(Post, title), sizeof(char[MAX_TITLE_LEN]), MAX_TITLE_LEN, FIELD_ACCESS_RW, NULL, NULL },
     { "likes", TYPE_UINT32_T, offsetof(Post, likes), sizeof(uint32_t), 1, FIELD_ACCESS_RW, NULL, NULL },
 };
-const size_t Post_FieldCount = sizeof(Post_Metadata) / sizeof(FieldInfo);
+const size_t Post_FieldCount = sizeof(Post_Metadata) / sizeof(StructFieldInfo);
 
-const FieldInfo UserPrefernces_Metadata[] = {
+const StructFieldInfo UserPrefernces_Metadata[] = {
     { "language", TYPE_CHAR_ARR, offsetof(UserPrefernces, language), sizeof(char[32]), 32, FIELD_ACCESS_RW, NULL, NULL },
     { "prefers_dark", TYPE_BOOL, offsetof(UserPrefernces, prefers_dark), sizeof(bool), 1, FIELD_ACCESS_RW, NULL, NULL },
 };
-const size_t UserPrefernces_FieldCount = sizeof(UserPrefernces_Metadata) / sizeof(FieldInfo);
+const size_t UserPrefernces_FieldCount = sizeof(UserPrefernces_Metadata) / sizeof(StructFieldInfo);
 
 const FieldExtensions ext_User_username = {
 #ifdef CMY_PLUGIN_PRINTER_ENABLED
@@ -260,7 +260,7 @@ const FieldExtensions ext_User_email = {
 #endif // CMY_PLUGIN_PRINTER_ENABLED
 };
 
-const FieldInfo User_Metadata[] = {
+const StructFieldInfo User_Metadata[] = {
     { "username", TYPE_CHAR_ARR, offsetof(User, username), sizeof(char[32]), 32, FIELD_ACCESS_RW, NULL, (void*)&ext_User_username },
     { "email", TYPE_CHAR_ARR, offsetof(User, email), sizeof(char[64]), 64, FIELD_ACCESS_RW, NULL, (void*)&ext_User_email },
     { "account_id", TYPE_UINT64_T, offsetof(User, account_id), sizeof(uint64_t), 1, FIELD_ACCESS_READ, NULL, NULL },
@@ -271,7 +271,7 @@ const FieldInfo User_Metadata[] = {
     { "post_count", TYPE_SIZE_T, offsetof(User, post_count), sizeof(size_t), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "posts", TYPE_POST_PTR, offsetof(User, posts), sizeof(Post *), 1, FIELD_ACCESS_RW, "post_count", NULL },
 };
-const size_t User_FieldCount = sizeof(User_Metadata) / sizeof(FieldInfo);
+const size_t User_FieldCount = sizeof(User_Metadata) / sizeof(StructFieldInfo);
 
 const EnumMemberInfo Permissions_Members[] = {
    { PERM_CREATE, "PERM_CREATE", NULL },
@@ -325,7 +325,7 @@ ReflectResult get_enum_metadata(FieldType type, EnumMetaData* out_meta) {
 
 
 // --- Auto-Generated Safe Type Setter
-ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void* value, size_t element_count) {
+ReflectResult safe_set_field(void* instance, const StructFieldInfo* field, const void* value, size_t element_count) {
     if (!instance || !field || !value) return false;
     switch(field->type) {
       case TYPE_ENUM_PERMISSIONS: return set_field_Permissions(instance, field, *(Permissions*)value);

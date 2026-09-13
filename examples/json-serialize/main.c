@@ -44,9 +44,9 @@ typedef struct
     FIELD_TYPE current_parent_type;
 } JsonState;
 
-void json_account_serializer(const void *base_instance, const FieldInfo *field, void *user_data);
+void json_account_serializer(const void *base_instance, const StructFieldInfo *field, void *user_data);
 
-void next_level(const void *base_instance, const FieldInfo *field, void *user_data)
+void next_level(const void *base_instance, const StructFieldInfo *field, void *user_data)
 {
     JsonState *state = (JsonState *)user_data;
 
@@ -60,7 +60,7 @@ void next_level(const void *base_instance, const FieldInfo *field, void *user_da
     printf("\n%*s}", state->indent, "");
 }
 
-void json_account_serializer(const void *base_instance, const FieldInfo *field, void *user_data)
+void json_account_serializer(const void *base_instance, const StructFieldInfo *field, void *user_data)
 {
     if (!(field->flags & FIELD_ACCESS_READ))
     {
