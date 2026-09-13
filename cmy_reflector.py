@@ -46,7 +46,7 @@ class Field:
         else:
             flags = "FIELD_ACCESS_RW"
 
-        length_field_name = f"{self.length_field}" if self.length_field else "NULL"
+        length_field_name = f'"{self.length_field}"' if self.length_field else "NULL"
 
         return f'    {{ "{self.name}", {self.type_enum}, offsetof({struct_name}, {self.name}), sizeof({self.type_name}{arr_suffix}), {count}, {flags}, {length_field_name} }}'
 
@@ -425,6 +425,22 @@ const char* get_name_of_type(FieldType type) {{
 
         return type_suffix
 
+    def generate_dynamic_array_accessors(self, struct_name: str, field: Field) -> str:
+        if not field.length_field or "*" not in field.type_name:
+            return ""
+
+        suffix = f"{struct_name}_{field.name}"
+        parent_enum = self.type_map[struct_name]
+        type_enum = field.type_enum
+
+        ctype = self.ctypes.get(field.normalized_type_name, field.type_name)
+        base_type = ctype.replace("*", "", 1).strip()
+
+        return (
+            f"DEFINE_DYNAMIC_ARRAY_SETTER({suffix}, {type_enum}, {ctype}, {base_type}, {parent_enum})\n"
+            f"DEFINE_DYNAMIC_ARRAY_GETTER({suffix}, {type_enum}, {ctype}, {base_type})\n"
+        )
+
     def generate_generic_type_setter(self) -> str:
         switch_cases = []
         for type_name, type_enum in self.type_map.items():
@@ -479,6 +495,16 @@ ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void*
             if type_name == "unknown":
                 continue
             lines.append(self.generate_type_setter(type_name, type_enum))
+
+        for struct in self.structs.values():
+            for field in struct.fields:
+                gen_str = self.generate_dynamic_array_accessors(
+                    struct.struct_name, field
+                )
+                if gen_str != "":
+                    lines.append(
+                        self.generate_dynamic_array_accessors(struct.struct_name, field)
+                    )
 
         lines.append("\n#endif // CMYREFLECTION_AUTOGEN_H")
         lines.append(self.generate_definitions())

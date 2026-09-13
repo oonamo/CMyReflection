@@ -20,6 +20,7 @@ typedef enum {
     TYPE_INT,
     TYPE_IOTDEVICE_ARR,
     TYPE_LONGLONG,
+    TYPE_SIZE_T,
     TYPE_STR,
     TYPE_STRUCT_BALL,
     TYPE_STRUCT_DEVICEMANAGER,
@@ -35,7 +36,7 @@ typedef enum {
     TYPE_UNSIGNEDCHAR_ARR,
     TYPE_VEC2,
     TYPE_VECTOR2_ARR,
-    TYPE_VECTOR2_PTR_PTR,
+    TYPE_VECTOR2_PTR,
 } FieldType;
 
 #include <cmyreflection.h>
@@ -150,8 +151,11 @@ DEFINE_ARRAY_GETTER(unsignedchar_arr, TYPE_UNSIGNEDCHAR_ARR, unsigned char *, un
 DEFINE_ARRAY_SETTER(float_arr, TYPE_FLOAT_ARR, float *, float)
 DEFINE_ARRAY_GETTER(float_arr, TYPE_FLOAT_ARR, float *, float)
 
-DEFINE_FIELD_SETTER(Vector2_ptr_ptr, TYPE_VECTOR2_PTR_PTR, Vector2 **)
-DEFINE_FIELD_GETTER(Vector2_ptr_ptr, TYPE_VECTOR2_PTR_PTR, Vector2 **)
+DEFINE_FIELD_SETTER(size_t, TYPE_SIZE_T, size_t)
+DEFINE_FIELD_GETTER(size_t, TYPE_SIZE_T, size_t)
+
+DEFINE_FIELD_SETTER(Vector2_ptr, TYPE_VECTOR2_PTR, Vector2 *)
+DEFINE_FIELD_GETTER(Vector2_ptr, TYPE_VECTOR2_PTR, Vector2 *)
 
 DEFINE_ARRAY_SETTER(Vector2_arr, TYPE_VECTOR2_ARR, Vector2 *, Vector2)
 DEFINE_ARRAY_GETTER(Vector2_arr, TYPE_VECTOR2_ARR, Vector2 *, Vector2)
@@ -164,6 +168,9 @@ DEFINE_FIELD_GETTER(uint64_t, TYPE_UINT64_T, uint64_t)
 
 DEFINE_ARRAY_SETTER(IoTDevice_arr, TYPE_IOTDEVICE_ARR, IoTDevice *, IoTDevice)
 DEFINE_ARRAY_GETTER(IoTDevice_arr, TYPE_IOTDEVICE_ARR, IoTDevice *, IoTDevice)
+
+DEFINE_DYNAMIC_ARRAY_SETTER(Game_waypoints, TYPE_VECTOR2_PTR, Vector2 *, Vector2, TYPE_STRUCT_GAME)
+DEFINE_DYNAMIC_ARRAY_GETTER(Game_waypoints, TYPE_VECTOR2_PTR, Vector2 *, Vector2)
 
 
 #endif // CMYREFLECTION_AUTOGEN_H
@@ -198,7 +205,8 @@ const FieldInfo Game_Metadata[] = {
     { "grid", TYPE_UINT8_T_ARR, offsetof(Game, grid), sizeof(uint8_t[9]), 9, FIELD_ACCESS_RW, NULL },
     { "sliding_window", TYPE_UNSIGNEDCHAR_ARR, offsetof(Game, sliding_window), sizeof(unsigned char[16]), 16, FIELD_ACCESS_RW, NULL },
     { "history", TYPE_FLOAT_ARR, offsetof(Game, history), sizeof(float[MAX_ARR_LEN]), MAX_ARR_LEN, FIELD_ACCESS_RW, NULL },
-    { "waypoints", TYPE_VECTOR2_PTR_PTR, offsetof(Game, waypoints), sizeof(Vector2 **), 1, FIELD_ACCESS_RW, NULL },
+    { "num_waypoints", TYPE_SIZE_T, offsetof(Game, num_waypoints), sizeof(size_t), 1, FIELD_ACCESS_RW, NULL },
+    { "waypoints", TYPE_VECTOR2_PTR, offsetof(Game, waypoints), sizeof(Vector2 *), 1, FIELD_ACCESS_RW, "num_waypoints" },
     { "enemy_positions", TYPE_VECTOR2_ARR, offsetof(Game, enemy_positions), sizeof(Vector2[20]), 20, FIELD_ACCESS_RW, NULL },
 };
 const size_t Game_FieldCount = sizeof(Game_Metadata) / sizeof(FieldInfo);
@@ -337,7 +345,8 @@ ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void*
       case TYPE_UINT8_T_ARR: return set_field_u8_arr(instance, field, (uint8_t*)value, element_count);
       case TYPE_UNSIGNEDCHAR_ARR: return set_field_unsignedchar_arr(instance, field, (unsigned char*)value, element_count);
       case TYPE_FLOAT_ARR: return set_field_float_arr(instance, field, (float*)value, element_count);
-      case TYPE_VECTOR2_PTR_PTR: return set_field_Vector2_ptr_ptr(instance, field, *(Vector2 ***)value);
+      case TYPE_SIZE_T: return set_field_size_t(instance, field, *(size_t*)value);
+      case TYPE_VECTOR2_PTR: return set_field_Vector2_ptr(instance, field, *(Vector2 **)value);
       case TYPE_VECTOR2_ARR: return set_field_Vector2_arr(instance, field, (Vector2*)value, element_count);
       case TYPE_CHAR_ARR: return set_field_char_arr(instance, field, (char*)value, element_count);
       case TYPE_UINT64_T: return set_field_uint64_t(instance, field, *(uint64_t*)value);
@@ -360,6 +369,7 @@ const char* get_name_of_type(FieldType type) {
      case TYPE_INT: return "TYPE_INT";
      case TYPE_IOTDEVICE_ARR: return "TYPE_IOTDEVICE_ARR";
      case TYPE_LONGLONG: return "TYPE_LONGLONG";
+     case TYPE_SIZE_T: return "TYPE_SIZE_T";
      case TYPE_STR: return "TYPE_STR";
      case TYPE_STRUCT_BALL: return "TYPE_STRUCT_BALL";
      case TYPE_STRUCT_DEVICEMANAGER: return "TYPE_STRUCT_DEVICEMANAGER";
@@ -375,7 +385,7 @@ const char* get_name_of_type(FieldType type) {
      case TYPE_UNSIGNEDCHAR_ARR: return "TYPE_UNSIGNEDCHAR_ARR";
      case TYPE_VEC2: return "TYPE_VEC2";
      case TYPE_VECTOR2_ARR: return "TYPE_VECTOR2_ARR";
-     case TYPE_VECTOR2_PTR_PTR: return "TYPE_VECTOR2_PTR_PTR";
+     case TYPE_VECTOR2_PTR: return "TYPE_VECTOR2_PTR";
         default: return NULL;
     };
 }

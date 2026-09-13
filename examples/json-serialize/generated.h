@@ -13,14 +13,20 @@ typedef enum {
     TYPE_CONSTSTR,
     TYPE_ENUM_ACCOUNTSTATE,
     TYPE_ENUM_PERMISSIONS,
+    TYPE_POST_PTR,
     TYPE_STR,
+    TYPE_STRUCTPOST_PTR,
+    TYPE_STRUCT_POST,
     TYPE_STRUCT_USER,
+    TYPE_UINT32_T,
     TYPE_UINT64_T,
     TYPE_UNKNOWN,
 } FieldType;
 
 #include <cmyreflection.h>
 // --- Metadata Declarations
+extern const FieldInfo Post_Metadata[];
+extern const size_t Post_FieldCount;
 extern const FieldInfo User_Metadata[];
 extern const size_t User_FieldCount;
 extern const EnumMemberInfo Permissions_Members[];
@@ -55,14 +61,26 @@ DEFINE_FIELD_GETTER(Permissions, TYPE_ENUM_PERMISSIONS, Permissions)
 DEFINE_ENUM_SETTER(AccountState, TYPE_ENUM_ACCOUNTSTATE, AccountState, is_valid_AccountState)
 DEFINE_FIELD_GETTER(AccountState, TYPE_ENUM_ACCOUNTSTATE, AccountState)
 
+DEFINE_FIELD_SETTER(Post, TYPE_STRUCT_POST, Post)
+DEFINE_FIELD_GETTER(Post, TYPE_STRUCT_POST, Post)
+
 DEFINE_FIELD_SETTER(User, TYPE_STRUCT_USER, User)
 DEFINE_FIELD_GETTER(User, TYPE_STRUCT_USER, User)
 
 DEFINE_ARRAY_SETTER(char_arr, TYPE_CHAR_ARR, char *, char)
 DEFINE_ARRAY_GETTER(char_arr, TYPE_CHAR_ARR, char *, char)
 
+DEFINE_FIELD_SETTER(u32, TYPE_UINT32_T, uint32_t)
+DEFINE_FIELD_GETTER(u32, TYPE_UINT32_T, uint32_t)
+
+DEFINE_FIELD_SETTER(structPost_ptr, TYPE_STRUCTPOST_PTR, struct Post *)
+DEFINE_FIELD_GETTER(structPost_ptr, TYPE_STRUCTPOST_PTR, struct Post *)
+
 DEFINE_FIELD_SETTER(uint64_t, TYPE_UINT64_T, uint64_t)
 DEFINE_FIELD_GETTER(uint64_t, TYPE_UINT64_T, uint64_t)
+
+DEFINE_FIELD_SETTER(Post_ptr, TYPE_POST_PTR, Post *)
+DEFINE_FIELD_GETTER(Post_ptr, TYPE_POST_PTR, Post *)
 
 
 #endif // CMYREFLECTION_AUTOGEN_H
@@ -70,13 +88,21 @@ DEFINE_FIELD_GETTER(uint64_t, TYPE_UINT64_T, uint64_t)
 #ifdef REFLECTION_IMPLEMENTATION
 
 // --- Generated from types.h ---
+const FieldInfo Post_Metadata[] = {
+    { "title", TYPE_CHAR_ARR, offsetof(Post, title), sizeof(char[MAX_TITLE_LEN]), MAX_TITLE_LEN, FIELD_ACCESS_RW, NULL },
+    { "likes", TYPE_UINT32_T, offsetof(Post, likes), sizeof(uint32_t), 1, FIELD_ACCESS_RW, NULL },
+    { "references", TYPE_STRUCTPOST_PTR, offsetof(Post, references), sizeof(struct Post *), 1, FIELD_ACCESS_RW, NULL },
+};
+const size_t Post_FieldCount = sizeof(Post_Metadata) / sizeof(FieldInfo);
+
 const FieldInfo User_Metadata[] = {
-    { "username", TYPE_CHAR_ARR, offsetof(User, username), sizeof(char[32]), 32, FIELD_ACCESS_RW },
-    { "email", TYPE_CHAR_ARR, offsetof(User, email), sizeof(char[64]), 64, FIELD_ACCESS_RW },
-    { "account_id", TYPE_UINT64_T, offsetof(User, account_id), sizeof(uint64_t), 1, FIELD_ACCESS_READ },
-    { "password_hash", TYPE_CHAR_ARR, offsetof(User, password_hash), sizeof(char[64]), 64, FIELD_ACCESS_WRITE },
-    { "permissions", TYPE_ENUM_PERMISSIONS, offsetof(User, permissions), sizeof(Permissions), 1, FIELD_ACCESS_RW },
-    { "state", TYPE_ENUM_ACCOUNTSTATE, offsetof(User, state), sizeof(AccountState), 1, FIELD_ACCESS_RW },
+    { "username", TYPE_CHAR_ARR, offsetof(User, username), sizeof(char[32]), 32, FIELD_ACCESS_RW, NULL },
+    { "email", TYPE_CHAR_ARR, offsetof(User, email), sizeof(char[64]), 64, FIELD_ACCESS_RW, NULL },
+    { "account_id", TYPE_UINT64_T, offsetof(User, account_id), sizeof(uint64_t), 1, FIELD_ACCESS_READ, NULL },
+    { "password_hash", TYPE_CHAR_ARR, offsetof(User, password_hash), sizeof(char[64]), 64, FIELD_ACCESS_WRITE, NULL },
+    { "permissions", TYPE_ENUM_PERMISSIONS, offsetof(User, permissions), sizeof(Permissions), 1, FIELD_ACCESS_RW, NULL },
+    { "state", TYPE_ENUM_ACCOUNTSTATE, offsetof(User, state), sizeof(AccountState), 1, FIELD_ACCESS_RW, NULL },
+    { "posts", TYPE_POST_PTR, offsetof(User, posts), sizeof(Post *), 1, FIELD_ACCESS_RW, NULL },
 };
 const size_t User_FieldCount = sizeof(User_Metadata) / sizeof(FieldInfo);
 
@@ -98,6 +124,10 @@ const size_t AccountState_MemberCount = sizeof(AccountState_Members) / sizeof(En
 ReflectResult get_struct_metadata(FieldType type, StructMetaData* out_meta) {
     if (!out_meta) return REFLECT_ERR_NULL_PTR;
     switch(type) {
+      case TYPE_STRUCT_POST:
+          out_meta->fields = Post_Metadata;
+          out_meta->count = Post_FieldCount;
+          return REFLECT_OK;
       case TYPE_STRUCT_USER:
           out_meta->fields = User_Metadata;
           out_meta->count = User_FieldCount;
@@ -131,9 +161,13 @@ ReflectResult safe_set_field(void* instance, const FieldInfo* field, const void*
       case TYPE_CONSTSTR: return set_field_conststr(instance, field, *(const char **)value);
       case TYPE_ENUM_PERMISSIONS: return set_field_Permissions(instance, field, *(Permissions*)value);
       case TYPE_ENUM_ACCOUNTSTATE: return set_field_AccountState(instance, field, *(AccountState*)value);
+      case TYPE_STRUCT_POST: return set_field_Post(instance, field, *(Post*)value);
       case TYPE_STRUCT_USER: return set_field_User(instance, field, *(User*)value);
       case TYPE_CHAR_ARR: return set_field_char_arr(instance, field, (char*)value, element_count);
+      case TYPE_UINT32_T: return set_field_u32(instance, field, *(uint32_t*)value);
+      case TYPE_STRUCTPOST_PTR: return set_field_structPost_ptr(instance, field, *(struct Post **)value);
       case TYPE_UINT64_T: return set_field_uint64_t(instance, field, *(uint64_t*)value);
+      case TYPE_POST_PTR: return set_field_Post_ptr(instance, field, *(Post **)value);
         default: return REFLECT_ERR_TYPE_INVALID;
     }
 }
@@ -145,8 +179,12 @@ const char* get_name_of_type(FieldType type) {
      case TYPE_CONSTSTR: return "TYPE_CONSTSTR";
      case TYPE_ENUM_ACCOUNTSTATE: return "TYPE_ENUM_ACCOUNTSTATE";
      case TYPE_ENUM_PERMISSIONS: return "TYPE_ENUM_PERMISSIONS";
+     case TYPE_POST_PTR: return "TYPE_POST_PTR";
      case TYPE_STR: return "TYPE_STR";
+     case TYPE_STRUCTPOST_PTR: return "TYPE_STRUCTPOST_PTR";
+     case TYPE_STRUCT_POST: return "TYPE_STRUCT_POST";
      case TYPE_STRUCT_USER: return "TYPE_STRUCT_USER";
+     case TYPE_UINT32_T: return "TYPE_UINT32_T";
      case TYPE_UINT64_T: return "TYPE_UINT64_T";
      case TYPE_UNKNOWN: return "TYPE_UNKNOWN";
         default: return NULL;

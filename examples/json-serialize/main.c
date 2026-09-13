@@ -114,7 +114,6 @@ void json_account_serializer(const void *base_instance, const FieldInfo *field, 
             printf("\"%s\"", val);
             break;
         }
-        case TYPE_STRUCT_USER:
         case TYPE_UINT64_T:
         {
             uint64_t val = 0;

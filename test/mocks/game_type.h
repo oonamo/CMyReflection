@@ -62,7 +62,8 @@ typedef struct
 
     float history[MAX_ARR_LEN];
 
-    Vector2 **waypoints;
+    size_t   num_waypoints;
+    Vector2 *waypoints; /// @length(num_waypoints)
 
     Vector2 enemy_positions[20];
 } Game;

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unity.h>
 #include <unity_fixture.h>
+#include <stdlib.h>
 
 #include "mocks/game_type.h"
 #include "mocks/readme_example.h"
@@ -871,6 +872,91 @@ TEST(Unit, VisitStruct_Is_Null_Safe)
     TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, visit_struct_fields(&g, TYPE_STRUCT_GAME, NULL, NULL));
 }
 
+TEST(Unit, DynamicArray_Allows_Valid_Set_Get)
+{
+    Game g          = {0};
+    g.num_waypoints = 3;
+    g.waypoints     = malloc(sizeof(Vector2) * g.num_waypoints);
+
+    const FieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "waypoints");
+    TEST_ASSERT_NOT_NULL(f);
+    Vector2 new_waypoints[3] = {
+        {1.0f, 1.0f},
+        {2.0f, 2.0f},
+        {3.0f, 3.0f},
+    };
+
+    TEST_ASSERT_EQUAL(REFLECT_OK, set_dynamic_Game_waypoints(&g, f, new_waypoints, 3));
+
+    Vector2 read_buf[2] = {0};
+    TEST_ASSERT_EQUAL(REFLECT_OK, get_dynamic_Game_waypoints(&g, f, read_buf, 2));
+
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, read_buf[0].x);
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, read_buf[0].y);
+
+    TEST_ASSERT_EQUAL_FLOAT(2.0f, read_buf[1].x);
+    TEST_ASSERT_EQUAL_FLOAT(2.0f, read_buf[1].y);
+
+    free(g.waypoints);
+}
+
+TEST(Unit, DynamicArray_Rejects_OutOfBounds)
+{
+    Game g          = {0};
+    g.num_waypoints = 2;
+    g.waypoints     = malloc(g.num_waypoints * sizeof(Vector2));
+
+    const FieldInfo *f          = find_field(Game_Metadata, Game_FieldCount, "waypoints");
+    Vector2          payload[3] = {0};
+
+    TEST_ASSERT_EQUAL(REFLECT_ERR_OUT_OF_BOUNDS, set_dynamic_Game_waypoints(&g, f, payload, 3));
+
+    free(g.waypoints);
+}
+
+TEST(Unit, DynamicArray_Is_Null_Safe)
+{
+    Game g          = {0};
+    g.num_waypoints = 5;
+    g.waypoints     = NULL;
+
+    const FieldInfo *f          = find_field(Game_Metadata, Game_FieldCount, "waypoints");
+    Vector2          payload[1] = {0};
+
+    TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, set_dynamic_Game_waypoints(&g, f, payload, 1));
+    TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, set_dynamic_Game_waypoints(NULL, f, payload, 1));
+    TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, set_dynamic_Game_waypoints(&g, NULL, payload, 1));
+}
+
+TEST(Unit, DynamicArray_Rejects_Type_Mismatch)
+{
+    Game game          = {0};
+    game.num_waypoints = 5;
+    game.waypoints     = malloc(5 * sizeof(Vector2));
+
+    const FieldInfo *wrong_field = find_field(Game_Metadata, Game_FieldCount, "num_waypoints");
+    Vector2          payload[1]  = {0};
+
+    TEST_ASSERT_EQUAL(REFLECT_ERR_TYPE_MISMATCH,
+                      set_dynamic_Game_waypoints(&game, wrong_field, payload, 1));
+
+    free(game.waypoints);
+}
+
+TEST(Unit, DynamicArray_Handles_Zero_Length)
+{
+    Game game          = {0};
+    game.num_waypoints = 0; // Length is explicitly 0
+    game.waypoints     = NULL;
+
+    const FieldInfo *f          = find_field(Game_Metadata, Game_FieldCount, "waypoints");
+    Vector2          payload[1] = {0};
+
+    TEST_ASSERT_EQUAL(REFLECT_ERR_OUT_OF_BOUNDS, set_dynamic_Game_waypoints(&game, f, payload, 1));
+
+    TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, set_dynamic_Game_waypoints(&game, f, payload, 0));
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -944,4 +1030,9 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, VisitStruct_Works_Without_Instance)
     RUN_TEST_CASE(Unit, VisitStruct_Rejects_Invalid_Types)
     RUN_TEST_CASE(Unit, VisitStruct_Is_Null_Safe)
+    RUN_TEST_CASE(Unit, DynamicArray_Allows_Valid_Set_Get)
+    RUN_TEST_CASE(Unit, DynamicArray_Rejects_OutOfBounds)
+    RUN_TEST_CASE(Unit, DynamicArray_Is_Null_Safe)
+    RUN_TEST_CASE(Unit, DynamicArray_Rejects_Type_Mismatch)
+    RUN_TEST_CASE(Unit, DynamicArray_Handles_Zero_Length)
 }

@@ -241,6 +241,64 @@ ReflectResult get_array_element(const void      *instance,
                                 void            *out_value,
                                 size_t           element_size);
 
+ReflectResult get_dynamic_array_length(const void      *base_instance,
+                                       FIELD_TYPE       parent_type,
+                                       const FieldInfo *field,
+                                       size_t          *out_length);
+
+ReflectResult set_dynamic_array_data(void            *instance,
+                                     const FieldInfo *field,
+                                     const void      *new_data,
+                                     size_t           write_size);
+
+ReflectResult get_dynamic_array_data(const void      *instance,
+                                     const FieldInfo *field,
+                                     void            *out_data,
+                                     size_t           read_size);
+
+#define DEFINE_DYNAMIC_ARRAY_GETTER(Suffix, EnumVal, CType, DownCastType)                          \
+    static inline ReflectResult get_dynamic_##Suffix(                                              \
+        const void *instance, const FieldInfo *field, CType out_data, size_t element_count)        \
+    {                                                                                              \
+        if (!instance || !field)                                                                   \
+        {                                                                                          \
+            return REFLECT_ERR_NULL_PTR;                                                           \
+        }                                                                                          \
+        if (field->type != EnumVal)                                                                \
+        {                                                                                          \
+            return REFLECT_ERR_TYPE_MISMATCH;                                                      \
+        }                                                                                          \
+        return get_dynamic_array_data(                                                             \
+            instance, field, out_data, element_count * sizeof(DownCastType));                      \
+    }
+
+#define DEFINE_DYNAMIC_ARRAY_SETTER(Suffix, EnumVal, CType, DownCastType, ParentEnumVal)           \
+    static inline ReflectResult set_dynamic_##Suffix(                                              \
+        void *instance, const FieldInfo *field, CType new_data, size_t element_count)              \
+    {                                                                                              \
+        if (!instance || !field)                                                                   \
+        {                                                                                          \
+            return REFLECT_ERR_NULL_PTR;                                                           \
+        }                                                                                          \
+        if (field->type != EnumVal)                                                                \
+        {                                                                                          \
+            return REFLECT_ERR_TYPE_MISMATCH;                                                      \
+        }                                                                                          \
+        size_t        current_len = 0;                                                             \
+        ReflectResult len_res =                                                                    \
+            get_dynamic_array_length(instance, ParentEnumVal, field, &current_len);                \
+        if (len_res != REFLECT_OK)                                                                 \
+        {                                                                                          \
+            return len_res;                                                                        \
+        }                                                                                          \
+        if (element_count > current_len)                                                           \
+        {                                                                                          \
+            return REFLECT_ERR_OUT_OF_BOUNDS;                                                      \
+        }                                                                                          \
+        return set_dynamic_array_data(                                                             \
+            instance, field, new_data, element_count * sizeof(DownCastType));                      \
+    }
+
 typedef void (*FieldVisitor)(const void *base_instance, const FieldInfo *field, void *user_data);
 
 ReflectResult
@@ -523,6 +581,57 @@ visit_struct_fields(const void *instance, FIELD_TYPE type, FieldVisitor visitor,
     return REFLECT_OK;
 }
 
+ReflectResult get_dynamic_array_length(const void      *base_instance,
+                                       FIELD_TYPE       parent_type,
+                                       const FieldInfo *field,
+                                       size_t          *out_length)
+{
+    if (!base_instance || !field || !out_length)
+    {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (field->length_field_name == NULL)
+    {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+    StructMetaData parent_meta;
+    if (get_struct_metadata(parent_type, &parent_meta) != REFLECT_OK)
+    {
+        return REFLECT_ERR_TYPE_INVALID;
+    }
+
+    const FieldInfo *len_field =
+        find_field(parent_meta.fields, parent_meta.count, field->length_field_name);
+    if (!len_field)
+    {
+        return REFLECT_ERR_NOT_FOUND;
+    }
+
+    const void *len_addr = (const char *)base_instance + len_field->offset;
+
+    switch (len_field->size)
+    {
+    case 1:
+        *out_length = (size_t)(*(const uint8_t *)len_addr);
+        break;
+    case 2:
+        *out_length = (size_t)(*(const uint16_t *)len_addr);
+        break;
+    case 4:
+        *out_length = (size_t)(*(const uint32_t *)len_addr);
+        break;
+    case 8:
+        *out_length = (size_t)(*(const uint64_t *)len_addr);
+        break;
+    default:
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+    return REFLECT_OK;
+}
+
 #endif // CMYREFLECTION_REGISTRY
 
 const FieldInfo *find_field(const FieldInfo *meta, size_t count, const char *name)
@@ -638,6 +747,66 @@ ReflectResult get_array_element(const void      *instance,
 
     memcpy(out_value, elem_ptr, expected_elem_size);
 
+    return REFLECT_OK;
+}
+
+ReflectResult set_dynamic_array_data(void            *instance,
+                                     const FieldInfo *field,
+                                     const void      *new_data,
+                                     size_t           write_size)
+{
+    if (!instance || !field || !new_data)
+    {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE))
+    {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+    if (field->length_field_name == NULL)
+    {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+    void **ptr_addr = (void **)((char *)instance + field->offset);
+    if (!*ptr_addr)
+    {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    memcpy(*ptr_addr, new_data, write_size);
+    return REFLECT_OK;
+}
+
+ReflectResult get_dynamic_array_data(const void      *instance,
+                                     const FieldInfo *field,
+                                     void            *out_data,
+                                     size_t           read_size)
+{
+    if (!instance || !field || !out_data)
+    {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_READ))
+    {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+    if (field->length_field_name == NULL)
+    {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+    const void **ptr_addr = (const void **)((const char *)instance + field->offset);
+    if (!*ptr_addr)
+    {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    memcpy(out_data, *ptr_addr, read_size);
     return REFLECT_OK;
 }
 

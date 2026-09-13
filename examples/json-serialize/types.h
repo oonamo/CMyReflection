@@ -2,6 +2,8 @@
 #define _TYPES_H
 #include <stdint.h>
 
+#define MAX_TITLE_LEN 124
+
 /// @reflect
 /// @unchecked
 typedef enum
@@ -18,6 +20,14 @@ typedef enum
     ACCOUNT_INACTIVE,
     ACCOUNT_STALE,
 } AccountState;
+
+/// @reflect
+typedef struct Post
+{
+    char         title[MAX_TITLE_LEN];
+    uint32_t     likes;
+    struct Post *references;
+} Post;
 
 #define PERMISSIONS_DEFAULT (PERM_CREATE | PERM_UPDATE)
 
@@ -39,6 +49,8 @@ typedef struct
 
     /// @private
     void *active_session_ptr;
+
+    Post *posts;
 } User;
 
 #endif // _TYPES_H
