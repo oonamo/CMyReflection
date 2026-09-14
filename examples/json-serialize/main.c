@@ -44,7 +44,9 @@ typedef struct
     FIELD_TYPE current_parent_type;
 } JsonState;
 
-void json_account_serializer(const void *base_instance, const StructFieldInfo *field, void *user_data);
+void json_account_serializer(const void            *base_instance,
+                             const StructFieldInfo *field,
+                             void                  *user_data);
 
 void next_level(const void *base_instance, const StructFieldInfo *field, void *user_data)
 {
@@ -60,7 +62,9 @@ void next_level(const void *base_instance, const StructFieldInfo *field, void *u
     printf("\n%*s}", state->indent, "");
 }
 
-void json_account_serializer(const void *base_instance, const StructFieldInfo *field, void *user_data)
+void json_account_serializer(const void            *base_instance,
+                             const StructFieldInfo *field,
+                             void                  *user_data)
 {
     if (!(field->flags & FIELD_ACCESS_READ))
     {
@@ -68,7 +72,6 @@ void json_account_serializer(const void *base_instance, const StructFieldInfo *f
     }
 
     JsonState *state = (JsonState *)user_data;
-    //
     if (!state->is_first_field)
     {
         printf(",\n");
@@ -107,44 +110,37 @@ void json_account_serializer(const void *base_instance, const StructFieldInfo *f
             }
             return;
         }
+        if (field->type == TYPE_ENUM_PERMISSIONS)
+        {
+            char   perm_str[4];
+            int    permissions = *(int *)data_ptr;
+            size_t i           = 0;
+
+            if (permissions & PERM_CREATE)
+            {
+                perm_str[i++] = 'c';
+            }
+            if (permissions & PERM_DELETE)
+            {
+                perm_str[i++] = 'x';
+            }
+            if (permissions & PERM_UPDATE)
+            {
+                perm_str[i++] = 'u';
+            }
+            if (i < 3)
+            {
+                perm_str[i] = '\0';
+            }
+            printf("\"%s\"", perm_str);
+            return;
+        }
         ReflectResult res = print_field(base_instance, field);
 
         if (res != REFLECT_OK)
         {
             switch (field->type)
             {
-            case TYPE_ENUM_PERMISSIONS:
-            {
-                char   perm_str[4];
-                int    permissions = *(int *)data_ptr;
-                size_t i           = 0;
-
-                if (permissions & PERM_CREATE)
-                {
-                    perm_str[i++] = 'c';
-                }
-                if (permissions & PERM_DELETE)
-                {
-                    perm_str[i++] = 'x';
-                }
-                if (permissions & PERM_UPDATE)
-                {
-                    perm_str[i++] = 'u';
-                }
-                if (i < 3)
-                {
-                    perm_str[i] = '\0';
-                }
-                printf("\"%s\"", perm_str);
-                break;
-            }
-            case TYPE_ENUM_ACCOUNTSTATE:
-            {
-                const char *val = get_enum_member_name(
-                    AccountState_Members, AccountState_MemberCount, *(int *)data_ptr);
-                printf("\"%s\"", val);
-                break;
-            }
             case TYPE_POST_PTR:
             {
                 Post *post_array = NULL;
@@ -174,7 +170,6 @@ void json_account_serializer(const void *base_instance, const StructFieldInfo *f
                                                   .is_first_field      = true,
                                                   .current_parent_type = TYPE_STRUCT_POST};
 
-                        // Native C iteration using the safely extracted pointer
                         visit_struct_fields(&post_array[i],
                                             TYPE_STRUCT_POST,
                                             json_account_serializer,

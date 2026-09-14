@@ -28,9 +28,11 @@ typedef enum {
 
 /*
  * CMyReflection Active Plugins
- *  -> Printer (v0.0.0) by oonamo - Provides run time type printing (enums unsupprted)
+ *  -> Printer (v0.0.0) by oonamo - Provides run time printing for primitive types
  *    - Provides tag: @format (Struct Fields)
  *    - Provides tag: @display (Enum Members)
+ *    - Provides tag: @no_print (Types)
+ *    - Provides router: ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen)
  *    - Provides router: ReflectResult print_field(const void* instance, const StructFieldInfo* field)
  */
 
@@ -133,105 +135,237 @@ DEFINE_DYNAMIC_ARRAY_GETTER(User_posts, TYPE_POST_PTR, Post *, Post)
 // Plugin: Printer
 // ==========================================
 #ifdef CMY_PLUGIN_PRINTER_ENABLED
-static inline ReflectResult print_field_char_arr(const void* instance, const StructFieldInfo* field) {
+static inline ReflectResult get_field_Permissions_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
-    char* val = (char*)malloc(field->size);
-    if (!val) { return REFLECT_ERR_NULL_PTR; } // Protect against allocation failure
-
-    ReflectResult res = get_field_char_arr(instance, field, val, field->count);
+    Permissions val;
+    ReflectResult res = get_field_Permissions(instance, field, &val);
     if (res != REFLECT_OK) {
-        free(val); // Ensure memory is freed on error
         return res;
     }
+    
+    EnumMetaData meta = EnumMetaData_FromName(Permissions);
+    const char* enum_val = get_enum_member_name(meta.members, meta.count, val);
+    const EnumMemberInfo* info = enum_val ? Find_Enum_Member(meta, enum_val) : NULL;
+    const EnumMemberExtension* ext = GET_MEMBER_EXT(info);
 
-    const StructFieldExtension* ext = GET_FIELD_EXT(field);
-    const char* fmt = (ext && ext->format) ? ext->format : "%s";
-
-    printf(fmt, val);
-    free(val);
+    (void)ext; // Prevent unused variable warnings for bools
+    const char* fmt = (ext && ext->display) ? ext->display : (enum_val ? enum_val : "<unknown>");
+    snprintf(out_buf, buflen, "%s", fmt);
 
     return REFLECT_OK;
 }
 
+static inline ReflectResult get_field_AccountState_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    AccountState val;
+    ReflectResult res = get_field_AccountState(instance, field, &val);
+    if (res != REFLECT_OK) {
+        return res;
+    }
+    
+    EnumMetaData meta = EnumMetaData_FromName(AccountState);
+    const char* enum_val = get_enum_member_name(meta.members, meta.count, val);
+    const EnumMemberInfo* info = enum_val ? Find_Enum_Member(meta, enum_val) : NULL;
+    const EnumMemberExtension* ext = GET_MEMBER_EXT(info);
+
+    (void)ext; // Prevent unused variable warnings for bools
+    const char* fmt = (ext && ext->display) ? ext->display : (enum_val ? enum_val : "<unknown>");
+    snprintf(out_buf, buflen, "%s", fmt);
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult get_field_char_arr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+                        char val[field->count];
+
+    ReflectResult res = get_field_char_arr(instance, field, val, field->count);
+    if (res != REFLECT_OK) {
+                return res;
+
+    }
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
+    (void)ext; // Prevent unused variable warnings for bools
+    const char* fmt = (ext && ext->format) ? ext->format : "%s";
+    snprintf(out_buf, buflen, fmt, val);
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult get_field_char_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    char val;
+    ReflectResult res = get_field_char(instance, field, &val);
+    if (res != REFLECT_OK) {
+        return res;
+    }
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
+    (void)ext; // Prevent unused variable warnings for bools
+    const char* fmt = (ext && ext->format) ? ext->format : "%c";
+    snprintf(out_buf, buflen, fmt, val);
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult get_field_u32_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    uint32_t val;
+    ReflectResult res = get_field_u32(instance, field, &val);
+    if (res != REFLECT_OK) {
+        return res;
+    }
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
+    (void)ext; // Prevent unused variable warnings for bools
+    const char* fmt = (ext && ext->format) ? ext->format : "%" PRIu32;
+    snprintf(out_buf, buflen, fmt, val);
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult get_field_bool_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    bool val;
+    ReflectResult res = get_field_bool(instance, field, &val);
+    if (res != REFLECT_OK) {
+        return res;
+    }
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
+    (void)ext; // Prevent unused variable warnings for bools
+    
+    snprintf(out_buf, buflen, "%s", val ? "true": "false");
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult get_field_u64_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    uint64_t val;
+    ReflectResult res = get_field_u64(instance, field, &val);
+    if (res != REFLECT_OK) {
+        return res;
+    }
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
+    (void)ext; // Prevent unused variable warnings for bools
+    const char* fmt = (ext && ext->format) ? ext->format : "%" PRIu64;
+    snprintf(out_buf, buflen, fmt, val);
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult get_field_size_t_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    size_t val;
+    ReflectResult res = get_field_size_t(instance, field, &val);
+    if (res != REFLECT_OK) {
+        return res;
+    }
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
+    (void)ext; // Prevent unused variable warnings for bools
+    const char* fmt = (ext && ext->format) ? ext->format : "%zu";
+    snprintf(out_buf, buflen, fmt, val);
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!field) { return REFLECT_ERR_NULL_PTR; }
+    switch(field->type) {
+      case TYPE_ENUM_PERMISSIONS: return get_field_Permissions_as_str(instance, field, out_buf, buflen);
+      case TYPE_ENUM_ACCOUNTSTATE: return get_field_AccountState_as_str(instance, field, out_buf, buflen);
+      case TYPE_CHAR_ARR: return get_field_char_arr_as_str(instance, field, out_buf, buflen);
+      case TYPE_CHAR: return get_field_char_as_str(instance, field, out_buf, buflen);
+      case TYPE_UINT32_T: return get_field_u32_as_str(instance, field, out_buf, buflen);
+      case TYPE_BOOL: return get_field_bool_as_str(instance, field, out_buf, buflen);
+      case TYPE_UINT64_T: return get_field_u64_as_str(instance, field, out_buf, buflen);
+      case TYPE_SIZE_T: return get_field_size_t_as_str(instance, field, out_buf, buflen);
+        default: return REFLECT_ERR_TYPE_MISMATCH;
+    }
+}
+
+#endif // CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_PRINTER_ENABLED
+static inline ReflectResult print_field_AccountState(const void* instance, const StructFieldInfo* field) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    char buf[field->count > 256 ? field->count : 256];
+    get_field_as_str(instance, field, buf, sizeof(buf));
+    printf("%s", buf);
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult print_field_char_arr(const void* instance, const StructFieldInfo* field) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    char buf[field->count > 256 ? field->count : 256];
+    get_field_as_str(instance, field, buf, sizeof(buf));
+    printf("%s", buf);
+
+    return REFLECT_OK;
+}
 
 static inline ReflectResult print_field_char(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
-    char v;
-    ReflectResult res = get_field_char(instance, field, &v);
-    if (res != REFLECT_OK) { return res; }
+    char buf[field->count > 256 ? field->count : 256];
+    get_field_as_str(instance, field, buf, sizeof(buf));
+    printf("%s", buf);
 
-    const StructFieldExtension* ext = GET_FIELD_EXT(field);
-    const char* fmt = (ext && ext->format) ? ext->format : "%c";
-
-    printf(fmt, v);
     return REFLECT_OK;
 }
-
 
 static inline ReflectResult print_field_u32(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
-    uint32_t v;
-    ReflectResult res = get_field_u32(instance, field, &v);
-    if (res != REFLECT_OK) { return res; }
+    char buf[field->count > 256 ? field->count : 256];
+    get_field_as_str(instance, field, buf, sizeof(buf));
+    printf("%s", buf);
 
-    const StructFieldExtension* ext = GET_FIELD_EXT(field);
-    const char* fmt = (ext && ext->format) ? ext->format : "%" PRIu32;
-
-    printf(fmt, v);
     return REFLECT_OK;
 }
-
 
 static inline ReflectResult print_field_bool(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
-    bool v;
-    ReflectResult res = get_field_bool(instance, field, &v);
-    if (res != REFLECT_OK) { return res; }
+    char buf[field->count > 256 ? field->count : 256];
+    get_field_as_str(instance, field, buf, sizeof(buf));
+    printf("%s", buf);
 
-    const StructFieldExtension* ext = GET_FIELD_EXT(field);
-    const char* fmt = (ext && ext->format) ? ext->format : "%s";
-
-    printf(fmt, v ? "true" : "false");
     return REFLECT_OK;
 }
-
 
 static inline ReflectResult print_field_u64(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
-    uint64_t v;
-    ReflectResult res = get_field_u64(instance, field, &v);
-    if (res != REFLECT_OK) { return res; }
+    char buf[field->count > 256 ? field->count : 256];
+    get_field_as_str(instance, field, buf, sizeof(buf));
+    printf("%s", buf);
 
-    const StructFieldExtension* ext = GET_FIELD_EXT(field);
-    const char* fmt = (ext && ext->format) ? ext->format : "%" PRIu64;
-
-    printf(fmt, v);
     return REFLECT_OK;
 }
-
 
 static inline ReflectResult print_field_size_t(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
-    size_t v;
-    ReflectResult res = get_field_size_t(instance, field, &v);
-    if (res != REFLECT_OK) { return res; }
+    char buf[field->count > 256 ? field->count : 256];
+    get_field_as_str(instance, field, buf, sizeof(buf));
+    printf("%s", buf);
 
-    const StructFieldExtension* ext = GET_FIELD_EXT(field);
-    const char* fmt = (ext && ext->format) ? ext->format : "%zu";
-
-    printf(fmt, v);
     return REFLECT_OK;
 }
 
 static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field) {
     if (!field) { return REFLECT_ERR_NULL_PTR; }
     switch(field->type) {
+      case TYPE_ENUM_ACCOUNTSTATE: return print_field_AccountState(instance, field);
       case TYPE_CHAR_ARR: return print_field_char_arr(instance, field);
       case TYPE_CHAR: return print_field_char(instance, field);
       case TYPE_UINT32_T: return print_field_u32(instance, field);

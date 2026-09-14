@@ -8,6 +8,7 @@
 
 // cmy:reflect
 // cmy:unchecked
+// cmy:no_print
 typedef enum
 {
     PERM_CREATE = 1 << 0,
