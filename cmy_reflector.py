@@ -73,8 +73,8 @@ class Plugin:
         self._code_emitters.append(func)
         return func
 
-    def field_tag(self, tag_name: str):
-        """Decorator to register a field tag"""
+    def struct_field_tag(self, tag_name: str):
+        """Decorator to register a struct field tag"""
 
         def decorator(func):
             self._struct_field_tags[tag_name] = func
@@ -355,6 +355,36 @@ class Reflector:
         self.active_enum_member_tags = {}
         self.active_type_tags = {}
         self.active_type_mappers = []
+
+    def normalze_type_identifier(self, identifier: str) -> str:
+        """Converts a ctype, type_enum, or type_name into the internal type_name"""
+        if identifier in self.type_map:
+            return identifier
+
+        for t_name, t_enum in self.type_map.items():
+            if t_enum == identifier:
+                return t_name
+
+        for t_name, c_type in self.ctypes.items():
+            if c_type == identifier:
+                return c_type
+
+        return identifier
+
+    def get_base_type_name(self, identifier: str) -> str:
+        """Gets the primitive type (char* -> char)"""
+        norm = self.normalze_type_identifier(identifier)
+        if norm.endswith("_arr"):
+            norm = norm[:-4]
+        if "*" in norm:
+            norm = norm[: norm.rfind("*")]
+        return norm.strip()
+
+    def is_struct(self, identifier: str) -> bool:
+        return self.get_base_type_name(identifier) in self.structs
+
+    def is_enum(self, identifier: str) -> bool:
+        return self.get_base_type_name(identifier) in self.enums
 
     def load_plugins(self):
         active_plugin_names = {p.name for p in _PLUGINS}

@@ -399,7 +399,7 @@ def test_can_create_struct_field_tag():
     def setup_description_hook(reflector):
         reflector.define_field_extension("description", "const char*")
 
-    @test_plugin.field_tag("description")
+    @test_plugin.struct_field_tag("description")
     def handle_field_description(reflector, struct, field, tag_value):
         reflector.set_field_extension(field, "description", tag_value)
 
@@ -481,3 +481,64 @@ static inline void foo_{suffix}(const void* a)
 
     generated_content = str(reflector)
     assert "if (!a) return;" in generated_content
+
+
+def test_helpers_work_as_expected():
+    c_code = """
+    //// @reflect
+    typedef struct
+    {
+        int a;
+        char b;
+        unsigned long l;
+
+        int* b;
+    } StructA;
+
+
+    /// @reflect
+    typedef struct
+    {
+        char* str;
+        StructA* ptr;
+
+        StructA arr[32];
+        char buf[32];
+    } StructB;
+
+    /// @reflect
+    typedef enum
+    {
+        TYPE_A,
+    } Enum;
+    """
+    reflector = cmy_reflector.Reflector()
+    cmy_reflector.generate_reflection(reflector, "test_enum.h", c_code)
+    reflector.resolve()
+
+    assert reflector.normalze_type_identifier("Enum") == "Enum"
+    assert reflector.normalze_type_identifier("TYPE_ENUM_ENUM") == "Enum"
+    assert reflector.normalze_type_identifier("TYPE_STRUCT_STRUCTB") == "StructB"
+    assert reflector.normalze_type_identifier("TYPE_STRUCTA_ARR") == "StructA_arr"
+    assert reflector.normalze_type_identifier("typex") == "typex"
+    assert reflector.normalze_type_identifier("TYPE_STRUCTA_PTR") == "StructA*"
+    assert reflector.normalze_type_identifier("TYPE_UNSIGNEDLONG") == "unsignedlong"
+
+    assert reflector.get_base_type_name("StructA*") == "StructA"
+    assert reflector.get_base_type_name("TYPE_STRUCTA_PTR") == "StructA"
+    assert reflector.get_base_type_name("TYPE_STRUCTA_ARR") == "StructA"
+    assert reflector.get_base_type_name("TYPE_CHAR_ARR") == "char"
+
+    assert reflector.is_enum("Enum")
+    assert reflector.is_enum("TYPE_ENUM_ENUM")
+    assert not reflector.is_struct("Enum")
+
+    assert reflector.is_struct("StructA")
+    assert reflector.is_struct("TYPE_STRUCT_STRUCTA")
+    assert not reflector.is_enum("StructA")
+
+    assert reflector.is_struct("StructB")
+    assert reflector.is_struct("TYPE_STRUCT_STRUCTB")
+    assert not reflector.is_enum("StructB")
+
+    assert reflector.get_base_type_name("StructB") == "StructB"

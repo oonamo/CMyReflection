@@ -24,7 +24,7 @@ def setup(reflector):
     return "// I generated this plugin!"
 
 
-@printer.field_tag("format")
+@printer.struct_field_tag("format")
 def handle_field_format(reflector, struct, field, tag_value):
     reflector.set_field_extension(field, "format", tag_value)
 
