@@ -485,7 +485,8 @@ static inline void foo_{suffix}(const void* a)
 
 def test_helpers_work_as_expected():
     c_code = """
-    //// @reflect
+    /// @reflect
+    /// @no_json
     typedef struct
     {
         int a;
@@ -497,6 +498,7 @@ def test_helpers_work_as_expected():
 
 
     /// @reflect
+    /// @value_tag("hello")
     typedef struct
     {
         char* str;
@@ -507,6 +509,7 @@ def test_helpers_work_as_expected():
     } StructB;
 
     /// @reflect
+    /// @serialize
     typedef enum
     {
         TYPE_A,
@@ -523,6 +526,10 @@ def test_helpers_work_as_expected():
     assert reflector.normalze_type_identifier("typex") == "typex"
     assert reflector.normalze_type_identifier("TYPE_STRUCTA_PTR") == "StructA*"
     assert reflector.normalze_type_identifier("TYPE_UNSIGNEDLONG") == "unsignedlong"
+
+    assert reflector.has_struct_tag("StructA", "no_json")
+    assert reflector.get_struct_tag("StructB", "value_tag") == '"hello"'
+    assert reflector.has_enum_tag("Enum", "serialize")
 
     assert reflector.get_base_type_name("StructA*") == "StructA"
     assert reflector.get_base_type_name("TYPE_STRUCTA_PTR") == "StructA"

@@ -420,8 +420,34 @@ class Reflector:
 
             self.active_type_mappers.extend(p.type_mappers)
 
+    def get_struct(self, identifier: str) -> CStruct | None:
+        """Returns the CStruct object or None if not found"""
+        base = self.get_base_type_name(identifier)
+        return self.structs.get(base)
+
+    def get_enum(self, identifier: str) -> CEnum | None:
+        """Returns the CEnum object or None if not found"""
+        base = self.get_base_type_name(identifier)
+        return self.enums.get(base)
+
+    def has_struct_tag(self, identifier: str, tag_name: str) -> bool:
+        struct = self.get_struct(identifier)
+        return struct is not None and tag_name in struct.tags
+
+    def get_struct_tag(self, identifier: str, tag_name: str) -> str | None:
+        struct = self.get_struct(identifier)
+        return struct.tags.get(tag_name) if struct else None
+
+    def has_enum_tag(self, identifier: str, tag_name: str) -> bool:
+        enum = self.get_enum(identifier)
+        return enum is not None and tag_name in enum.tags
+
     def define_field_extension(self, name: str, ctype: str, requires: str = None):
         self.field_extension_members[name] = (ctype, requires)
+
+    def define_member_extension(self, name: str, ctype: str, requires: str = None):
+        pass
+        # self.enum_extension_members[name] = (ctype, requires)
 
     def set_field_extension(self, field: Field, name: str, value: str):
         if name not in self.field_extension_members:
