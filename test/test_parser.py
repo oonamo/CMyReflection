@@ -5,7 +5,14 @@ from pathlib import Path
 import pytest
 
 import cmy_reflector
-from cmy_reflector import CBuilder, Plugin, Reflector, generate_reflection, sort_plugins
+from cmy_reflector import (
+    CBuilder,
+    CVar,
+    Plugin,
+    Reflector,
+    generate_reflection,
+    sort_plugins,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -742,3 +749,38 @@ static inline void s(void) {
 """
         == func
     )
+
+
+def test_cvar_building():
+    v1 = CVar("char*", "v1")
+
+    assert v1 == "char* v1;"
+
+    v1.as_const()
+    assert v1 == "const char* v1;"
+
+    v1.as_static()
+    assert v1 == "static const char* v1;"
+
+    v1.val('"test"')
+    assert v1 == 'static const char* v1 = "test";'
+
+    expected_err = "Var 'static const char* v1' already has value '\"test\"'."
+    with pytest.raises(ValueError, match=re.escape(expected_err)):
+        v1.val_with_default("!x", "x", "y")
+
+    v1.checked("!buffer", "g_flag = 0;\nreturn REFLECT_ERR_NULL_PTR;")
+    assert (
+        v1.gen_str()
+        == """\
+static const char* v1 = "test";
+if (!buffer) {
+    g_flag = 0;
+    return REFLECT_ERR_NULL_PTR;
+}
+"""
+    )
+
+    v2 = CVar("int", "i")
+    v2.val_with_default("f != NULL", "f", "def")
+    assert v2 == "int i = (f != NULL) ? f : def;"

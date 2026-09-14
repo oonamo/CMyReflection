@@ -1188,6 +1188,64 @@ static inline {mapper.signature} {{
         return "\n".join(lines)
 
 
+class CVar:
+    def __init__(self, ctype: str, name: str, val: str = None):
+        self.ctype = ctype
+        self.name = name
+        self._val = val
+
+        self.after: str = None
+
+    def val(self, val: str):
+        self._val = val
+        return self
+
+    def as_const(self):
+        self.ctype = "const " + self.ctype
+        return self
+
+    def as_static(self):
+        self.ctype = "static " + self.ctype
+        return self
+
+    def val_with_default(self, cond: str, val: str, default: str = None):
+        if self._val:
+            raise ValueError(
+                f"Var '{self.ctype} {self.name}' already has value '{self._val}'."
+            )
+
+        if default:
+            self._val = f"({cond}) ? {val} : {default}"
+
+    def checked(self, cond: str, ifbad: str = "return REFLECT_ERR_NULL_PTR;"):
+        indented_ifbad = ifbad.replace("\n", "\n    ")
+        self.after = f"if ({cond}) {{\n    {indented_ifbad}\n}}\n"
+        return self
+
+    def gen_str(self) -> str:
+        if self._val:
+            var = f"{self.ctype} {self.name} = {self._val};"
+        else:
+            var = f"{self.ctype} {self.name};"
+
+        if self.after:
+            var += f"\n{self.after}"
+
+        return var
+
+    def __str__(self) -> str:
+        return self.gen_str()
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, str):
+            return self.gen_str() == other
+
+        if isinstance(other, CVar):
+            return self.gen_str() == other.gen_str()
+
+        return NotImplemented
+
+
 class CBuilder:
     def __init__(self, reflector: Reflector):
         self.reflector = reflector
@@ -1195,11 +1253,9 @@ class CBuilder:
             [reflector.get_type_suffix(t) for t in reflector.type_map.keys()]
         )
 
-    def var(self, ctype: str, var_name: str, init_val: str = None) -> str:
-        """Generate a safe C variable declaration"""
-        if init_val:
-            return f"{ctype} {var_name} = {init_val};"
-        return f"{ctype} {var_name};"
+    def var(self, ctype: str, name: str, val: str = None) -> str:
+        """Returns a CVar builder object"""
+        return CVar(ctype, name, val)
 
     def _has_suffix(self, suffix: str) -> bool:
         return suffix in self.valid_suffixes
@@ -1260,7 +1316,7 @@ class CBuilder:
         inline="inline",
         retval="ReflectResult",
     ) -> str:
-        body = "\n    ".join(line for line in body_lines if line is not None)
+        body = "\n    ".join(str(line) for line in body_lines if line is not None)
         return f"{static} {inline} {retval} {signature} {{\n    {body}\n}}\n"
 
 
