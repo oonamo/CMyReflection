@@ -730,6 +730,15 @@ def test_cbuilder_features():
     # Primitives
     assert cb.struct_field_getter("int", "&v") == "get_field_int(instance, field, &v);"
 
-    lines = [
-        cb.var("int", "x", "0"),
-    ]
+    lines = [cb.var("int", "x", "0"), cb.struct_field_getter("int", "&x")]
+
+    func = cb.build_func("s(void)", lines, retval="void")
+    assert (
+        """\
+static inline void s(void) {
+    int x = 0;
+    get_field_int(instance, field, &x);
+}
+"""
+        == func
+    )
