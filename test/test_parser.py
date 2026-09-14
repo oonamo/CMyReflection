@@ -25,7 +25,7 @@ def test_array_setter_generation(tmp_path: Path):
     mock_header = src_dir / "test_struct.h"
 
     mock_header.write_text("""
-    /// @reflect
+    //# @reflect
     typedef struct {
         float history[MAX_ARR_LEN];
         int score;
@@ -66,7 +66,7 @@ def test_array_setter_generation(tmp_path: Path):
 
 def test_parses_char_arrays():
     c_code = """
-    /// @reflect
+    //# @reflect
     typedef struct {
         char buffer[64];
     } Buf;
@@ -89,15 +89,15 @@ def test_parses_char_arrays():
 
 def test_ignores_private_keys():
     c_code = """
-    /// @reflect
+    //# @reflect
     typedef struct {
         int public_1;
 
-        int private_1; /// @private
+        int private_1; //# @private
 
         void* public_2;
 
-        /// @private
+        //# @private
         int private_2;
 
         unsigned int public_3;
@@ -124,7 +124,7 @@ def test_ignores_private_keys():
 
 def test_parser_handles_bad_c_formatting():
     c_code = """
-    /// @reflect
+    //# @reflect
     typedef struct {
         int* type_attached;
         float *name_attached;
@@ -165,7 +165,7 @@ def test_parser_handles_bad_c_formatting():
 
 def test_parser_generates_enum():
     c_code = """
-    /// @reflect
+    //# @reflect
     typedef enum {
         VALA,
         VALB,
@@ -208,16 +208,16 @@ def test_parser_ignores_unreflected_enum():
 
 def test_parser_ignores_private_enum_fields():
     c_code = """
-    /// @reflect
+    //# @reflect
     typedef enum {
         VAL1,
 
-        /// @private
+        //# @private
         VAL2,
 
-        VAL3, /// @private
+        VAL3, //# @private
 
-        VAL4 = 4, /// @private
+        VAL4 = 4, //# @private
 
         VAL5
     } MyEnum;
@@ -243,8 +243,8 @@ def test_parser_ignores_private_enum_fields():
 
 def test_parser_does_not_generate_validator_for_unchecked_enums(tmp_path: Path):
     c_code = """
-    /// @reflect
-    /// @unchecked
+    //# @reflect
+    //# @unchecked
     typedef enum {
         VALA,
         VALB,
@@ -282,12 +282,12 @@ def test_parser_does_not_generate_validator_for_unchecked_enums(tmp_path: Path):
 
 def test_parser_extracts_length_tags():
     c_code = """\
-    /// @reflect
+    //# @reflect
     typedef struct
     {
         uint32_t count;
 
-        /// @length(count)
+        //# @length(count)
         float* data;
     } Test;
     """
@@ -312,12 +312,12 @@ def test_parser_extracts_length_tags():
 
 def test_parser_fails_on_invalid_length_field():
     c_code = """\
-    /// @reflect
+    //# @reflect
     typedef struct
     {
         uint32_t count;
 
-        /// @length(size)
+        //# @length(size)
         float* data;
     } Test;
     """
@@ -332,19 +332,19 @@ def test_parser_fails_on_invalid_length_field():
 
 def test_parser_generates_correct_basetype(tmp_path: Path):
     c_code = """
-    /// @reflect
+    //# @reflect
     typedef struct
     {
         void* data;
     } super;
 
-    /// @reflect
+    //# @reflect
     typedef struct
     {
         a* aptr;
 
         size_t blen;
-        b* dyn_arr; /// @length(blen)
+        b* dyn_arr; //# @length(blen)
 
         char* str;
 
@@ -416,10 +416,10 @@ static inline const char* get_field_description(const FieldInfo* field)
     cmy_reflector.add_plugin(test_plugin)
 
     c_code = """
-    /// @reflect
+    //# @reflect
     typedef struct
     {
-        /// @description("cool")
+        //# @description("cool")
         int stuff;
     } Options;
     """
@@ -464,7 +464,7 @@ static inline void foo_{suffix}(const void* a)
         return (func_def, case_code)
 
     c_code = """
-    /// @reflect
+    //# @reflect
     typedef struct
     {
         type_a a;
@@ -485,8 +485,8 @@ static inline void foo_{suffix}(const void* a)
 
 def test_helpers_work_as_expected():
     c_code = """
-    /// @reflect
-    /// @no_json
+    //# @reflect
+    //# @no_json
     typedef struct
     {
         int a;
@@ -497,8 +497,8 @@ def test_helpers_work_as_expected():
     } StructA;
 
 
-    /// @reflect
-    /// @value_tag("hello")
+    //# @reflect
+    //# @value_tag("hello")
     typedef struct
     {
         char* str;
@@ -508,8 +508,8 @@ def test_helpers_work_as_expected():
         char buf[32];
     } StructB;
 
-    /// @reflect
-    /// @serialize
+    //# @reflect
+    //# @serialize
     typedef enum
     {
         TYPE_A,

@@ -8,32 +8,32 @@ typedef struct
     char *desc;
 } AdditionalData;
 
-/// @deftag description(desc)
-/// @sets (AdditionalData*)user_data->desc = {desc}
+//# @deftag description(desc)
+//# @sets (AdditionalData*)user_data->desc = {desc}
 
-/// @deftag format(format_str)
-/// @sets (AdditionalData*)user_data->format_str = {format_str}
+//# @deftag format(format_str)
+//# @sets (AdditionalData*)user_data->format_str = {format_str}
 
-/// @ifhastag format
-/// @creates print_field_{{type}}
-/// @requires GET
-/// @calls
+//# @ifhastag format
+//# @creates print_field_{{type}}
+//# @requires GET
+//# @calls
 ///     printf((AdditionalData*)user_data->format_str, value);
-/// @endcall
+//# @endcall
 
-/// @reflect
+//# @reflect
 typedef enum
 {
     BALL_TYPE_SMALL = 0,
     BALL_TYPE_MEDIUM,
     BALL_TYPE_BIG,
 
-    /// @private
+    //# @private
     BALL_TYPE_NONE,
 } BallSize;
 
-/// @reflect
-/// @enum(TYPE_VEC2)
+//# @reflect
+//# @enum(TYPE_VEC2)
 typedef struct
 {
     float x;
@@ -42,7 +42,7 @@ typedef struct
 
 #define MAX_ARR_LEN 256
 
-/// @reflect
+//# @reflect
 typedef struct
 {
     Vector2  speed;
@@ -50,7 +50,7 @@ typedef struct
     BallSize size;
 } Ball;
 
-/// @reflect
+//# @reflect
 typedef struct
 {
     Vector2 player_pos;
@@ -61,18 +61,18 @@ typedef struct
 
     DamageComponent damage;
 
-    /// @readonly
+    //# @readonly
     uint8_t game_flags;
 
-    /// @writeonly
+    //# @writeonly
     uint32_t hash;
 
     unsigned char current_tile;
 
-    /// @private
+    //# @private
     uint32_t internal_count;
 
-    void *userdata; /// @private
+    void *userdata; //# @private
 
     long long score;
 
@@ -83,7 +83,7 @@ typedef struct
     float history[MAX_ARR_LEN];
 
     size_t   num_waypoints;
-    Vector2 *waypoints; /// @length(num_waypoints)
+    Vector2 *waypoints; //# @length(num_waypoints)
 
     Vector2 enemy_positions[20];
 } Game;

@@ -3,21 +3,21 @@
 
 #include <stdint.h>
 
-/// @reflect
+//# @reflect
 typedef struct
 {
     float voltage;
     float temp;
 } SensorData;
 
-/// @reflect
+//# @reflect
 typedef enum
 {
     DEVICE_RX,
     DEVICE_TX,
 } DeviceState;
 
-/// @reflect
+//# @reflect
 typedef struct
 {
     char        device_id[32];
@@ -25,12 +25,12 @@ typedef struct
     SensorData  data;
     DeviceState state;
 
-    /// @readonly
+    //# @readonly
     uint64_t uuid;
 } IoTDevice;
 
-/// @reflect
-/// @unchecked
+//# @reflect
+//# @unchecked
 typedef enum
 {
     MANAGER_NONE  = 1 << 0,
@@ -40,12 +40,12 @@ typedef enum
 
 #define MAX_BUF_LEN 64
 
-/// @reflect
+//# @reflect
 typedef struct
 {
     unsigned char      op_mode;
 
-    /// @readonly
+    //# @readonly
     ManagerPermissions permissions;
 
     char               device_location[MAX_BUF_LEN];

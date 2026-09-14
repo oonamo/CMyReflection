@@ -6,8 +6,8 @@
 
 #define MAX_TITLE_LEN 124
 
-/// @reflect
-/// @unchecked
+//# @reflect
+//# @unchecked
 typedef enum
 {
     PERM_CREATE = 1 << 0,
@@ -15,7 +15,7 @@ typedef enum
     PERM_UPDATE = 1 << 2,
 } Permissions;
 
-/// @reflect
+//# @reflect
 typedef enum
 {
     ACCOUNT_ACTIVE,
@@ -23,14 +23,14 @@ typedef enum
     ACCOUNT_STALE,
 } AccountState;
 
-/// @reflect
+//# @reflect
 typedef struct Post
 {
     char     title[MAX_TITLE_LEN];
     uint32_t likes;
 } Post;
 
-/// @reflect
+//# @reflect
 typedef struct
 {
     char language[32];
@@ -39,19 +39,19 @@ typedef struct
 
 #define PERMISSIONS_DEFAULT (PERM_CREATE | PERM_UPDATE)
 
-/// @reflect
+//# @reflect
 typedef struct
 {
-    /// @format("%s")
+    //# @format("%s")
     char username[32];
 
-    /// @format("%s")
+    //# @format("%s")
     char email[64];
 
-    /// @readonly
+    //# @readonly
     uint64_t account_id;
 
-    /// @writeonly
+    //# @writeonly
     char password_hash[64];
 
     Permissions  permissions;
@@ -59,12 +59,12 @@ typedef struct
 
     UserPrefernces settings;
 
-    /// @private
+    //# @private
     void *active_session_ptr;
 
     size_t post_count;
 
-    /// @length(post_count)
+    //# @length(post_count)
     Post *posts;
 } User;
 
