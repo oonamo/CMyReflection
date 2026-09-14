@@ -63,7 +63,7 @@ _PRIMITIVE_FORMATS = {
     guard_clause="if (!field) { return REFLECT_ERR_NULL_PTR; }",
     requires="CMY_PLUGIN_PRINTER_ENABLED",
 )
-def handle_primitive_printers(type_name, type_enum, ctype, suffix):
+def handle_primitive_printers(reflector, type_name, type_enum, ctype, suffix):
     if type_name in _PRIMITIVE_FORMATS:
         default_fmt = _PRIMITIVE_FORMATS[type_name]
 

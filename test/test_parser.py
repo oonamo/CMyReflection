@@ -452,7 +452,7 @@ def test_type_mapper_creates_guard_clause():
         default_case="return;",
         guard_clause="if (!a) return;",
     )
-    def type_mapper(type_name, type_enum, ctype, suffix):
+    def type_mapper(reflector, type_name, type_enum, ctype, suffix):
         func_def = f"""
 static inline void foo_{suffix}(const void* a)
 {{

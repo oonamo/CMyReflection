@@ -1060,7 +1060,7 @@ FieldType get_base_type(FieldType type) {{
                     ctype = self.ctypes.get(type_name, type_name)
                     suffix = self.get_type_suffix(type_name)
 
-                    result = mapper.func(type_name, type_enum, ctype, suffix)
+                    result = mapper.func(self, type_name, type_enum, ctype, suffix)
 
                     if result:
                         func_code, case_code = result
