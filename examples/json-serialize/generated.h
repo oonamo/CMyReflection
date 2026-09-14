@@ -129,8 +129,10 @@ DEFINE_DYNAMIC_ARRAY_GETTER(User_posts, TYPE_POST_PTR, Post *, Post)
 
 // --- Plugin-Generated-Extensions ---
 
+// ==========================================
+// Plugin: Printer
+// ==========================================
 #ifdef CMY_PLUGIN_PRINTER_ENABLED
-
 static inline ReflectResult print_field_char_arr(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
@@ -153,7 +155,6 @@ static inline ReflectResult print_field_char_arr(const void* instance, const Str
 }
 
 
-
 static inline ReflectResult print_field_char(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
@@ -167,7 +168,6 @@ static inline ReflectResult print_field_char(const void* instance, const StructF
     printf(fmt, v);
     return REFLECT_OK;
 }
-
 
 
 static inline ReflectResult print_field_u32(const void* instance, const StructFieldInfo* field) {
@@ -185,7 +185,6 @@ static inline ReflectResult print_field_u32(const void* instance, const StructFi
 }
 
 
-
 static inline ReflectResult print_field_bool(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
@@ -199,7 +198,6 @@ static inline ReflectResult print_field_bool(const void* instance, const StructF
     printf(fmt, v ? "true" : "false");
     return REFLECT_OK;
 }
-
 
 
 static inline ReflectResult print_field_u64(const void* instance, const StructFieldInfo* field) {
@@ -217,7 +215,6 @@ static inline ReflectResult print_field_u64(const void* instance, const StructFi
 }
 
 
-
 static inline ReflectResult print_field_size_t(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
@@ -232,7 +229,6 @@ static inline ReflectResult print_field_size_t(const void* instance, const Struc
     return REFLECT_OK;
 }
 
-
 static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field) {
     if (!field) { return REFLECT_ERR_NULL_PTR; }
     switch(field->type) {
@@ -245,7 +241,6 @@ static inline ReflectResult print_field(const void* instance, const StructFieldI
         default: return REFLECT_ERR_TYPE_MISMATCH;
     }
 }
-
 
 #endif // CMY_PLUGIN_PRINTER_ENABLED
 

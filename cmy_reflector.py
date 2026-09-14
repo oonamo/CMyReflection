@@ -3,6 +3,7 @@ import dataclasses
 import importlib.util
 import re
 import sys
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
@@ -131,6 +132,44 @@ class Plugin:
 
 
 _PLUGINS: list[Plugin] = []
+
+
+def sort_plugins(plugins: list[Plugin]) -> list[Plugin]:
+    """Sorts plugin by dependencies, then name"""
+    plugin_map = {p.name: p for p in plugins}
+    deps_count_map = {p.name: 0 for p in plugins}
+    dependents = {p.name: [] for p in plugins}
+
+    for p in plugins:
+        for dep in p.depends_on:
+            if dep in plugin_map:
+                dependents[dep].append(p.name)
+                deps_count_map[p.name] += 1
+
+    # Freely available plugins
+    available = [p for p in plugins if deps_count_map[p.name] == 0]
+    sorted_plugins = []
+
+    while available:
+        available.sort(key=lambda x: x.name)
+
+        current = available.pop(0)
+        sorted_plugins.append(current)
+
+        for dep in dependents[current.name]:
+            deps_count_map[dep] -= 1
+
+            # No more dependencies, plugin is free
+            if deps_count_map[dep] == 0:
+                available.append(plugin_map[dep])
+
+    if len(sorted_plugins) != len(plugins):
+        raise ValueError(
+            "Circular dependency detected in plugins! "
+            "Two or more plugins depend on each other."
+        )
+
+    return sorted_plugins
 
 
 def add_plugin(plugin: Plugin):
@@ -377,6 +416,12 @@ class Reflector:
             "unsignedint": "unsigned int",
             "longlong": "long long",
         }
+
+        self.builtin_struct_tags = {"reflect", "enum"}
+        self.builtin_enum_tags = {"reflect", "enum", "unchecked"}
+        self.builtin_field_tags = {"private", "readonly", "writeonly", "length"}
+        self.builtin_member_tags = {"private"}
+
         self.base_types = {}
 
         self.member_extensions_members = {}
@@ -385,6 +430,48 @@ class Reflector:
         self.active_enum_member_tags = {}
         self.active_type_tags = {}
         self.active_type_mappers = []
+
+    def validate_tags(self):
+        """Checks for any unregistered tags"""
+        errors = []
+
+        valid_struct_tags = self.builtin_struct_tags | set(self.active_type_tags)
+        valid_enum_tags = self.builtin_enum_tags | set(self.active_type_tags)
+        valid_field_tags = self.builtin_field_tags | set(self.active_struct_field_tags)
+        valid_member_tags = self.builtin_member_tags | set(self.active_enum_member_tags)
+
+        for struct_name, struct in self.structs.items():
+            for tag in struct.tags:
+                if tag not in valid_struct_tags:
+                    errors.append(
+                        f"- Unknown struct tag 'cmy:{tag}' on struct '{struct_name}"
+                    )
+            for field in struct.fields:
+                for tag in field.tags:
+                    if tag not in valid_field_tags:
+                        errors.append(
+                            f"- Unknown field tag 'cmy:{tag}' on field '{field.name}', in struct '{struct_name}'"
+                        )
+
+        for enum_name, enum in self.enums.items():
+            for tag in enum.tags:
+                if tag not in valid_enum_tags:
+                    errors.append(
+                        f"- Unknown enum tag 'cmy:{tag}' on enum '{enum_name}'"
+                    )
+            for member in enum.members:
+                for tag in member.tags:
+                    if tag not in valid_member_tags:
+                        errors.append(
+                            f"- Unknown member tag 'cmy:{tag}' on '{enum_name}'"
+                        )
+
+        if errors:
+            error_message = (
+                "Tag Validation failed. Did you make a type or forget to include a plugin?\n"
+                + "\n".join(errors)
+            )
+            raise ValueError(error_message)
 
     def normalze_type_identifier(self, identifier: str) -> str:
         """Converts a ctype, type_enum, or type_name into the internal type_name"""
@@ -417,38 +504,58 @@ class Reflector:
         return self.get_base_type_name(identifier) in self.enums
 
     def load_plugins(self):
+        global _PLUGINS
+
+        _PLUGINS = sort_plugins(_PLUGINS)
+
         active_plugin_names = {p.name for p in _PLUGINS}
+        errors = []
+
+        struct_field_claims = defaultdict(list)
+        enum_member_claims = defaultdict(list)
+        type_claims = defaultdict(list)
 
         for p in _PLUGINS:
             for dep in p.depends_on:
                 if dep not in active_plugin_names:
-                    raise RuntimeError(f"'{p.name}' requires '{dep}'")
+                    errors.append(f"- Plugin '{p.name}' requires '{dep}'")
 
             if p.setup_hook:
                 p.setup_hook(self)
 
             for tag_name, handler in p.struct_field_tags.items():
-                if tag_name in self.active_struct_field_tags:
-                    raise ValueError(
-                        f"Tag collision: '@{tag_name}' (Struct Fields) is defined multiple times."
-                    )
-                self.active_struct_field_tags[tag_name] = handler
+                struct_field_claims[tag_name].append((p.name, handler))
 
             for tag_name, handler in p.enum_member_tags.items():
-                if tag_name in self.active_enum_member_tags:
-                    raise ValueError(
-                        f"Tag collision: '@{tag_name}' (Enum Member) is defined multiple times."
-                    )
-                self.active_enum_member_tags[tag_name] = handler
+                enum_member_claims[tag_name].append((p.name, handler))
 
             for tag_name, handler in p.type_tags.items():
-                if tag_name in self.active_type_tags:
-                    raise ValueError(
-                        f"Tag collision: '@{tag_name}' (Type) is defined multiple times."
-                    )
-                self.active_type_tags[tag_name] = handler
+                type_claims[tag_name].append((p.name, handler))
 
             self.active_type_mappers.extend(p.type_mappers)
+
+        def resolve_claims(claims, active_dict, context_name):
+            for tag_name, claim_list in claims.items():
+                if len(claim_list) > 1:
+                    competing_plugs = [claim[0] for claim in claim_list]
+                    errors.append(
+                        f"- Tag collision: 'cmy:{tag_name}' ({context_name}) is claimed by "
+                        f"{len(competing_plugs)} plugins: {', '.join(competing_plugs)}."
+                    )
+                else:
+                    active_dict[tag_name] = claim_list[0][1]
+
+        resolve_claims(
+            struct_field_claims, self.active_struct_field_tags, "Struct Fields"
+        )
+        resolve_claims(enum_member_claims, self.active_enum_member_tags, "Enum Members")
+        resolve_claims(type_claims, self.active_type_tags, "Types")
+
+        if errors:
+            raise ValueError(
+                "Plugin loading failed due to the following errors:\n"
+                + "\n".join(errors)
+            )
 
     def get_struct(self, identifier: str) -> CStruct | None:
         """Returns the CStruct object or None if not found"""
@@ -595,6 +702,9 @@ class Reflector:
                         f"@length({field.length_field}), but '{field.length_field}' "
                         f"does not exist in the struct."
                     )
+
+        self.load_plugins()
+        self.validate_tags()
 
     def generate_file_header(self) -> str:
         return """\
@@ -937,32 +1047,30 @@ FieldType get_base_type(FieldType type) {{
         extension_lines = ["// --- Plugin-Generated-Extensions ---"]
 
         for p in _PLUGINS:
+            plugin_code = []
             for emitter in p.code_emitters:
                 snippet = emitter(self)
                 if snippet:
-                    extension_lines.append(snippet)
+                    plugin_code.append(snippet)
+            for mapper in p.type_mappers:
+                standalone_funcs = []
+                switch_cases = []
 
-        for mapper in self.active_type_mappers:
-            hook_func = mapper.func
+                for type_name, type_enum in self.type_map.items():
+                    ctype = self.ctypes.get(type_name, type_name)
+                    suffix = self.get_type_suffix(type_name)
 
-            standalone_funcs = []
-            switch_cases = []
+                    result = mapper.func(type_name, type_enum, ctype, suffix)
 
-            for type_name, type_enum in self.type_map.items():
-                ctype = self.ctypes.get(type_name, type_name)
-                suffix = self.get_type_suffix(type_name)
-
-                result = hook_func(type_name, type_enum, ctype, suffix)
-
-                if result:
-                    func_code, case_code = result
-                    if func_code:
-                        standalone_funcs.append(func_code)
-                    if case_code:
-                        switch_cases.append(f"      case {type_enum}: {case_code}")
-            if switch_cases:
-                switch_body = "\n".join(switch_cases)
-                router = f"""\
+                    if result:
+                        func_code, case_code = result
+                        if func_code:
+                            standalone_funcs.append(func_code)
+                        if case_code:
+                            switch_cases.append(f"      case {type_enum}: {case_code}")
+                if switch_cases:
+                    switch_body = "\n".join(switch_cases)
+                    router = f"""\
 static inline {mapper.signature} {{
     {mapper.guard_clause}
     switch({mapper.switch_var}) {{
@@ -971,52 +1079,58 @@ static inline {mapper.signature} {{
     }}
 }}
 """
-                if mapper.requires:
-                    extension_lines.append(f"#ifdef {mapper.requires}")
-                extension_lines.extend(standalone_funcs)
-                extension_lines.append(router)
-                if mapper.requires:
-                    extension_lines.append(f"#endif // {mapper.requires}")
+                    if mapper.requires:
+                        plugin_code.append(f"#ifdef {mapper.requires}")
+                    plugin_code.extend(standalone_funcs)
+                    plugin_code.append(router)
+                    if mapper.requires:
+                        plugin_code.append(f"#endif // {mapper.requires}")
 
-        # TODO: Flatten for loops
-        for struct in self.structs.values():
-            for tag_name, tag_value in struct.tags.items():
-                if tag_name in self.active_type_tags:
-                    snippet = self.active_type_tags[tag_name](self, struct, tag_value)
-                    if snippet:
-                        extension_lines.append(snippet)
-
-        for enum in self.enums.values():
-            for tag_name, tag_value in enum.tags.items():
-                if tag_name in self.active_type_tags:
-                    snippet = self.active_type_tags[tag_name](self, enum, tag_value)
-                    if snippet:
-                        extension_lines.append(snippet)
-
-        for struct in self.structs.values():
-            for field in struct.fields:
-                for tag_name, tag_value in field.tags.items():
-                    if tag_name in self.active_struct_field_tags:
-                        snippet = self.active_struct_field_tags[tag_name](
-                            self, struct, field, tag_value
-                        )
+            for struct in self.structs.values():
+                for tag_name, tag_value in struct.tags.items():
+                    if tag_name in p.type_tags:
+                        snippet = p.type_tags[tag_name](self, struct, tag_value)
                         if snippet:
-                            extension_lines.append(snippet)
+                            plugin_code.append(snippet)
 
-        for enum in self.enums.values():
-            for member in enum.members:
-                for tag_name, tag_value in member.tags.items():
-                    if tag_name in self.active_enum_member_tags:
-                        snippet = self.active_enum_member_tags[tag_name](
-                            self, enum, member, tag_value
-                        )
+            for enum in self.enums.values():
+                for tag_name, tag_value in enum.tags.items():
+                    if tag_name in p.type_tags:
+                        snippet = p.type_tags[tag_name](self, enum, tag_value)
                         if snippet:
-                            extension_lines.append(snippet)
+                            plugin_code.append(snippet)
 
-        return "\n\n".join(extension_lines)
+            for struct in self.structs.values():
+                for field in struct.fields:
+                    for tag_name, tag_value in field.tags.items():
+                        if tag_name in p.struct_field_tags:
+                            snippet = p.struct_field_tags[tag_name](
+                                self, struct, field, tag_value
+                            )
+                            if snippet:
+                                plugin_code.append(snippet)
+
+            for enum in self.enums.values():
+                for member in enum.members:
+                    for tag_name, tag_value in member.tags.items():
+                        if tag_name in p.enum_member_tags:
+                            snippet = p.enum_member_tags[tag_name](
+                                self, enum, member, tag_value
+                            )
+                            if snippet:
+                                plugin_code.append(snippet)
+
+            if plugin_code:
+                extension_lines.append(
+                    "\n// =========================================="
+                )
+                extension_lines.append(f"// Plugin: {p.name}")
+                extension_lines.append("// ==========================================")
+                extension_lines.extend(plugin_code)
+
+        return "\n".join(extension_lines)
 
     def __str__(self):
-        self.load_plugins()
         plugin_code = self.generate_plugin_extensions()
 
         ext_struct_code = self.generate_struct_extension_type()

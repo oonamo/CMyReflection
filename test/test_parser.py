@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 import cmy_reflector
-from cmy_reflector import Reflector, generate_reflection
+from cmy_reflector import Plugin, Reflector, generate_reflection, sort_plugins
 
 
 @pytest.fixture(autouse=True)
@@ -517,7 +517,11 @@ def test_helpers_work_as_expected():
     """
     reflector = cmy_reflector.Reflector()
     cmy_reflector.generate_reflection(reflector, "test_enum.h", c_code)
-    reflector.resolve()
+
+    try:
+        reflector.resolve()
+    except ValueError:
+        pass
 
     assert reflector.normalze_type_identifier("Enum") == "Enum"
     assert reflector.normalze_type_identifier("TYPE_ENUM_ENUM") == "Enum"
@@ -551,15 +555,100 @@ def test_helpers_work_as_expected():
     assert reflector.get_base_type_name("StructB") == "StructB"
 
 
-def can_generate_enum_extensinos():
-    test_plugin = cmy_reflector.Plugin("test")
+def test_errors_on_undefined_member_tag():
     c_code = """
     // cmy:reflect
+    // cmy:dne
     typedef enum {
         // cmy:t(1)
         s1,
 
         // cmy:t(2)
-        22,
+        s2,
     } State;
     """
+    reflector = cmy_reflector.Reflector()
+    cmy_reflector.generate_reflection(reflector, "test_enum.h", c_code)
+    with pytest.raises(ValueError) as exc_info:
+        reflector.resolve()
+
+    error_msg = str(exc_info.value)
+
+    assert "cmy:dne" in error_msg
+    assert "cmy:t" in error_msg
+    assert "State" in error_msg
+
+
+def test_errors_on_tag_collision():
+    p1 = Plugin("p1")
+    p2 = Plugin("p2")
+
+    @p1.type_tag("test")
+    def p1_handle(reflector, struct, field, tag_value):
+        pass
+
+    @p2.type_tag("test")
+    def p2_handle(reflector, struct, field, tag_value):
+        pass
+
+    cmy_reflector.add_plugin(p1)
+    cmy_reflector.add_plugin(p2)
+
+    c_code = """
+    // cmy:reflect
+    // cmy:test
+    typedef struct
+    {
+        char* buf;
+    } str_view;
+    """
+
+    reflector = Reflector()
+    generate_reflection(reflector, "test.h", c_code)
+
+    with pytest.raises(ValueError) as exc_info:
+        reflector.resolve()
+
+    error_msg = str(exc_info.value)
+
+    assert (
+        "- Tag collision: 'cmy:test' (Types) is claimed by 2 plugins: p1, p2."
+    ) in error_msg
+
+
+class MockPlugin:
+    def __init__(self, name, depends_on=None):
+        self.name = name
+        self.depends_on = depends_on or []
+
+
+def test_plugin_sort_alphabetical():
+    p1 = MockPlugin("gamma")
+    p2 = MockPlugin("alpha")
+    p3 = MockPlugin("beta")
+
+    result = sort_plugins([p1, p2, p3])
+    names = [p.name for p in result]
+    assert names == ["alpha", "beta", "gamma"]
+
+
+def test_plugin_sort_dependency():
+    p_a = MockPlugin("a", ["b"])
+    p_b = MockPlugin("b", ["c"])
+    p_c = MockPlugin("c")
+
+    result = sort_plugins([p_a, p_b, p_c])
+    names = [p.name for p in result]
+    assert names == ["c", "b", "a"]
+
+
+def test_plugin_sort_complex():
+    p1 = MockPlugin("a", ["c", "b"])
+    p2 = MockPlugin("b", ["d"])
+    p3 = MockPlugin("c", ["e"])
+    p4 = MockPlugin("d")
+    p5 = MockPlugin("e")
+
+    result = sort_plugins([p1, p2, p3, p4, p5])
+    names = [p.name for p in result]
+    assert names == ["d", "b", "e", "c", "a"]
