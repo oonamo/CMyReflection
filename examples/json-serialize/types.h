@@ -6,8 +6,8 @@
 
 #define MAX_TITLE_LEN 124
 
-//# @reflect
-//# @unchecked
+// cmy:reflect
+// cmy:unchecked
 typedef enum
 {
     PERM_CREATE = 1 << 0,
@@ -15,27 +15,27 @@ typedef enum
     PERM_UPDATE = 1 << 2,
 } Permissions;
 
-//# @reflect
+// cmy:reflect
 typedef enum
 {
-    //# @display("Active")
+    // cmy:display("Active")
     ACCOUNT_ACTIVE,
 
-    //# @display("Inactive")
+    // cmy:display("Inactive")
     ACCOUNT_INACTIVE,
 
-    //# @display("Stale")
+    // cmy:display("Stale")
     ACCOUNT_STALE,
 } AccountState;
 
-//# @reflect
+// cmy:reflect
 typedef struct Post
 {
     char     title[MAX_TITLE_LEN];
     uint32_t likes;
 } Post;
 
-//# @reflect
+// cmy:reflect
 typedef struct
 {
     char language[32];
@@ -44,19 +44,19 @@ typedef struct
 
 #define PERMISSIONS_DEFAULT (PERM_CREATE | PERM_UPDATE)
 
-//# @reflect
+// cmy:reflect
 typedef struct
 {
-    //# @format("%s")
+    // cmy:format("%s")
     char username[32];
 
-    //# @format("%s")
+    // cmy:format("%s")
     char email[64];
 
-    //# @readonly
+    // cmy:readonly
     uint64_t account_id;
 
-    //# @writeonly
+    // cmy:writeonly
     char password_hash[64];
 
     Permissions  permissions;
@@ -64,12 +64,12 @@ typedef struct
 
     UserPrefernces settings;
 
-    //# @private
+    // cmy:private
     void *active_session_ptr;
 
     size_t post_count;
 
-    //# @length(post_count)
+    // cmy:length(post_count)
     Post *posts;
 } User;
 

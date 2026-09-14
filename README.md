@@ -16,21 +16,21 @@ A simple, 0-dependency, reflection framework for C99+
 ## Usage
 ### 1. Annotate Structs & Enums
 ```c
-//# @reflect
+// cmy:reflect
 typedef struct
 {
     float voltage;
     float temp;
 } SensorData;
 
-//# @reflect
+// cmy:reflect
 typedef enum
 {
     DEVICE_RX,
     DEVICE_TX,
 } DeviceState;
 
-//# @reflect
+// cmy:reflect
 typedef struct
 {
     char        device_id[32];
@@ -38,12 +38,12 @@ typedef struct
     SensorData  data;
     DeviceState state;
 
-    //# @readonly
+    // cmy:readonly
     uint64_t uuid;
 } IoTDevice;
 
-//# @reflect
-//# @unchecked
+// cmy:reflect
+// cmy:unchecked
 typedef enum
 {
     MANAGER_NONE  = 1 << 0,
@@ -53,12 +53,12 @@ typedef enum
 
 #define MAX_BUF_LEN 64
 
-//# @reflect
+// cmy:reflect
 typedef struct
 {
     unsigned char      op_mode;
 
-    //# @readonly
+    // cmy:readonly
     ManagerPermissions permissions;
 
     char               device_location[MAX_BUF_LEN];
@@ -131,7 +131,7 @@ Placed before the typedef struct|enum definition
 Instructs the parser to reflect the struct|enum definition
 
 ```c
-//# @reflect
+// cmy:reflect
 typedef struct
 {
     int x;
@@ -150,8 +150,8 @@ Placed before the typedef struct definition, after `@reflect`
 Renames the type enum to be NAME
 
 ```c
-//# @reflect
-//# @enum(TYPE_U8_DYN_ARR)
+// cmy:reflect
+// cmy:enum(TYPE_U8_DYN_ARR)
 typedef struct
 {
     uint8_t* data;
@@ -167,12 +167,12 @@ typedef struct
 Placed before the field, or after
 
 ```c
-//# @reflect
+// cmy:reflect
 typedef struct
 {
-    //# @private
+    // cmy:private
     char data[256];
-    uint32_t uuid32; //# @private
+    uint32_t uuid32; // cmy:private
 
     int did_ack;
 } recv_buffer_t;
@@ -182,12 +182,12 @@ typedef struct
 
 ### @readonly
 ```c
-//# @reflect
+// cmy:reflect
 typedef struct
 {
     char data[256];
 
-    //# @readonly
+    // cmy:readonly
     size_t attempts;
 } send_buffer_t;
 
@@ -196,10 +196,10 @@ typedef struct
 
 ### @writeonly
 ```c
-//# @reflect
+// cmy:reflect
 typedef struct
 {
-    //# @writeonly
+    // cmy:writeonly
     char* hash_str;
 } hash;
 
@@ -208,12 +208,12 @@ typedef struct
 
 ### @length
 ```c
-//# @reflect
+// cmy:reflect
 typedef struct
 {
     size_t len;
 
-    //# @length(len)
+    // cmy:length(len)
     void* buffer;
 } mem_pool;
 
@@ -224,8 +224,8 @@ typedef struct
 
 ### @unchecked
 ```c
-//# @reflect
-//# @unchecked
+// cmy:reflect
+// cmy:unchecked
 typedef enum
 {
     HAS_A = 1 << 0,

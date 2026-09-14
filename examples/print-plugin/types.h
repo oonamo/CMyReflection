@@ -1,8 +1,8 @@
 
-//# @reflect
+// cmy:reflect
 typedef struct
 {
 
-  //# @format("%d")
+  // cmy:format("%d")
   int a;
 } Game;

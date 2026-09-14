@@ -1065,20 +1065,15 @@ static inline {mapper.signature} {{
 
 def extract_tags(comment_text: str) -> dict:
     tags = {}
+    pattern = re.compile(r"cmy:([a-zA-Z0-9_]+)(?:\(([^)]+)\))?")
 
-    for line in comment_text.splitlines():
-        if "//#" not in line:
-            continue
-
-        reflection_part = line.split("//#", 1)[1]
-
-        for match in re.finditer(r"@([a-zA-Z0-9_]+)(?:\(([^)]+)\))?", reflection_part):
-            tag_name = match.group(1)
-            if match.group(2):
-                tag_value = match.group(2).strip()
-            else:
-                tag_value = True
-            tags[tag_name] = tag_value
+    for match in re.finditer(pattern, comment_text):
+        tag_name = match.group(1)
+        if match.group(2):
+            tag_value = match.group(2).strip()
+        else:
+            tag_value = True
+        tags[tag_name] = tag_value
 
     return tags
 
@@ -1087,7 +1082,7 @@ def generate_reflection(reflector: Reflector, fname: str, code: str):
     """Constructs the reflection data from the file"""
     # NOTE: captures all tags after @reflect
     block_pattern = re.compile(
-        r"(//#\s*@reflect[\s\S]*?)typedef\s+(struct|enum)[^{]*\{([^}]+)\}\s*(\w+);"
+        r"(//\s*cmy:reflect[\s\S]*?)typedef\s+(struct|enum)[^{]*\{([^}]+)\}\s*(\w+);"
     )
 
     for match in block_pattern.finditer(code):
@@ -1119,18 +1114,13 @@ def generate_reflection(reflector: Reflector, fname: str, code: str):
             if not line:
                 continue
 
-            if line.startswith("//#"):
-                pending_tags.update(extract_tags(line))
-                continue
-
-            parts = line.split("//#", 1)
-            decl = parts[0].strip()
-            inline_comment = f"//# {parts[1]}" if len(parts) > 1 else ""
-
+            line_tags = extract_tags(line)
+            decl = line.split("//")[0].strip()
             if not decl:
+                pending_tags.update(line_tags)
                 continue
 
-            field_tags = {**pending_tags, **extract_tags(inline_comment)}
+            field_tags = {**pending_tags, **line_tags}
             pending_tags = {}
 
             if "private" in field_tags:
