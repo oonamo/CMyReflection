@@ -1,4 +1,5 @@
 import cmy_reflector
+from cmy_reflector import CBuilder, Reflector
 
 
 def print_specifier(type: str) -> str:
@@ -37,7 +38,7 @@ def handle_member_format(reflector, enum, member, tag_value):
 
 
 @printer.type_tag("no_print")
-def handle_no_print(reeflector, struct_or_enum, tag_value):
+def handle_no_print(reflector, struct_or_enum, tag_value):
     pass
 
 
@@ -69,6 +70,30 @@ def has_field_str_attribute(reflector, type_name):
     if type_name in ["bool", "char_arr"]:
         return True
     return False
+
+
+def _generate_enum_str(
+    reflector: Reflector, cb: CBuilder, type_name, type_enum, ctype, suffix
+) -> (str | None, str | None):
+    return [
+        "if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }",
+        cb.var(ctype, "var"),
+        cb.var("ReflectResult", "res", cb.struct_field_getter(suffix, "&var")),
+        "if (res != REFLECT_OK) { return res; }",
+        "",
+        cb.var("EnumMetaData", "meta", cb.enum_metadata(type_name)),
+        cb.var(
+            "const char*",
+            "enum_val",
+            "get_enum_member_name(meta.name, meta.counnt, val)",
+        ),
+        cb.var(
+            "const EnumMemberInfo*",
+            "info",
+            "enum_val ? Find_Enum_Member(meta, enum_val) : NULL;",
+        ),
+        cb.var(),
+    ]
 
 
 @printer.type_mapper(

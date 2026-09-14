@@ -21,6 +21,14 @@ class TypeMapper:
 
 
 @dataclass
+class TypeContext:
+    name: str
+    enun_id: str
+    ctype: str
+    suffix: str
+
+
+@dataclass
 class Plugin:
     name: str
     version: str = "1.0.0"
@@ -496,6 +504,9 @@ class Reflector:
         if "*" in norm:
             norm = norm[: norm.rfind("*")]
         return norm.strip()
+
+    def is_arr(self, identifier: str) -> bool:
+        return self.normalze_type_identifier(identifier).endswith("_arr")
 
     def is_struct(self, identifier: str) -> bool:
         return self.get_base_type_name(identifier) in self.structs
@@ -1175,6 +1186,82 @@ static inline {mapper.signature} {{
         lines.append("\n")
 
         return "\n".join(lines)
+
+
+class CBuilder:
+    def __init__(self, reflector: Reflector):
+        self.reflector = reflector
+        self.valid_suffixes = set(
+            [reflector.get_type_suffix(t) for t in reflector.type_map.keys()]
+        )
+
+    def var(self, ctype: str, var_name: str, init_val: str = None) -> str:
+        """Generate a safe C variable declaration"""
+        if init_val:
+            return f"{ctype} {var_name} = {init_val};"
+        return f"{ctype} {var_name};"
+
+    def _has_suffix(self, suffix: str) -> bool:
+        return suffix in self.valid_suffixes
+
+    def get_suffix_from_ident(self, identifier: str) -> str:
+        if self._has_suffix(identifier):
+            return identifier
+        else:
+            base_name = self.reflector.get_base_type_name(identifier)
+            suffix = self.reflector.get_type_suffix(base_name)
+            if not self._has_suffix(suffix):
+                raise ValueError(
+                    f"Identifier '{identifier}' with base name '{base_name}' has invalid suffix '{suffix}'"
+                )
+
+            return suffix
+
+    def struct_field_getter(
+        self,
+        identifier: str,
+        val_ptr: str,
+        instance_name: str = "instance",
+        field_name: str = "field",
+        array_len: str = None,
+    ) -> str:
+        suffix = self.get_suffix_from_ident(identifier)
+        if self.reflector.is_arr(identifier):
+            if not array_len:
+                array_len = f"{field_name}->count"
+            return f"get_field_{suffix}({instance_name}, {field_name}, {val_ptr}, {array_len});"
+        elif array_len:
+            raise ValueError(
+                f"'{identifier}' is not an array, but array_len is provided."
+            )
+        return f"get_field_{suffix}({instance_name}, {field_name}, {val_ptr});"
+
+    def struct_field_extension(self, field_name: str = "field"):
+        return f"GET_FIELD_EXT({field_name})"
+
+    def enum_member_extension(self, member_name: str = "member"):
+        return f"GET_MEMBER_EXT({member_name})"
+
+    def struct_metadata(self, struct_name: str) -> str:
+        if not self.reflector.is_struct(struct_name):
+            raise ValueError(f"'{struct_name}' has no struct metadata.")
+        return f"StructMetaData_FromName({struct_name})"
+
+    def enum_metadata(self, enum_name: str) -> str:
+        if not self.reflector.is_enum(enum_name):
+            raise ValueError(f"'{enum_name}' has no enum metadata.")
+        return f"EnumMetaData_FromName({enum_name})"
+
+    def build_func(
+        self,
+        signature: str,
+        body_lines: list[str],
+        static="static",
+        inline="inline",
+        retval="ReflectResult",
+    ) -> str:
+        body = "\n    ".join(line for line in body_lines if line is not None)
+        return f"{static} {inline} {retval} {signature} {{\n    {body}\n}}\n"
 
 
 def extract_tags(comment_text: str) -> dict:

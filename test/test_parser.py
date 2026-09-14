@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 import cmy_reflector
-from cmy_reflector import Plugin, Reflector, generate_reflection, sort_plugins
+from cmy_reflector import CBuilder, Plugin, Reflector, generate_reflection, sort_plugins
 
 
 @pytest.fixture(autouse=True)
@@ -652,3 +652,84 @@ def test_plugin_sort_complex():
     result = sort_plugins([p1, p2, p3, p4, p5])
     names = [p.name for p in result]
     assert names == ["d", "b", "e", "c", "a"]
+
+
+def test_cbuilder_features():
+    c_code = """\
+    // cmy:reflect
+    typedef struct
+    {
+        int a;
+        char x[32];
+    } struct_a;
+
+    // cmy:reflect
+    typedef enum
+    {
+        ENUM_VAL1,
+    } enum_a;
+    """
+
+    reflector = Reflector()
+    generate_reflection(reflector, "test.h", c_code)
+    reflector.resolve()
+
+    cb = CBuilder(reflector)
+
+    assert cb.var("const char*", "x") == "const char* x;"
+    assert cb.var("const char*", "x", '"hello!"') == 'const char* x = "hello!";'
+    assert cb.var("weird_type", "f") == "weird_type f;"
+
+    assert cb.struct_field_extension() == "GET_FIELD_EXT(field)"
+    assert cb.struct_field_extension("f") == "GET_FIELD_EXT(f)"
+
+    assert cb.enum_member_extension() == "GET_MEMBER_EXT(member)"
+    assert cb.enum_member_extension("m") == "GET_MEMBER_EXT(m)"
+
+    assert cb.struct_metadata("struct_a") == "StructMetaData_FromName(struct_a)"
+
+    expected_err = "'dne' has no struct metadata."
+    with pytest.raises(ValueError, match=re.escape(expected_err)):
+        cb.struct_metadata("dne")
+
+    assert cb.enum_metadata("enum_a") == "EnumMetaData_FromName(enum_a)"
+    expected_err = "'dne' has no enum metadata."
+    with pytest.raises(ValueError, match=re.escape(expected_err)):
+        cb.enum_metadata("dne")
+
+    # Valid struct identifier
+    assert (
+        cb.struct_field_getter("struct_a", "&v")
+        == "get_field_struct_a(instance, field, &v);"
+    )
+    assert (
+        cb.struct_field_getter("TYPE_STRUCT_STRUCT_A", "&v")
+        == "get_field_struct_a(instance, field, &v);"
+    )
+
+    # Invalid struct identifiers
+    expected_err = (
+        "Identifier 'invalid' with base name 'invalid' has invalid suffix 'invalid'"
+    )
+    with pytest.raises(ValueError, match=re.escape(expected_err)):
+        cb.struct_field_getter("invalid", "x")
+
+    assert (
+        cb.struct_field_getter("char_arr", "&v")
+        == "get_field_char_arr(instance, field, &v, field->count);"
+    )
+    assert (
+        cb.struct_field_getter("char_arr", "&v", array_len="32")
+        == "get_field_char_arr(instance, field, &v, 32);"
+    )
+
+    expected_err = "'struct_a' is not an array, but array_len is provided."
+    with pytest.raises(ValueError, match=re.escape(expected_err)):
+        cb.struct_field_getter("struct_a", "&v", array_len="2")
+
+    # Primitives
+    assert cb.struct_field_getter("int", "&v") == "get_field_int(instance, field, &v);"
+
+    lines = [
+        cb.var("int", "x", "0"),
+    ]
