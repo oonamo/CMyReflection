@@ -30,6 +30,7 @@ typedef enum {
  * CMyReflection Active Plugins
  *  -> Printer (v0.0.0) by oonamo - Provides run time type printing (enums unsupprted)
  *    - Provides tag: @format (Struct Fields)
+ *    - Provides tag: @display (Enum Members)
  *    - Provides router: ReflectResult print_field(const void* instance, const StructFieldInfo* field)
  */
 
@@ -42,7 +43,13 @@ typedef struct {
 #ifdef CMY_PLUGIN_PRINTER_ENABLED
      const char* format;
 #endif // CMY_PLUGIN_PRINTER_ENABLED
-} FieldExtensions;
+} StructFieldExtension;
+
+typedef struct {
+#ifdef CMY_PLUGIN_PRINTER_ENABLED
+     const char* display;
+#endif // CMY_PLUGIN_PRINTER_ENABLED
+} EnumMemberExtension;
 // --- Metadata Declarations
 extern const StructFieldInfo Post_Metadata[];
 extern const size_t Post_FieldCount;
@@ -50,12 +57,21 @@ extern const StructFieldInfo UserPrefernces_Metadata[];
 extern const size_t UserPrefernces_FieldCount;
 extern const StructFieldInfo User_Metadata[];
 extern const size_t User_FieldCount;
-extern const FieldExtensions ext_User_username;
-extern const FieldExtensions ext_User_email;
+extern const StructFieldExtension ext_User_username;
+extern const StructFieldExtension ext_User_email;
 extern const EnumMemberInfo Permissions_Members[];
 extern const size_t Permissions_MemberCount;
 extern const EnumMemberInfo AccountState_Members[];
 extern const size_t AccountState_MemberCount;
+extern const EnumMemberExtension ext_AccountState_ACCOUNT_ACTIVE;
+extern const EnumMemberExtension ext_AccountState_ACCOUNT_INACTIVE;
+extern const EnumMemberExtension ext_AccountState_ACCOUNT_STALE;
+
+#define GET_FIELD_EXT(field_ptr) \
+    ((field_ptr) && (field_ptr)->user_data ? (const StructFieldExtension*)((field_ptr)->user_data) : NULL)
+
+#define GET_MEMBER_EXT(member_ptr) \
+    ((member_ptr) && (member_ptr)->user_data ? ((const EnumMemberExtension*)(member_ptr->user_data)) : NULL)
 
 // --- Auto-Generated Enum Validators ---
 
@@ -127,7 +143,7 @@ static inline ReflectResult print_field_char_arr(const void* instance, const Str
         return res;
     }
 
-    const FieldExtensions* ext = (const FieldExtensions*)field->user_data;
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
     const char* fmt = (ext && ext->format) ? ext->format : "%s";
 
     printf(fmt, val);
@@ -145,7 +161,7 @@ static inline ReflectResult print_field_char(const void* instance, const StructF
     ReflectResult res = get_field_char(instance, field, &v);
     if (res != REFLECT_OK) { return res; }
 
-    const FieldExtensions* ext = (const FieldExtensions*)field->user_data;
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
     const char* fmt = (ext && ext->format) ? ext->format : "%c";
 
     printf(fmt, v);
@@ -161,7 +177,7 @@ static inline ReflectResult print_field_u32(const void* instance, const StructFi
     ReflectResult res = get_field_u32(instance, field, &v);
     if (res != REFLECT_OK) { return res; }
 
-    const FieldExtensions* ext = (const FieldExtensions*)field->user_data;
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
     const char* fmt = (ext && ext->format) ? ext->format : "%" PRIu32;
 
     printf(fmt, v);
@@ -177,7 +193,7 @@ static inline ReflectResult print_field_bool(const void* instance, const StructF
     ReflectResult res = get_field_bool(instance, field, &v);
     if (res != REFLECT_OK) { return res; }
 
-    const FieldExtensions* ext = (const FieldExtensions*)field->user_data;
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
     const char* fmt = (ext && ext->format) ? ext->format : "%s";
 
     printf(fmt, v ? "true" : "false");
@@ -193,7 +209,7 @@ static inline ReflectResult print_field_u64(const void* instance, const StructFi
     ReflectResult res = get_field_u64(instance, field, &v);
     if (res != REFLECT_OK) { return res; }
 
-    const FieldExtensions* ext = (const FieldExtensions*)field->user_data;
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
     const char* fmt = (ext && ext->format) ? ext->format : "%" PRIu64;
 
     printf(fmt, v);
@@ -209,7 +225,7 @@ static inline ReflectResult print_field_size_t(const void* instance, const Struc
     ReflectResult res = get_field_size_t(instance, field, &v);
     if (res != REFLECT_OK) { return res; }
 
-    const FieldExtensions* ext = (const FieldExtensions*)field->user_data;
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
     const char* fmt = (ext && ext->format) ? ext->format : "%zu";
 
     printf(fmt, v);
@@ -250,12 +266,12 @@ const StructFieldInfo UserPrefernces_Metadata[] = {
 };
 const size_t UserPrefernces_FieldCount = sizeof(UserPrefernces_Metadata) / sizeof(StructFieldInfo);
 
-const FieldExtensions ext_User_username = {
+const StructFieldExtension ext_User_username = {
 #ifdef CMY_PLUGIN_PRINTER_ENABLED
 .format = "%s",
 #endif // CMY_PLUGIN_PRINTER_ENABLED
 };
-const FieldExtensions ext_User_email = {
+const StructFieldExtension ext_User_email = {
 #ifdef CMY_PLUGIN_PRINTER_ENABLED
 .format = "%s",
 #endif // CMY_PLUGIN_PRINTER_ENABLED
@@ -281,10 +297,25 @@ const EnumMemberInfo Permissions_Members[] = {
 };
 const size_t Permissions_MemberCount = sizeof(Permissions_Members) / sizeof(EnumMemberInfo);
 
+const EnumMemberExtension ext_AccountState_ACCOUNT_ACTIVE = {
+#ifdef CMY_PLUGIN_PRINTER_ENABLED
+.display = "Active",
+#endif // CMY_PLUGIN_PRINTER_ENABLED
+};
+const EnumMemberExtension ext_AccountState_ACCOUNT_INACTIVE = {
+#ifdef CMY_PLUGIN_PRINTER_ENABLED
+.display = "Inactive",
+#endif // CMY_PLUGIN_PRINTER_ENABLED
+};
+const EnumMemberExtension ext_AccountState_ACCOUNT_STALE = {
+#ifdef CMY_PLUGIN_PRINTER_ENABLED
+.display = "Stale",
+#endif // CMY_PLUGIN_PRINTER_ENABLED
+};
 const EnumMemberInfo AccountState_Members[] = {
-   { ACCOUNT_ACTIVE, "ACCOUNT_ACTIVE", NULL },
-   { ACCOUNT_INACTIVE, "ACCOUNT_INACTIVE", NULL },
-   { ACCOUNT_STALE, "ACCOUNT_STALE", NULL },
+   { ACCOUNT_ACTIVE, "ACCOUNT_ACTIVE", (void*)&ext_AccountState_ACCOUNT_ACTIVE },
+   { ACCOUNT_INACTIVE, "ACCOUNT_INACTIVE", (void*)&ext_AccountState_ACCOUNT_INACTIVE },
+   { ACCOUNT_STALE, "ACCOUNT_STALE", (void*)&ext_AccountState_ACCOUNT_STALE },
 };
 const size_t AccountState_MemberCount = sizeof(AccountState_Members) / sizeof(EnumMemberInfo);
 

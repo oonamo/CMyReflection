@@ -42,7 +42,9 @@ typedef enum {
 #include <cmyreflection.h>
 
 // No plugins active
-// No plugins
+// No Struct Extensions
+
+// No Enum Extensions
 // --- Metadata Declarations
 extern const StructFieldInfo Vector2_Metadata[];
 extern const size_t Vector2_FieldCount;

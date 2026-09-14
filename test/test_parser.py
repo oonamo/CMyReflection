@@ -409,7 +409,7 @@ def test_can_create_struct_field_tag():
 static inline const char* get_field_description(const FieldInfo* field)
 {
     if (!field || !field->user_data) { return NULL; }
-    return ((FieldExtensions*)(field->user_data))->description;
+    return ((StructFieldExtensions*)(field->user_data))->description;
 }
 """
 
@@ -430,7 +430,7 @@ static inline const char* get_field_description(const FieldInfo* field)
 
     generated_content = str(reflector)
 
-    assert "} FieldExtensions;" in generated_content
+    assert "} StructFieldExtensions;" in generated_content
     assert "const char* description" in generated_content
 
     assert (
@@ -549,3 +549,16 @@ def test_helpers_work_as_expected():
     assert not reflector.is_enum("StructB")
 
     assert reflector.get_base_type_name("StructB") == "StructB"
+
+def can_generate_enum_extensinos():
+    test_plugin = cmy_reflector.Plugin("test")
+    c_code = """
+    //# @reflect
+    typedef enum {
+        //# @t(1)
+        s1,
+
+        //# @t(2)
+        22,
+    } State;
+    """

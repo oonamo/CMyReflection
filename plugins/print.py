@@ -21,12 +21,20 @@ def setup(reflector):
         "format", "const char*", requires="CMY_PLUGIN_PRINTER_ENABLED"
     )
 
+    reflector.define_member_extension(
+        "display", "const char*", requires="CMY_PLUGIN_PRINTER_ENABLED"
+    )
+
     return "// I generated this plugin!"
 
 
 @printer.struct_field_tag("format")
 def handle_field_format(reflector, struct, field, tag_value):
     reflector.set_field_extension(field, "format", tag_value)
+
+@printer.enum_member_tag("display")
+def handle_member_format(reflector, enum, member, tag_value):
+    reflector.set_member_extension(member, "display", tag_value)
 
 
 _PRIMITIVE_FORMATS = {
@@ -67,7 +75,7 @@ static inline ReflectResult print_field_{suffix}(const void* instance, const Str
     ReflectResult res = get_field_{suffix}(instance, field, &v);
     if (res != REFLECT_OK) {{ return res; }}
 
-    const FieldExtensions* ext = (const FieldExtensions*)field->user_data;
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
     const char* fmt = (ext && ext->format) ? ext->format : {default_fmt};
 
     printf(fmt, v);
@@ -85,7 +93,7 @@ static inline ReflectResult print_field_{suffix}(const void* instance, const Str
     ReflectResult res = get_field_{suffix}(instance, field, &v);
     if (res != REFLECT_OK) {{ return res; }}
 
-    const FieldExtensions* ext = (const FieldExtensions*)field->user_data;
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
     const char* fmt = (ext && ext->format) ? ext->format : "%s";
 
     printf(fmt, v ? "true" : "false");
@@ -108,7 +116,7 @@ static inline ReflectResult print_field_{suffix}(const void* instance, const Str
         return res;
     }}
 
-    const FieldExtensions* ext = (const FieldExtensions*)field->user_data;
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
     const char* fmt = (ext && ext->format) ? ext->format : "%s";
 
     printf(fmt, val);

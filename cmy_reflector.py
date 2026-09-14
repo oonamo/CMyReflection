@@ -213,7 +213,7 @@ class CStruct:
         for field in self.fields:
             if field.plugin_data:
                 ext_var_name = f"ext_{self.name}_{field.name}"
-                lines.append(f"extern const FieldExtensions {ext_var_name};")
+                lines.append(f"extern const StructFieldExtension {ext_var_name};")
 
         return "\n".join(lines)
 
@@ -224,7 +224,7 @@ class CStruct:
         for field in self.fields:
             if field.plugin_data:
                 ext_var_name = f"ext_{self.name}_{field.name}"
-                lines.append(f"const FieldExtensions {ext_var_name} = {{")
+                lines.append(f"const StructFieldExtension {ext_var_name} = {{")
 
                 for key, val in field.plugin_data.items():
                     _, req = extensions.get(key, (None, None))
@@ -276,9 +276,28 @@ class CEnum:
         self.members = members if members is not None else []
         self.tags = tags if tags is not None else {}
 
-    def generate_definition(self) -> str:
+    def generate_definition(self, extensions: dict[str, (str, str | None)]) -> str:
         """Generates a definition for the enum metadata"""
-        lines = [f"const EnumMemberInfo {self.name}_Members[] = {{"]
+        lines = []
+
+        for member in self.members:
+            if member.plugin_data:
+                ext_var_name = f"ext_{self.name}_{member.name}"
+                lines.append(f"const EnumMemberExtension {ext_var_name} = {{")
+
+                for key, val in member.plugin_data.items():
+                    _, req = extensions.get(key, (None, None))
+                    if req:
+                        lines.append(f"#ifdef {req}")
+                    lines.append(f".{key} = {val},")
+                    if req:
+                        lines.append(f"#endif // {req}")
+                lines.append("};")
+                member.user_data_expr = f"(void*)&{ext_var_name}"
+            else:
+                member.user_data_expr = "NULL"
+
+        lines.append(f"const EnumMemberInfo {self.name}_Members[] = {{")
         for member in self.members:
             lines.append(member.gen_member_str() + ",")
         lines.append("};")
@@ -316,10 +335,20 @@ static inline bool is_valid_{self.name}({self.name} value) {{
 
     def generate_declaration(self) -> str:
         """Generates a declaration for the enum metadata"""
-        return (
-            f"extern const EnumMemberInfo {self.name}_Members[];\n"
-            f"extern const size_t {self.name}_MemberCount;"
-        )
+        lines = [
+            f"extern const EnumMemberInfo {self.name}_Members[];",
+            f"extern const size_t {self.name}_MemberCount;",
+        ]
+
+        has_plugin_data = False
+
+        for member in self.members:
+            if member.plugin_data:
+                ext_var_name = f"ext_{self.name}_{member.name}"
+                lines.append(f"extern const EnumMemberExtension {ext_var_name};")
+                has_plugin_data
+
+        return "\n".join(lines)
 
 
 class Reflector:
@@ -350,6 +379,7 @@ class Reflector:
         }
         self.base_types = {}
 
+        self.member_extensions_members = {}
         self.field_extension_members = {}
         self.active_struct_field_tags = {}
         self.active_enum_member_tags = {}
@@ -446,8 +476,7 @@ class Reflector:
         self.field_extension_members[name] = (ctype, requires)
 
     def define_member_extension(self, name: str, ctype: str, requires: str = None):
-        pass
-        # self.enum_extension_members[name] = (ctype, requires)
+        self.member_extensions_members[name] = (ctype, requires)
 
     def set_field_extension(self, field: Field, name: str, value: str):
         if name not in self.field_extension_members:
@@ -458,9 +487,17 @@ class Reflector:
 
         field.plugin_data[name] = value
 
-    def generate_extension_struct(self):
+    def set_member_extension(self, member: EnumMember, name: str, value: str):
+        if name not in self.member_extensions_members:
+            raise ValueError(
+                f"Validation Error: Cannot set extension '{name}' on field '{member.name}'. "
+                f"It must be registered first using reflector.define_member_extension()."
+            )
+        member.plugin_data[name] = value
+
+    def generate_struct_extension_type(self) -> str:
         if not self.field_extension_members:
-            return "// No plugins"
+            return "// No Struct Extensions"
         lines = ["typedef struct {"]
         for name, (c_type, req) in self.field_extension_members.items():
             if req:
@@ -468,7 +505,20 @@ class Reflector:
             lines.append(f"     {c_type} {name};")
             if req:
                 lines.append(f"#endif // {req}")
-        lines.append("} FieldExtensions;")
+        lines.append("} StructFieldExtension;")
+        return "\n".join(lines)
+
+    def generate_enum_extension_type(self) -> str:
+        if not self.member_extensions_members:
+            return "// No Enum Extensions"
+        lines = ["typedef struct {"]
+        for name, (c_type, req) in self.member_extensions_members.items():
+            if req:
+                lines.append(f"#ifdef {req}")
+            lines.append(f"     {c_type} {name};")
+            if req:
+                lines.append(f"#endif // {req}")
+        lines.append("} EnumMemberExtension;")
         return "\n".join(lines)
 
     def add_cstruct(self, struct: CStruct) -> bool:
@@ -612,7 +662,9 @@ class Reflector:
         for enum in self.enums.values():
             if enum.fname not in files:
                 files[enum.fname] = []
-            files[enum.fname].append(enum.generate_definition())
+            files[enum.fname].append(
+                enum.generate_definition(self.member_extensions_members)
+            )
 
         lines = ["// --- Metadata Definitions", "#ifdef REFLECTION_IMPLEMENTATION\n"]
         for file, contents in files.items():
@@ -636,13 +688,33 @@ class Reflector:
     def generate_declarations(self) -> str:
         """Generates the declarations for the metadata"""
         lines = ["// --- Metadata Declarations"]
+        has_field_extension = False
+        has_member_extension = False
         for struct in self.structs.values():
             lines.append(struct.generate_declaration())
+
+            if any(field.plugin_data for field in struct.fields):
+                has_field_extension = True
 
         for enum in self.enums.values():
             lines.append(enum.generate_declaration())
 
+            if any(member.plugin_data for member in enum.members):
+                has_member_extension = True
+
         lines.append("")
+
+        if has_field_extension:
+            lines.append("""\
+#define GET_FIELD_EXT(field_ptr) \\
+    ((field_ptr) && (field_ptr)->user_data ? (const StructFieldExtension*)((field_ptr)->user_data) : NULL)
+""")
+
+        if has_member_extension:
+            lines.append("""\
+#define GET_MEMBER_EXT(member_ptr) \\
+    ((member_ptr) && (member_ptr)->user_data ? ((const EnumMemberExtension*)(member_ptr->user_data)) : NULL)
+""")
 
         return "\n".join(lines)
 
@@ -934,8 +1006,8 @@ static inline {mapper.signature} {{
         for enum in self.enums.values():
             for member in enum.members:
                 for tag_name, tag_value in member.tags.items():
-                    if tag_name in self.active_type_mappers:
-                        snippet = self.active_type_mappers[tag_name](
+                    if tag_name in self.active_enum_member_tags:
+                        snippet = self.active_enum_member_tags[tag_name](
                             self, enum, member, tag_value
                         )
                         if snippet:
@@ -947,7 +1019,9 @@ static inline {mapper.signature} {{
         self.load_plugins()
         plugin_code = self.generate_plugin_extensions()
 
-        ext_struct_code = self.generate_extension_struct()
+        ext_struct_code = self.generate_struct_extension_type()
+        ext_enum_code = self.generate_enum_extension_type()
+
         lines = [
             self.generate_file_header(),
             "#define CMYREFLECTION_PARSED",
@@ -959,6 +1033,8 @@ static inline {mapper.signature} {{
             "",
             self.generate_plugin_headers(),
             ext_struct_code,
+            "",
+            ext_enum_code,
             self.generate_declarations(),
         ]
 

@@ -18,8 +18,13 @@ typedef enum
 //# @reflect
 typedef enum
 {
+    //# @display("Active")
     ACCOUNT_ACTIVE,
+
+    //# @display("Inactive")
     ACCOUNT_INACTIVE,
+
+    //# @display("Stale")
     ACCOUNT_STALE,
 } AccountState;
 
