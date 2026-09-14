@@ -687,6 +687,15 @@ def test_cbuilder_features():
     assert cb.var("const char*", "x", '"hello!"') == 'const char* x = "hello!";'
     assert cb.var("weird_type", "f") == "weird_type f;"
 
+    assert (
+        cb.check("!buf && !g_buf", "return REFLECT_ERR_NULL_PTR;")
+        == """\
+if (!buf && !g_buf) {
+    return REFLECT_ERR_NULL_PTR;
+}
+"""
+    )
+
     assert cb.struct_field_extension() == "GET_FIELD_EXT(field)"
     assert cb.struct_field_extension("f") == "GET_FIELD_EXT(f)"
 

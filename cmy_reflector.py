@@ -1217,7 +1217,7 @@ class CVar:
         if default:
             self._val = f"({cond}) ? {val} : {default}"
 
-    def checked(self, cond: str, ifbad: str = "return REFLECT_ERR_NULL_PTR;"):
+    def checked(self, cond: str, ifbad: str):
         indented_ifbad = ifbad.replace("\n", "\n    ")
         self.after = f"if ({cond}) {{\n    {indented_ifbad}\n}}\n"
         return self
@@ -1307,6 +1307,10 @@ class CBuilder:
         if not self.reflector.is_enum(enum_name):
             raise ValueError(f"'{enum_name}' has no enum metadata.")
         return f"EnumMetaData_FromName({enum_name})"
+
+    def check(self, cond: str, ifbad: str) -> str:
+        ifbad_indented = ifbad.replace("\n", "\n    ")
+        return f"if ({cond}) {{\n    {ifbad_indented}\n}}\n"
 
     def build_func(
         self,
