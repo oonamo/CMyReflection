@@ -590,11 +590,11 @@ def test_errors_on_tag_collision():
     p1 = Plugin("p1")
     p2 = Plugin("p2")
 
-    @p1.type_tag("test")
+    @p1.struct_tag("test")
     def p1_handle(reflector, struct, field, tag_value):
         pass
 
-    @p2.type_tag("test")
+    @p2.struct_tag("test")
     def p2_handle(reflector, struct, field, tag_value):
         pass
 
@@ -619,7 +619,7 @@ def test_errors_on_tag_collision():
     error_msg = str(exc_info.value)
 
     assert (
-        "- Tag collision: 'cmy:test' (Types) is claimed by 2 plugins: p1, p2."
+        "- Tag collision: 'cmy:test' (Structs) is claimed by 2 plugins: p1, p2."
     ) in error_msg
 
 
@@ -798,7 +798,7 @@ if (!buffer) {
 def test_enforces_tag_value():
     p = Plugin("test")
 
-    @p.type_tag("show", enforce_value=True)
+    @p.struct_tag("show", enforce_value=True)
     def handle_tags(reflector, struct_or_enum, tag_value):
         print(tag_value)
         pass

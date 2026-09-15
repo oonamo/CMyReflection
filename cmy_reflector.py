@@ -41,7 +41,8 @@ class Plugin:
 
     _setup_hook: Callable[[Any], None] = dataclasses.field(default=None, init=False)
     _struct_field_tags: dict = dataclasses.field(default_factory=dict, init=False)
-    _type_tags: dict = dataclasses.field(default_factory=dict, init=False)
+    _struct_tags: dict = dataclasses.field(default_factory=dict, init=False)
+    _enum_tags: dict = dataclasses.field(default_factory=dict, init=False)
     _enum_member_tags: dict = dataclasses.field(default_factory=dict, init=False)
     _type_mappers: list[TypeMapper] = dataclasses.field(
         default_factory=list, init=False
@@ -61,8 +62,12 @@ class Plugin:
         return MappingProxyType(self._enum_member_tags)
 
     @property
-    def type_tags(self) -> dict:
-        return MappingProxyType(self._type_tags)
+    def struct_tags(self) -> dict:
+        return MappingProxyType(self._struct_tags)
+
+    @property
+    def enum_tags(self) -> dict:
+        return MappingProxyType(self._enum_tags)
 
     @property
     def type_mappers(self) -> tuple:
@@ -92,7 +97,14 @@ class Plugin:
 
         def decorator(func):
             self._struct_field_tags[tag_name] = (func, enforce_value, validator)
-            self.description += f"\n *    - Provides tag: @{tag_name} (Struct Fields)"
+            if enforce_value:
+                self.description += (
+                    f"\n *    - Provides tag @{tag_name}(value) (Struct Fields)"
+                )
+            else:
+                self.description += (
+                    f"\n *    - Provides tag: @{tag_name} (Struct Fields)"
+                )
             return func
 
         return decorator
@@ -107,7 +119,54 @@ class Plugin:
 
         def decorator(func):
             self._enum_member_tags[tag_name] = (func, enforce_value, validator)
-            self.description += f"\n *    - Provides tag: @{tag_name} (Enum Members)"
+            if enforce_value:
+                self.description += (
+                    f"\n *    - Provides tag @{tag_name}(value) (Enum Members)"
+                )
+            else:
+                self.description += (
+                    f"\n *    - Provides tag: @{tag_name} (Enum Members)"
+                )
+            return func
+
+        return decorator
+
+    def struct_tag(
+        self,
+        tag_name: str,
+        enforce_value=False,
+        validator: Callable[[str, str], tuple[bool, str]] = None,
+    ):
+        """Decorator for tags applied to structs"""
+
+        def decorator(func):
+            self._struct_tags[tag_name] = (func, enforce_value, validator)
+            if enforce_value:
+                self.description += (
+                    f"\n *    - Provides tag @{tag_name}(value) (Struct)"
+                )
+            else:
+                self.description += f"\n *    - Provides tag: @{tag_name} (Struct)"
+            return func
+
+        return decorator
+
+    def enum_tag(
+        self,
+        tag_name: str,
+        enforce_value=False,
+        validator: Callable[[str, str], tuple[bool, str]] = None,
+    ):
+        """Decorator for tags applied to structs"""
+
+        def decorator(func):
+            self._enum_tags[tag_name] = (func, enforce_value, validator)
+            if enforce_value:
+                self.description += (
+                    f"\n *    - Provides tag @{tag_name}(value) (Struct)"
+                )
+            else:
+                self.description += f"\n *    - Provides tag: @{tag_name} (Struct)"
             return func
 
         return decorator
@@ -118,7 +177,7 @@ class Plugin:
         enforce_value=False,
         validator: Callable[[str, str], tuple[bool, str]] = None,
     ):
-        """Decorator for tags applied to enum members."""
+        """Decorator for tags applied to types members."""
 
         def decorator(func):
             self._type_tags[tag_name] = (func, enforce_value, validator)
@@ -452,14 +511,16 @@ class Reflector:
         self.active_struct_field_tags = {}
         self.active_enum_member_tags = {}
         self.active_type_tags = {}
+        self.active_enum_tags = {}
+        self.active_struct_tags = {}
         self.active_type_mappers = []
 
     def validate_tags(self):
         """Checks for any unregistered tags"""
         errors = []
 
-        valid_struct_tags = self.builtin_struct_tags | set(self.active_type_tags)
-        valid_enum_tags = self.builtin_enum_tags | set(self.active_type_tags)
+        valid_struct_tags = self.builtin_struct_tags | set(self.active_struct_tags)
+        valid_enum_tags = self.builtin_enum_tags | set(self.active_enum_tags)
         valid_field_tags = self.builtin_field_tags | set(self.active_struct_field_tags)
         valid_member_tags = self.builtin_member_tags | set(self.active_enum_member_tags)
 
@@ -539,7 +600,8 @@ class Reflector:
 
         struct_field_claims = defaultdict(list)
         enum_member_claims = defaultdict(list)
-        type_claims = defaultdict(list)
+        struct_claims = defaultdict(list)
+        enum_claims = defaultdict(list)
 
         for p in _PLUGINS:
             for dep in p.depends_on:
@@ -555,8 +617,11 @@ class Reflector:
             for tag_name, handler in p.enum_member_tags.items():
                 enum_member_claims[tag_name].append((p.name, handler))
 
-            for tag_name, handler in p.type_tags.items():
-                type_claims[tag_name].append((p.name, handler))
+            for tag_name, handler in p.struct_tags.items():
+                struct_claims[tag_name].append((p.name, handler))
+
+            for tag_name, handler in p.enum_tags.items():
+                enum_claims[tag_name].append((p.name, handler))
 
             self.active_type_mappers.extend(p.type_mappers)
 
@@ -575,7 +640,8 @@ class Reflector:
             struct_field_claims, self.active_struct_field_tags, "Struct Fields"
         )
         resolve_claims(enum_member_claims, self.active_enum_member_tags, "Enum Members")
-        resolve_claims(type_claims, self.active_type_tags, "Types")
+        resolve_claims(struct_claims, self.active_struct_tags, "Structs")
+        resolve_claims(enum_claims, self.active_enum_tags, "Enums")
 
         if errors:
             raise ValueError(
@@ -1131,8 +1197,8 @@ static inline {mapper.signature} {{
 
             for struct in self.structs.values():
                 for tag_name, tag_value in struct.tags.items():
-                    if tag_name in p.type_tags:
-                        func, enforced, validator = p.type_tags[tag_name]
+                    if tag_name in p.struct_tags:
+                        func, enforced, validator = p.struct_tags[tag_name]
                         self._check_tag_value(
                             tag_name, tag_value, enforced, "Type", validator
                         )
@@ -1143,8 +1209,8 @@ static inline {mapper.signature} {{
 
             for enum in self.enums.values():
                 for tag_name, tag_value in enum.tags.items():
-                    if tag_name in p.type_tags:
-                        func, enforced, validator = p.type_tags[tag_name]
+                    if tag_name in p.enum_tags:
+                        func, enforced, validator = p.enum_tags[tag_name]
                         self._check_tag_value(
                             tag_name, tag_value, enforced, "Type", validator
                         )

@@ -37,7 +37,7 @@ def handle_member_format(reflector, enum, member, tag_value):
     reflector.set_member_extension(member, "display", tag_value)
 
 
-@printer.type_tag("no_print")
+@printer.enum_tag("no_print")
 def handle_no_print(reflector, struct_or_enum, tag_value):
     pass
 

@@ -31,7 +31,7 @@ typedef enum {
  *  -> Printer (v0.0.0) by oonamo - Provides run time printing for primitive types
  *    - Provides tag: @format (Struct Fields)
  *    - Provides tag: @display (Enum Members)
- *    - Provides tag: @no_print (Types)
+ *    - Provides tag: @no_print (Struct)
  *    - Provides router: ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen)
  *    - Provides router: ReflectResult print_field(const void* instance, const StructFieldInfo* field)
  */
