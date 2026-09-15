@@ -1124,14 +1124,15 @@ FieldType get_base_type(FieldType type) {{
 
         lines.append(" */\n")
 
+        if macros:
+            lines.append("")
+            lines.extend(macros)
+            lines.append("")
+
         for inc in sorted(includes):
             if not inc.startswith("<") and not inc.startwith('"'):
                 inc = f"<{inc}>"
             lines.append(f"#include {inc}")
-
-        if macros:
-            lines.append("")
-            lines.extend(macros)
 
         return "\n".join(lines)
 
@@ -1351,6 +1352,20 @@ class CVar:
 
     def __str__(self) -> str:
         return self.gen_str()
+
+    def __radd__(self, other) -> str:
+        if isinstance(other, str):
+            return other + self.gen_str()
+
+        if isinstance(other, CVar):
+            return other.gen_str() + self.gen_str()
+
+    def __add__(self, other) -> str:
+        if isinstance(other, str):
+            return self.gen_str() + other
+
+        if isinstance(other, CVar):
+            return self.gen_str() + other.gen_str()
 
     def __eq__(self, other) -> bool:
         if isinstance(other, str):

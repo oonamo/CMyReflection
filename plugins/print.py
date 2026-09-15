@@ -2,6 +2,10 @@ import cmy_reflector
 from cmy_reflector import CBuilder, Reflector
 
 
+def default_def(macro, default) -> str:
+    return f"#ifndef {macro}\n#    define {macro} {default}\n#endif // {macro}"
+
+
 def print_specifier(type: str) -> str:
     return f'"%" PRI{type}'
 
@@ -12,7 +16,10 @@ printer = cmy_reflector.Plugin(
     maintainers=["oonamo"],
     description="Provides run time printing for primitive types",
     includes=["<stdio.h>", "<stdlib.h>", "<inttypes.h>"],
-    macros=["#define CMY_PLUGIN_PRINTER_ENABLED 1"],
+    macros=[
+        "#define CMY_PLUGIN_PRINTER_ENABLED 1",
+        default_def("CMY_PRINTER_MAX_BUF_LEN", "256"),
+    ],
 )
 
 
@@ -25,6 +32,8 @@ def setup(reflector):
     reflector.define_member_extension(
         "display", "const char*", requires="CMY_PLUGIN_PRINTER_ENABLED"
     )
+
+    return "// Does this still let for generation?"
 
 
 @printer.struct_field_tag("format")
@@ -128,11 +137,18 @@ def _generate_char_arr_str(
 ) -> list[str]:
     return [
         cb.check("!instance || !field", "return REFLECT_ERR_NULL_PTR;"),
-        cb.var("char", "var[field->count]"),
+        "#ifdef _MSC_VER",
+        "    " + cb.var("char", "var[CMY_PLUGIN_PRINTER_ENABLED];"),
+        "    " + cb.var("size_t", "arr_len", "CMY_PLUGIN_PRINTER_ENABLED"),
+        "#else",
+        "    " + cb.var("char", "var[field->count]"),
+        "    " + cb.var("size_t", "arr_len", "field->count"),
+        "#endif",
+        "",
         cb.var(
             "ReflectResult",
             "res",
-            cb.struct_field_getter(suffix, "var", array_len="field->count"),
+            cb.struct_field_getter(suffix, "var", array_len="arr_len"),
         ).checked("res != REFLECT_OK", "return res;"),
         cb.var(
             "StructFieldExtension*", "ext", cb.struct_field_extension("field")
@@ -238,8 +254,14 @@ def handle_primitive_printers(
 static inline ReflectResult print_field_{suffix}(const void* instance, const StructFieldInfo* field) {{
     if (!instance || !field) {{ return REFLECT_ERR_NULL_PTR; }}
 
-    char buf[field->count > 256 ? field->count : 256];
-    ReflectResult res = get_field_as_str(instance, field, buf, sizeof(buf));
+#ifdef _MSC_VER
+    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
+    char buf[CMY_PRINTER_MAX_BUF_LEN];
+#else
+    size_t buflen = field->count > 256 ? field->count : 256;
+    char buf[buflen];
+#endif
+    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
     if (res != REFLECT_OK) {{
         return res;
     }}

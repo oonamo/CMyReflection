@@ -36,11 +36,15 @@ typedef enum {
  *    - Provides router: ReflectResult print_field(const void* instance, const StructFieldInfo* field)
  */
 
+
+#define CMY_PLUGIN_PRINTER_ENABLED 1
+#ifndef CMY_PRINTER_MAX_BUF_LEN
+#    define CMY_PRINTER_MAX_BUF_LEN 256
+#endif // CMY_PRINTER_MAX_BUF_LEN
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#define CMY_PLUGIN_PRINTER_ENABLED 1
 typedef struct {
 #ifdef CMY_PLUGIN_PRINTER_ENABLED
      const char* format;
@@ -182,8 +186,15 @@ static inline ReflectResult get_field_char_arr_as_str(const void* instance, cons
         return REFLECT_ERR_NULL_PTR;
     }
 
-    char var[field->count];
-    ReflectResult res = get_field_char_arr(instance, field, var, field->count);;
+    #ifdef _MSC_VER
+        char var[CMY_PLUGIN_PRINTER_ENABLED];;
+        size_t arr_len = CMY_PLUGIN_PRINTER_ENABLED;
+    #else
+        char var[field->count];
+        size_t arr_len = field->count;
+    #endif
+
+    ReflectResult res = get_field_char_arr(instance, field, var, arr_len);;
     if (res != REFLECT_OK) {
         return res;
     }
@@ -305,8 +316,14 @@ static inline ReflectResult get_field_as_str(const void* instance, const StructF
 static inline ReflectResult print_field_AccountState(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
-    char buf[field->count > 256 ? field->count : 256];
-    ReflectResult res = get_field_as_str(instance, field, buf, sizeof(buf));
+#ifdef _MSC_VER
+    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
+    char buf[CMY_PRINTER_MAX_BUF_LEN];
+#else
+    size_t buflen = field->count > 256 ? field->count : 256;
+    char buf[buflen];
+#endif
+    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
     if (res != REFLECT_OK) {
         return res;
     }
@@ -318,8 +335,14 @@ static inline ReflectResult print_field_AccountState(const void* instance, const
 static inline ReflectResult print_field_char_arr(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
-    char buf[field->count > 256 ? field->count : 256];
-    ReflectResult res = get_field_as_str(instance, field, buf, sizeof(buf));
+#ifdef _MSC_VER
+    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
+    char buf[CMY_PRINTER_MAX_BUF_LEN];
+#else
+    size_t buflen = field->count > 256 ? field->count : 256;
+    char buf[buflen];
+#endif
+    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
     if (res != REFLECT_OK) {
         return res;
     }
@@ -331,8 +354,14 @@ static inline ReflectResult print_field_char_arr(const void* instance, const Str
 static inline ReflectResult print_field_char(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
-    char buf[field->count > 256 ? field->count : 256];
-    ReflectResult res = get_field_as_str(instance, field, buf, sizeof(buf));
+#ifdef _MSC_VER
+    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
+    char buf[CMY_PRINTER_MAX_BUF_LEN];
+#else
+    size_t buflen = field->count > 256 ? field->count : 256;
+    char buf[buflen];
+#endif
+    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
     if (res != REFLECT_OK) {
         return res;
     }
@@ -344,8 +373,14 @@ static inline ReflectResult print_field_char(const void* instance, const StructF
 static inline ReflectResult print_field_u32(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
-    char buf[field->count > 256 ? field->count : 256];
-    ReflectResult res = get_field_as_str(instance, field, buf, sizeof(buf));
+#ifdef _MSC_VER
+    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
+    char buf[CMY_PRINTER_MAX_BUF_LEN];
+#else
+    size_t buflen = field->count > 256 ? field->count : 256;
+    char buf[buflen];
+#endif
+    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
     if (res != REFLECT_OK) {
         return res;
     }
@@ -357,8 +392,14 @@ static inline ReflectResult print_field_u32(const void* instance, const StructFi
 static inline ReflectResult print_field_bool(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
-    char buf[field->count > 256 ? field->count : 256];
-    ReflectResult res = get_field_as_str(instance, field, buf, sizeof(buf));
+#ifdef _MSC_VER
+    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
+    char buf[CMY_PRINTER_MAX_BUF_LEN];
+#else
+    size_t buflen = field->count > 256 ? field->count : 256;
+    char buf[buflen];
+#endif
+    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
     if (res != REFLECT_OK) {
         return res;
     }
@@ -370,8 +411,14 @@ static inline ReflectResult print_field_bool(const void* instance, const StructF
 static inline ReflectResult print_field_u64(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
-    char buf[field->count > 256 ? field->count : 256];
-    ReflectResult res = get_field_as_str(instance, field, buf, sizeof(buf));
+#ifdef _MSC_VER
+    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
+    char buf[CMY_PRINTER_MAX_BUF_LEN];
+#else
+    size_t buflen = field->count > 256 ? field->count : 256;
+    char buf[buflen];
+#endif
+    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
     if (res != REFLECT_OK) {
         return res;
     }
@@ -383,8 +430,14 @@ static inline ReflectResult print_field_u64(const void* instance, const StructFi
 static inline ReflectResult print_field_size_t(const void* instance, const StructFieldInfo* field) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
-    char buf[field->count > 256 ? field->count : 256];
-    ReflectResult res = get_field_as_str(instance, field, buf, sizeof(buf));
+#ifdef _MSC_VER
+    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
+    char buf[CMY_PRINTER_MAX_BUF_LEN];
+#else
+    size_t buflen = field->count > 256 ? field->count : 256;
+    char buf[buflen];
+#endif
+    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
     if (res != REFLECT_OK) {
         return res;
     }
