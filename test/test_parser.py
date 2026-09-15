@@ -793,3 +793,67 @@ if (!buffer) {
     v2 = CVar("int", "i")
     v2.val_with_default("f != NULL", "f", "def")
     assert v2 == "int i = (f != NULL) ? f : def;"
+
+
+def test_enforces_tag_value():
+    p = Plugin("test")
+
+    @p.type_tag("show", enforce_value=True)
+    def handle_tags(reflector, struct_or_enum, tag_value):
+        print(tag_value)
+        pass
+
+    cmy_reflector.add_plugin(p)
+
+    c_code = """
+    // cmy:reflect
+    // cmy:show
+    typedef struct
+    {
+        int x;
+    } b;
+    """
+
+    reflector = Reflector()
+    generate_reflection(reflector, "test.h", c_code)
+    reflector.resolve()
+
+    expected_err = "Tag 'show' (Type) requires a value"
+    with pytest.raises(ValueError, match=re.escape(expected_err)):
+        str(reflector)
+
+
+def test_validates_tag_value():
+    p = Plugin("test")
+
+    def is_odd(tag_name, tag_value) -> (bool, str):
+        return (int(tag_value) % 2 != 0, "The tag is not odd")
+
+    @p.setup
+    def setup(reflector):
+        reflector.define_field_extension("isodd", "bool")
+
+    @p.struct_field_tag("isodd", enforce_value=True, validator=is_odd)
+    def handle_field_tag(reflector, struct, field, tag_value):
+        reflector.set_field_extension(field, "isodd", tag_value)
+
+    cmy_reflector.add_plugin(p)
+
+    c_code = """
+    // cmy:reflect
+    typedef struct
+    {
+        // cmy:isodd(2)
+        int x;
+    } a;
+    """
+
+    reflector = Reflector()
+    generate_reflection(reflector, "test.h", c_code)
+    reflector.resolve()
+
+    expected_err = """\
+Tag 'isodd' (Struct) with value '2' could not be validated. Reason:
+    The tag is not odd"""
+    with pytest.raises(ValueError, match=re.escape(expected_err)):
+        str(reflector)

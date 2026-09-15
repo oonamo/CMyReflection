@@ -82,31 +82,46 @@ class Plugin:
         self._code_emitters.append(func)
         return func
 
-    def struct_field_tag(self, tag_name: str):
+    def struct_field_tag(
+        self,
+        tag_name: str,
+        enforce_value=False,
+        validator: Callable[[str, str], tuple[bool, str]] = None,
+    ):
         """Decorator to register a struct field tag"""
 
         def decorator(func):
-            self._struct_field_tags[tag_name] = func
+            self._struct_field_tags[tag_name] = (func, enforce_value, validator)
             self.description += f"\n *    - Provides tag: @{tag_name} (Struct Fields)"
             return func
 
         return decorator
 
-    def enum_member_tag(self, tag_name: str):
+    def enum_member_tag(
+        self,
+        tag_name: str,
+        enforce_value=False,
+        validator: Callable[[str, str], tuple[bool, str]] = None,
+    ):
         """Decorator for tags applied to enum members."""
 
         def decorator(func):
-            self._enum_member_tags[tag_name] = func
+            self._enum_member_tags[tag_name] = (func, enforce_value, validator)
             self.description += f"\n *    - Provides tag: @{tag_name} (Enum Members)"
             return func
 
         return decorator
 
-    def type_tag(self, tag_name: str):
+    def type_tag(
+        self,
+        tag_name: str,
+        enforce_value=False,
+        validator: Callable[[str, str], tuple[bool, str]] = None,
+    ):
         """Decorator for tags applied to enum members."""
 
         def decorator(func):
-            self._type_tags[tag_name] = func
+            self._type_tags[tag_name] = (func, enforce_value, validator)
             self.description += f"\n *    - Provides tag: @{tag_name} (Types)"
             return func
 
@@ -1054,6 +1069,23 @@ FieldType get_base_type(FieldType type) {{
 
         return "\n".join(lines)
 
+    def _check_tag_value(
+        self,
+        tag_name: str,
+        tag_value: str | None,
+        enforced: bool,
+        scope: str,
+        validator: Callable[[str, str], tuple[bool, str]] = None,
+    ):
+        if enforced and tag_value is True:
+            raise ValueError(f"Tag '{tag_name}' ({scope}) requires a value")
+        if validator:
+            valid, reason = validator(tag_name, tag_value)
+            if not valid:
+                raise ValueError(
+                    f"Tag '{tag_name}' ({scope}) with value '{tag_value}' could not be validated. Reason:\n    {reason}"
+                )
+
     def generate_plugin_extensions(self) -> str:
         extension_lines = ["// --- Plugin-Generated-Extensions ---"]
 
@@ -1100,14 +1132,24 @@ static inline {mapper.signature} {{
             for struct in self.structs.values():
                 for tag_name, tag_value in struct.tags.items():
                     if tag_name in p.type_tags:
-                        snippet = p.type_tags[tag_name](self, struct, tag_value)
+                        func, enforced, validator = p.type_tags[tag_name]
+                        self._check_tag_value(
+                            tag_name, tag_value, enforced, "Type", validator
+                        )
+
+                        snippet = func(self, struct, tag_value)
                         if snippet:
                             plugin_code.append(snippet)
 
             for enum in self.enums.values():
                 for tag_name, tag_value in enum.tags.items():
                     if tag_name in p.type_tags:
-                        snippet = p.type_tags[tag_name](self, enum, tag_value)
+                        func, enforced, validator = p.type_tags[tag_name]
+                        self._check_tag_value(
+                            tag_name, tag_value, enforced, "Type", validator
+                        )
+
+                        snippet = func(self, enum, tag_value)
                         if snippet:
                             plugin_code.append(snippet)
 
@@ -1115,9 +1157,12 @@ static inline {mapper.signature} {{
                 for field in struct.fields:
                     for tag_name, tag_value in field.tags.items():
                         if tag_name in p.struct_field_tags:
-                            snippet = p.struct_field_tags[tag_name](
-                                self, struct, field, tag_value
+                            func, enforced, validator = p.struct_field_tags[tag_name]
+                            self._check_tag_value(
+                                tag_name, tag_value, enforced, "Struct", validator
                             )
+
+                            snippet = func(self, struct, field, tag_value)
                             if snippet:
                                 plugin_code.append(snippet)
 
@@ -1125,9 +1170,12 @@ static inline {mapper.signature} {{
                 for member in enum.members:
                     for tag_name, tag_value in member.tags.items():
                         if tag_name in p.enum_member_tags:
-                            snippet = p.enum_member_tags[tag_name](
-                                self, enum, member, tag_value
+                            func, enforced, validator = p.enum_member_tags[tag_name]
+                            self._check_tag_value(
+                                tag_name, tag_value, enforced, "Struct", validator
                             )
+
+                            snippet = func(self, enum, member, tag_value)
                             if snippet:
                                 plugin_code.append(snippet)
 
