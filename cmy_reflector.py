@@ -1217,6 +1217,8 @@ class CVar:
         if default:
             self._val = f"({cond}) ? {val} : {default}"
 
+        return self
+
     def checked(self, cond: str, ifbad: str):
         indented_ifbad = ifbad.replace("\n", "\n    ")
         self.after = f"if ({cond}) {{\n    {indented_ifbad}\n}}\n"
@@ -1253,7 +1255,7 @@ class CBuilder:
             [reflector.get_type_suffix(t) for t in reflector.type_map.keys()]
         )
 
-    def var(self, ctype: str, name: str, val: str = None) -> str:
+    def var(self, ctype: str, name: str, val: str = None) -> CVar:
         """Returns a CVar builder object"""
         return CVar(ctype, name, val)
 
@@ -1320,8 +1322,17 @@ class CBuilder:
         inline="inline",
         retval="ReflectResult",
     ) -> str:
-        body = "\n    ".join(str(line) for line in body_lines if line is not None)
-        return f"{static} {inline} {retval} {signature} {{\n    {body}\n}}\n"
+        flat_lines = []
+        for item in body_lines:
+            if item is not None:
+                flat_lines.extend(str(item).split("\n"))
+        indented_lines = [f"    {line}" if line.strip() else "" for line in flat_lines]
+        body = "\n".join(indented_lines)
+
+        modifiers = f"{static} {inline}".strip()
+        prefix = f"{modifiers} {retval}".strip()
+
+        return f"{prefix} {signature} {{\n{body}\n}}\n"
 
 
 def extract_tags(comment_text: str) -> dict:

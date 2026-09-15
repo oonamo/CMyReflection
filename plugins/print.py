@@ -74,25 +74,99 @@ def has_field_str_attribute(reflector, type_name):
 
 def _generate_enum_str(
     reflector: Reflector, cb: CBuilder, type_name, type_enum, ctype, suffix
-) -> (str | None, str | None):
+) -> list[str]:
     return [
-        "if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }",
+        cb.check("!instance || !field", "return REFLECT_ERR_NULL_PTR;"),
         cb.var(ctype, "var"),
-        cb.var("ReflectResult", "res", cb.struct_field_getter(suffix, "&var")),
-        "if (res != REFLECT_OK) { return res; }",
-        "",
-        cb.var("EnumMetaData", "meta", cb.enum_metadata(type_name)),
+        cb.var("ReflectResult", "res", cb.struct_field_getter(suffix, "&var")).checked(
+            "res != REFLECT_OK", "return res;"
+        ),
+        cb.var("EnumMetaData", "meta", cb.enum_metadata(type_name)).as_const(),
         cb.var(
-            "const char*",
+            "char*",
             "enum_val",
-            "get_enum_member_name(meta.name, meta.counnt, val)",
+            "get_enum_member_name(meta.members, meta.count, var)",
+        ).as_const(),
+        cb.var("EnumMemberInfo*", "info")
+        .val_with_default("enum_val", "Find_Enum_Member(meta, enum_val)", "NULL")
+        .as_const(),
+        cb.var(
+            "EnumMemberExtension*", "ext", cb.enum_member_extension("info")
+        ).as_const(),
+        "",
+        cb.var("char*", "fmt")
+        .val_with_default(
+            "ext && ext->display", "ext->display", '(enum_val ? enum_val : "<unknown>")'
+        )
+        .as_const(),
+        'snprintf(out_buf, buflen, "%s", fmt);',
+        "return REFLECT_OK;",
+    ]
+
+
+def _generate_bool_str(
+    reflector: Reflector, cb: CBuilder, type_name, type_enum, ctype, suffix
+) -> list[str]:
+    return [
+        cb.check("!instance || !field", "return REFLECT_ERR_NULL_PTR;"),
+        cb.var(ctype, "var"),
+        cb.var("ReflectResult", "res", cb.struct_field_getter(suffix, "&var")).checked(
+            "res != REFLECT_OK", "return res;"
         ),
         cb.var(
-            "const EnumMemberInfo*",
-            "info",
-            "enum_val ? Find_Enum_Member(meta, enum_val) : NULL;",
-        ),
-        cb.var(),
+            "StructFieldExtension*", "ext", cb.struct_field_extension("field")
+        ).as_const(),
+        "(void)ext;",
+        "",
+        'snprintf(out_buf, buflen, "%s", var ? "true" : "false");',
+        "return REFLECT_OK;",
+    ]
+
+
+def _generate_char_arr_str(
+    reflector: Reflector, cb: CBuilder, type_name, type_enum, ctype, suffix
+) -> list[str]:
+    return [
+        cb.check("!instance || !field", "return REFLECT_ERR_NULL_PTR;"),
+        cb.var("char", "var[field->count]"),
+        cb.var(
+            "ReflectResult",
+            "res",
+            cb.struct_field_getter(suffix, "var", array_len="field->count"),
+        ).checked("res != REFLECT_OK", "return res;"),
+        cb.var(
+            "StructFieldExtension*", "ext", cb.struct_field_extension("field")
+        ).as_const(),
+        "",
+        cb.var("char*", "fmt")
+        .val_with_default("ext && ext->format", "ext->format", '"%s"')
+        .as_const(),
+        "snprintf(out_buf, buflen, fmt, var);",
+        "return REFLECT_OK;",
+    ]
+
+
+def _generate_type_str(
+    reflector: Reflector, cb: CBuilder, type_name, type_enum, ctype, suffix
+) -> list[str]:
+    default_fmt = _PRIMITIVE_FORMATS[type_name]
+    return [
+        cb.check("!instance || !field", "return REFLECT_ERR_NULL_PTR;"),
+        cb.var(ctype, "var"),
+        cb.var(
+            "ReflectResult",
+            "res",
+            cb.struct_field_getter(suffix, "&var"),
+        ).checked("res != REFLECT_OK", "return res;"),
+        cb.var(
+            "StructFieldExtension*", "ext", cb.struct_field_extension("field")
+        ).as_const(),
+        "",
+        cb.var("char*", "fmt")
+        .val_with_default("ext && ext->format", "ext->format", default_fmt)
+        .as_const(),
+        "snprintf(out_buf, buflen, fmt, var);",
+        "return REFLECT_OK;",
     ]
 
 
@@ -106,65 +180,39 @@ def _generate_enum_str(
 def handle_field_str(
     reflector: cmy_reflector.Reflector, type_name, type_enum, ctype, suffix
 ):
+    if not has_field_str_attribute(reflector, type_name):
+        return None
+    builder = CBuilder(reflector)
+    if reflector.is_enum(type_name):
+        c_lines = _generate_enum_str(
+            reflector, builder, type_name, type_enum, ctype, suffix
+        )
+    elif type_name == "bool":
+        c_lines = _generate_bool_str(
+            reflector, builder, type_name, type_enum, ctype, suffix
+        )
+    elif type_name == "char_arr":
+        c_lines = _generate_char_arr_str(
+            reflector, builder, type_name, type_enum, ctype, suffix
+        )
+    elif type_name in _PRIMITIVE_FORMATS:
+        c_lines = _generate_type_str(
+            reflector, builder, type_name, type_enum, ctype, suffix
+        )
+    else:
+        return None
+
+    if not c_lines:
+        return None
+
     func_name = f"get_field_{suffix}_as_str"
     case_def = f"return {func_name}(instance, field, out_buf, buflen);"
-    val_setup = f"{ctype} val;"
-    field_getter = f"get_field_{suffix}(instance, field, &val);"
-    res_bad = "return res;"
-    user_data = "const StructFieldExtension* ext = GET_FIELD_EXT(field);"
-    snprintf_fmt = "snprintf(out_buf, buflen, fmt, val);"
-    fmt = ""
-    done = "return REFLECT_OK;"
+    func_def = builder.build_func(
+        signature=f"{func_name}(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen)",
+        retval="ReflectResult",
+        body_lines=c_lines,
+    )
 
-    if not has_field_str_attribute(reflector, type_name):
-        return
-
-    if reflector.is_enum(type_name):
-        enum = reflector.get_enum(type_name)
-        user_data = f"""
-    EnumMetaData meta = EnumMetaData_FromName({ctype});
-    const char* enum_val = get_enum_member_name(meta.members, meta.count, val);
-    const EnumMemberInfo* info = enum_val ? Find_Enum_Member(meta, enum_val) : NULL;
-    const EnumMemberExtension* ext = GET_MEMBER_EXT(info);
-"""
-        fmt = 'const char* fmt = (ext && ext->display) ? ext->display : (enum_val ? enum_val : "<unknown>");'
-        snprintf_fmt = 'snprintf(out_buf, buflen, "%s", fmt);'
-    elif type_name not in _PRIMITIVE_FORMATS:
-        if type_name == "bool":
-            snprintf_fmt = 'snprintf(out_buf, buflen, "%s", val ? "true": "false");'
-        elif type_name == "char_arr":
-            val_setup = """\
-                    char val[field->count];
-"""
-            field_getter = "get_field_char_arr(instance, field, val, field->count);"
-            res_bad = """\
-        return res;
-"""
-            fmt = 'const char* fmt = (ext && ext->format) ? ext->format : "%s";'
-            snprintf_fmt = "snprintf(out_buf, buflen, fmt, val);"
-        else:
-            return
-    else:
-        fmt = f"const char* fmt = (ext && ext->format) ? ext->format : {_PRIMITIVE_FORMATS[type_name]};"
-
-    lines = [
-        f"static inline ReflectResult {func_name}(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {{",
-        "    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }",
-        "",
-        f"    {val_setup}",
-        f"    ReflectResult res = {field_getter}",
-        "    if (res != REFLECT_OK) {",
-        f"        {res_bad}",
-        "    }",
-        f"    {user_data}",
-        "    (void)ext; // Prevent unused variable warnings for bools",
-        f"    {fmt}",
-        f"    {snprintf_fmt}",
-        "",
-        f"    {done}",
-        "}",
-    ]
-    func_def = "\n".join(lines) + "\n"
     return (func_def, case_def)
 
 
@@ -191,9 +239,12 @@ static inline ReflectResult print_field_{suffix}(const void* instance, const Str
     if (!instance || !field) {{ return REFLECT_ERR_NULL_PTR; }}
 
     char buf[field->count > 256 ? field->count : 256];
-    get_field_as_str(instance, field, buf, sizeof(buf));
-    printf("%s", buf);
+    ReflectResult res = get_field_as_str(instance, field, buf, sizeof(buf));
+    if (res != REFLECT_OK) {{
+        return res;
+    }}
 
+    printf("%s", buf);
     return REFLECT_OK;
 }}
 """
