@@ -25,6 +25,7 @@ class Tag:
     func: Callable
     enforced: bool = False
     validator: Callable[[str, str], [bool, str]] | None = None
+    description: str = None
 
 
 @dataclass
@@ -35,6 +36,7 @@ class TypeMapper:
     default_case: str
     requires: str | None = None
     guard_clause: str | None = ""
+    description: str = None
 
 
 class MacroType(Enum):
@@ -145,6 +147,13 @@ class FuncDef:
         return f"{q}{self.rettype} {self.name}{self.params};"
 
 
+@dataclass(frozen=True)
+class FunctionPrimitive:
+    fdef: FuncDef
+    requires: str
+    description: str
+
+
 @dataclass
 class TypeContext:
     name: str
@@ -207,19 +216,48 @@ class Plugin:
     def functions(self) -> tuple:
         return tuple(self._functions)
 
+    def format_description(
+        self, description: str, first_level_format: str, subsequent_format: str
+    ) -> str:
+        lines = []
+        desc_lines = description.strip().splitlines()
+
+        lines.append(first_level_format.format(desc_lines[0]))
+        for extra_line in desc_lines[1:]:
+            lines.append(subsequent_format.format(extra_line))
+
+        return "\n".join(lines)
+
     def generate_header(
-        self, inferred_prototypes: list[str], mapped_types: dict[str, list[str]]
+        self,
+        inferred_prototypes: list[FunctionPrimitive],
+        mapped_types: dict[str, list[str]],
     ) -> str:
         lines = []
         m_str = f" by {', '.join(self.maintainers)}" if self.maintainers else ""
         lines.append(
-            f" *  -> {self.name} (v{self.version}){m_str} - {self.description}"
+            self.format_description(
+                self.description,
+                first_level_format=f" *  -> {self.name} (v{self.version}){m_str} - {{}}",
+                subsequent_format=" *      {}",
+            )
         )
 
         def gen_str_for_tag_dict(tag_dict: dict[str, Tag], scope: str):
             for tag_name, tag in tag_dict.items():
                 val_str = "(value)" if tag.enforced else ""
-                lines.append(f" *    - Provides tag: @{tag_name}{val_str} ({scope})")
+                if tag.description:
+                    lines.append(
+                        self.format_description(
+                            tag.description,
+                            f" *    - Provides tag: @{tag_name}{val_str} ({scope}) - {{}}",
+                            " *      {}",
+                        )
+                    )
+                else:
+                    lines.append(
+                        f" *    - Provides tag: @{tag_name}{val_str} ({scope})"
+                    )
 
         gen_str_for_tag_dict(self._struct_tags, "Structs")
         gen_str_for_tag_dict(self._enum_tags, "Enums")
@@ -232,7 +270,17 @@ class Plugin:
         for mapper in self._type_mappers:
             types = mapped_types.get(mapper.signature, []) if mapped_types else []
 
-            lines.append(f" *    - Provides router: {mapper.signature}")
+            if mapper.description:
+                lines.append(
+                    self.format_description(
+                        mapper.description,
+                        f" *    - Provides router: {mapper.signature} - {{}}",
+                        " *      {}",
+                    )
+                )
+            else:
+                lines.append(f" *    - Provides router: {mapper.signature}")
+
             if types:
                 types_joined = ", ".join(types)
 
@@ -247,8 +295,19 @@ class Plugin:
                 lines.append(" (No types mapped)")
 
         if inferred_prototypes:
-            for proto in sorted(inferred_prototypes):
-                lines.append(f" *    - Provides function: {proto.rstrip(';')}")
+            for proto in sorted(inferred_prototypes, key=lambda f: f.fdef.name):
+                if proto.description:
+                    lines.append(
+                        self.format_description(
+                            proto.description,
+                            f" *    - Provides function: {proto.fdef.prototype_string(with_qualifiers=False).rstrip(';')} - {{}}",
+                            " *        {}",
+                        )
+                    )
+                else:
+                    lines.append(
+                        f" *    - Provides function: {proto.fdef.prototype_string(with_qualifiers=False).rstrip(';')}"
+                    )
 
         return "\n".join(lines)
 
@@ -281,12 +340,16 @@ class Plugin:
         tag_name: str,
         enforce_value=False,
         validator: Callable[[str, str], tuple[bool, str]] = None,
+        description: str = "",
     ):
         """Decorator to register a struct field tag"""
 
         def decorator(func):
             self._struct_field_tags[tag_name] = Tag(
-                func=func, enforced=enforce_value, validator=validator
+                func=func,
+                enforced=enforce_value,
+                validator=validator,
+                description=description,
             )
             return func
 
@@ -297,12 +360,16 @@ class Plugin:
         tag_name: str,
         enforce_value=False,
         validator: Callable[[str, str], tuple[bool, str]] = None,
+        description: str = "",
     ):
         """Decorator for tags applied to enum members."""
 
         def decorator(func):
             self._enum_member_tags[tag_name] = Tag(
-                func=func, enforced=enforce_value, validator=validator
+                func=func,
+                enforced=enforce_value,
+                validator=validator,
+                description=description,
             )
 
         return decorator
@@ -312,12 +379,16 @@ class Plugin:
         tag_name: str,
         enforce_value=False,
         validator: Callable[[str, str], tuple[bool, str]] = None,
+        description: str = "",
     ):
         """Decorator for tags applied to structs"""
 
         def decorator(func):
             self._struct_tags[tag_name] = Tag(
-                func=func, enforced=enforce_value, validator=validator
+                func=func,
+                enforced=enforce_value,
+                validator=validator,
+                description=description,
             )
             return func
 
@@ -328,12 +399,16 @@ class Plugin:
         tag_name: str,
         enforce_value=False,
         validator: Callable[[str, str], tuple[bool, str]] = None,
+        description: str = "",
     ):
         """Decorator for tags applied to structs"""
 
         def decorator(func):
             self._enum_tags[tag_name] = Tag(
-                func=func, enforced=enforce_value, validator=validator
+                func=func,
+                enforced=enforce_value,
+                validator=validator,
+                description=description,
             )
             return func
 
@@ -346,6 +421,7 @@ class Plugin:
         default_case: str = "break;",
         guard_clause: str = "",
         requires=None,
+        description: str = "",
     ):
         """Decorator for creating a function for all types"""
 
@@ -357,6 +433,7 @@ class Plugin:
                 default_case=default_case,
                 guard_clause=guard_clause,
                 requires=requires,
+                description=description,
             )
             self._type_mappers.append(mapper)
 
@@ -670,8 +747,12 @@ class Reflector:
         self.active_struct_tags = {}
         self.active_type_mappers = []
 
-        self.private_plugin_prototypes: dict[str, set[FuncDef, str]] = defaultdict(set)
-        self.public_plugin_prototypes: dict[str, set[FuncDef, str]] = defaultdict(set)
+        self.private_plugin_prototypes: dict[str, set[FunctionPrimitive]] = defaultdict(
+            set
+        )
+        self.public_plugin_prototypes: dict[str, set[FunctionPrimitive]] = defaultdict(
+            set
+        )
         self.plugin_mapped_types: dict[str, dict[str, list[str]]] = defaultdict(
             lambda: defaultdict(list)
         )
@@ -1293,11 +1374,9 @@ FieldType get_base_type(FieldType type) {{
             public_prototypes = self.public_plugin_prototypes.get(p.name, set())
             mapped_types = self.plugin_mapped_types.get(p.name, [])
 
-            public_sigs = [
-                f.prototype_string(with_qualifiers=False) for f, _ in public_prototypes
-            ]
-
-            lines.append(p.generate_header(public_sigs, mapped_types=mapped_types))
+            lines.append(
+                p.generate_header(public_prototypes, mapped_types=mapped_types)
+            )
 
             prototypes = public_prototypes | self.private_plugin_prototypes.get(
                 p.name, set()
@@ -1309,8 +1388,8 @@ FieldType get_base_type(FieldType type) {{
                 declarations.append(f"// {'#' * 40}")
 
                 grouped_protos = defaultdict(list)
-                for fdef, req in prototypes:
-                    grouped_protos[req].append(fdef)
+                for f in prototypes:
+                    grouped_protos[f.requires].append(f.fdef)
 
                 if None in grouped_protos:
                     for fdef in sorted(grouped_protos[None], key=lambda f: f.name):
@@ -1369,22 +1448,30 @@ FieldType get_base_type(FieldType type) {{
                 )
 
     def _add_proto(
-        self, plugin: Plugin, c_code: str, public: bool, requires: str | None = None
+        self,
+        plugin: Plugin,
+        c_code: str,
+        public: bool,
+        requires: str | None = None,
+        description: str | None = None,
     ):
         match = SIG_REGEX.match(c_code)
 
         if match:
-            func = FuncDef(
+            fdef = FuncDef(
                 qualifiers=match.group("prefix"),
                 rettype=match.group("rettype"),
                 name=match.group("fname"),
                 params=match.group("params"),
             )
+            func = FunctionPrimitive(
+                fdef=fdef, requires=requires, description=description
+            )
 
             if public:
-                self.public_plugin_prototypes[plugin.name].add((func, requires))
+                self.public_plugin_prototypes[plugin.name].add(func)
             else:
-                self.private_plugin_prototypes[plugin.name].add((func, requires))
+                self.private_plugin_prototypes[plugin.name].add(func)
 
     def generate_plugin_extensions(self) -> str:
         extension_lines = ["// --- Plugin-Generated-Extensions ---"]
@@ -1397,7 +1484,7 @@ FieldType get_base_type(FieldType type) {{
                     plugin_code.append(snippet)
             for f in p.functions:
                 c_code = f.func(self)
-                self._add_proto(p, c_code, True, f.requires)
+                self._add_proto(p, c_code, True, f.requires, f.description)
 
                 if f.requires:
                     plugin_code.append(f"#ifdef {f.requires}")
@@ -1440,7 +1527,9 @@ static inline {mapper.signature} {{
                         plugin_code.append(f"#ifdef {mapper.requires}")
                     plugin_code.extend(standalone_funcs)
                     plugin_code.append(router)
-                    self._add_proto(p, router, True, mapper.requires)
+                    self._add_proto(
+                        p, router, False, mapper.requires, mapper.description
+                    )
                     if mapper.requires:
                         plugin_code.append(f"#endif // {mapper.requires}")
 

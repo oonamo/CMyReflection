@@ -5,6 +5,7 @@ from cmy_reflector import CBuilder, Macro, Reflector
 def default_def(macro, default) -> str:
     return f"#ifndef {macro}\n#    define {macro} {default}\n#endif // {macro}"
 
+
 def print_specifier(type: str) -> str:
     return f'"%" PRI{type}'
 
@@ -39,17 +40,40 @@ def setup(reflector):
     )
 
 
-@printer.struct_field_tag("format", enforce_value=True)
+@printer.struct_field_tag(
+    "format",
+    enforce_value=True,
+    description="""\
+Specify a C format specifier for a struct.
+Does not create a get_field_as_str function if not defined
+Example:
++  @format("struct MyStruct @ addr: %p")
++  typedef struct { ... } MyStruct;
+""",
+)
 def handle_field_format(reflector, struct, field, tag_value):
     reflector.set_field_extension(field, "format", tag_value)
 
 
-@printer.enum_member_tag("display", enforce_value=True)
+@printer.enum_member_tag(
+    "display",
+    enforce_value=True,
+    description="""\
+Specifies how an enum should be displayed.
+Defaults to name of the enum member if not provided
+Example:
++  @display("enum a")
++  ENUM_A
+""",
+)
 def handle_member_format(reflector, enum, member, tag_value):
     reflector.set_member_extension(member, "display", tag_value)
 
 
-@printer.enum_tag("no_print")
+@printer.enum_tag(
+    "no_print",
+    description="Forces the plugin to not generate get_field_as_str for enum",
+)
 def handle_no_print(reflector, struct_or_enum, tag_value):
     pass
 
@@ -195,6 +219,10 @@ def _generate_type_str(
     default_case="return REFLECT_ERR_TYPE_MISMATCH;",
     guard_clause="if (!field) { return REFLECT_ERR_NULL_PTR; }",
     requires="CMY_PLUGIN_PRINTER_ENABLED",
+    description="""\
+Creates a get_type_as_str for the type for primitives and enums
+By default, enums are enabled
+""",
 )
 def handle_field_str(
     reflector: cmy_reflector.Reflector, type_name, type_enum, ctype, suffix
@@ -235,7 +263,10 @@ def handle_field_str(
     return (func_def, case_def)
 
 
-@printer.function(requires="CMY_PLUGIN_PRINTER_ENABLED")
+@printer.function(
+    requires="CMY_PLUGIN_PRINTER_ENABLED",
+    description="Prints a field, if it implements get_field_as_str",
+)
 def print_field(reflector):
     return """\
 static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field)

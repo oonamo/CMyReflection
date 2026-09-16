@@ -29,18 +29,26 @@ typedef enum {
 /*
  * CMyReflection Active Plugins
  *  -> Printer (v0.0.0) by oonamo - Provides run time printing for primitive types
- *    - Provides tag: @no_print (Enums)
- *    - Provides tag: @format(value) (Struct Fields)
- *    - Provides tag: @display(value) (Enum Members)
+ *    - Provides tag: @no_print (Enums) - Forces the plugin to not generate get_field_as_str for enum
+ *    - Provides tag: @format(value) (Struct Fields) - Specify a C format specifier for a struct.
+ *      Does not create a get_field_as_str function if not defined
+ *      Example:
+ *      +  @format("struct MyStruct @ addr: %p")
+ *      +  typedef struct { ... } MyStruct;
+ *    - Provides tag: @display(value) (Enum Members) - Specifies how an enum should be displayed.
+ *      Defaults to name of the enum member if not provided
+ *      Example:
+ *      +  @display("enum a")
+ *      +  ENUM_A
  *    - Provides macro: CMY_HAS_PRINTER_PLUGIN (Value: 1) - Printer plugin is available
  *    - Provides macro: CMY_PLUGIN_PRINTER_ENABLED (Default: 1) - Enables the printer plugin
  *    - Provides macro: CMY_PRINTER_MAX_BUF_LEN (Default: 256) - Default buffer len for printing (_MSC_VER)
  *    - Provides macro: CMY_PRINTF (Default: printf) - Defines the printf implementation
- *    - Provides router: ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen)
+ *    - Provides router: ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) - Creates a get_type_as_str for the type for primitives and enums
+ *      By default, enums are enabled
  *      + Types: Permissions, AccountState, char_arr, char, uint32_t, bool,
  *        uint64_t, size_t
- *    - Provides function: ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen)
- *    - Provides function: ReflectResult print_field(const void* instance, const StructFieldInfo* field)
+ *    - Provides function: ReflectResult print_field(const void* instance, const StructFieldInfo* field) - Prints a field, if it implements get_field_as_str
  */
 
 
@@ -174,7 +182,7 @@ static inline ReflectResult print_field(const void* instance, const StructFieldI
 {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
-#ifdef _MSV_VER
+#ifdef _MSC_VER
     size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
     char buf[CMY_PRINTER_MAX_BUF_LEN];
 #else // May have VLA support
