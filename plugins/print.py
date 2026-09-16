@@ -33,8 +33,6 @@ def setup(reflector):
         "display", "const char*", requires="CMY_PLUGIN_PRINTER_ENABLED"
     )
 
-    return "// Does this still let for generation?"
-
 
 @printer.struct_field_tag("format")
 def handle_field_format(reflector, struct, field, tag_value):
@@ -138,8 +136,8 @@ def _generate_char_arr_str(
     return [
         cb.check("!instance || !field", "return REFLECT_ERR_NULL_PTR;"),
         "#ifdef _MSC_VER",
-        "    " + cb.var("char", "var[CMY_PLUGIN_PRINTER_ENABLED];"),
-        "    " + cb.var("size_t", "arr_len", "CMY_PLUGIN_PRINTER_ENABLED"),
+        "    " + cb.var("char", "var[CMY_PRINTER_MAX_BUF_LEN];"),
+        "    " + cb.var("size_t", "arr_len", "CMY_PRINTER_MAX_BUF_LEN"),
         "#else",
         "    " + cb.var("char", "var[field->count]"),
         "    " + cb.var("size_t", "arr_len", "field->count"),

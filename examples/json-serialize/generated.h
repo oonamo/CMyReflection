@@ -187,8 +187,8 @@ static inline ReflectResult get_field_char_arr_as_str(const void* instance, cons
     }
 
     #ifdef _MSC_VER
-        char var[CMY_PLUGIN_PRINTER_ENABLED];;
-        size_t arr_len = CMY_PLUGIN_PRINTER_ENABLED;
+        char var[CMY_PRINTER_MAX_BUF_LEN];;
+        size_t arr_len = CMY_PRINTER_MAX_BUF_LEN;
     #else
         char var[field->count];
         size_t arr_len = field->count;
