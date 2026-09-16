@@ -37,7 +37,7 @@ TEST(Unit, Fails_To_Find_Invalid_Field)
 
 TEST(Unit, Can_Use_Generated_Setter)
 {
-    Game             g = {0};
+    Game                   g = {0};
     const StructFieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "health");
 
     bool success = set_field_float(&g, f, 18.0f) == REFLECT_OK;
@@ -63,18 +63,18 @@ TEST(Unit, Private_Fields_Are_Ignored)
 {
     Game g = {0};
 
-    g.internal_count    = 5;
+    g.internal_count          = 5;
     const StructFieldInfo *f1 = find_field(Game_Metadata, Game_FieldCount, "internal_count");
     TEST_ASSERT_NULL_MESSAGE(f1, "internal_count was exposed");
 
-    g.userdata          = (void *)"dummy str to check field exists";
+    g.userdata                = (void *)"dummy str to check field exists";
     const StructFieldInfo *f2 = find_field(Game_Metadata, Game_FieldCount, "userdata");
     TEST_ASSERT_NULL_MESSAGE(f2, "userdata was exposed");
 }
 
 TEST(Unit, Set_Field_Is_Null_Safe)
 {
-    Game             g = {0};
+    Game                   g = {0};
     const StructFieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "health");
     TEST_ASSERT_NOT_NULL(f);
 
@@ -87,7 +87,7 @@ TEST(Unit, Set_Field_Is_Null_Safe)
 
 TEST(Unit, Type_Set_Field_Is_Null_Safe)
 {
-    Game             g = {0};
+    Game                   g = {0};
     const StructFieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "health");
     TEST_ASSERT_NOT_NULL(f);
 
@@ -96,7 +96,7 @@ TEST(Unit, Type_Set_Field_Is_Null_Safe)
 
 TEST(Unit, String_Has_Alias)
 {
-    Game             g = {0};
+    Game                   g = {0};
     const StructFieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "player_name");
 
     TEST_ASSERT_EQUAL(REFLECT_OK, set_field_str(&g, f, "player1"));
@@ -117,7 +117,7 @@ TEST(Unit, Metadata_Stores_Correct_Sizes)
 
 TEST(Unit, Can_Generate_Array_Literals)
 {
-    Game             g = {0};
+    Game                   g = {0};
     const StructFieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "grid");
     TEST_ASSERT_NOT_NULL(f);
 
@@ -133,7 +133,7 @@ TEST(Unit, Can_Generate_Array_Literals)
 
 TEST(Unit, Can_Generate_Array_Macro)
 {
-    Game             g = {0};
+    Game                   g = {0};
     const StructFieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "history");
     TEST_ASSERT_NOT_NULL(f);
 
@@ -143,7 +143,7 @@ TEST(Unit, Can_Generate_Array_Macro)
 
 TEST(Unit, Handles_Spaced_Types)
 {
-    Game             g = {0};
+    Game                   g = {0};
     const StructFieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "score");
     TEST_ASSERT_NOT_NULL(f);
 
@@ -153,7 +153,7 @@ TEST(Unit, Handles_Spaced_Types)
 
 TEST(Unit, Array_Setter_Copies_Memory)
 {
-    Game             g = {0};
+    Game                   g = {0};
     const StructFieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "history");
     TEST_ASSERT_NOT_NULL(f);
 
@@ -172,7 +172,7 @@ TEST(Unit, Array_Setter_Copies_Memory)
 
 TEST(Unit, Array_Setter_Fails_On_OOB)
 {
-    Game             g = {0};
+    Game                   g = {0};
     const StructFieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "history");
 
     float new_history[MAX_ARR_LEN + 4] = {0.0f};
@@ -188,9 +188,9 @@ TEST(Unit, Array_Setter_Fails_On_OOB)
 
 TEST(Unit, Custom_Struct_Setter_Works)
 {
-    Game             g       = {0};
+    Game                   g       = {0};
     const StructFieldInfo *f       = find_field(Game_Metadata, Game_FieldCount, "player_pos");
-    Vector2          new_pos = {.x = 100.0f, .y = 250.0f};
+    Vector2                new_pos = {.x = 100.0f, .y = 250.0f};
 
     TEST_ASSERT_EQUAL(REFLECT_OK, set_field_Vector2(&g, f, new_pos));
     TEST_ASSERT_EQUAL_FLOAT(100.0f, g.player_pos.x);
@@ -214,7 +214,7 @@ TEST(Unit, Can_Set_Nested_Struct_Field)
     Game g = {0};
 
     const StructFieldInfo *leaf = NULL;
-    void            *target_struct =
+    void                  *target_struct =
         resolve_field_path(&g, Game_Metadata, Game_FieldCount, "player_pos.x", &leaf);
 
     TEST_ASSERT_NOT_NULL(target_struct);
@@ -228,7 +228,7 @@ TEST(Unit, Can_Set_Nested_Struct_Field)
 
 TEST(Unit, Recursive_Lookup_Fails_On_Invalid_Path)
 {
-    Game             g    = {0};
+    Game                   g    = {0};
     const StructFieldInfo *leaf = NULL;
 
     void *target1 = resolve_field_path(&g, Game_Metadata, Game_FieldCount, "health.xyz", &leaf);
@@ -242,8 +242,8 @@ TEST(Unit, Can_Use_Indicies_On_Lookup)
 {
     Game g = {0};
 
-    g.enemy_positions[19].x = 18.32f;
-    const StructFieldInfo *leaf   = NULL;
+    g.enemy_positions[19].x     = 18.32f;
+    const StructFieldInfo *leaf = NULL;
 
     void *target_struct =
         resolve_field_path(&g, Game_Metadata, Game_FieldCount, "enemy_positions[19].x", &leaf);
@@ -265,7 +265,7 @@ TEST(Unit, Lookup_Safely_Ignores_OOB)
     Game g = {0};
 
     const StructFieldInfo *leaf = NULL;
-    void            *target_struct =
+    void                  *target_struct =
         resolve_field_path(&g, Game_Metadata, Game_FieldCount, "enemy_positions[21].x", &leaf);
     TEST_ASSERT_NULL(target_struct);
     TEST_ASSERT_NULL(leaf);
@@ -273,7 +273,7 @@ TEST(Unit, Lookup_Safely_Ignores_OOB)
 
 TEST(Unit, Set_FIeld_Fails_On_Type_MisMatch)
 {
-    Game             g = {0};
+    Game                   g = {0};
     const StructFieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "score");
 
     TEST_ASSERT_FALSE(set_field_int(&g, f, 32) == REFLECT_OK);
@@ -282,7 +282,7 @@ TEST(Unit, Set_FIeld_Fails_On_Type_MisMatch)
 
 TEST(Unit, Set_Array_Can_Write_Partial_Data)
 {
-    Game             g = {0};
+    Game                   g = {0};
     const StructFieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "grid");
 
     uint8_t partial_write[2] = {23, 12};
@@ -299,7 +299,7 @@ TEST(Unit, Set_Array_Can_Write_Partial_Data)
 
 TEST(Unit, SafeSetField_Sets_Primitive_Correctly)
 {
-    Game             g = {0};
+    Game                   g = {0};
     const StructFieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "health");
 
     float new_health = 712;
@@ -309,7 +309,7 @@ TEST(Unit, SafeSetField_Sets_Primitive_Correctly)
 
 TEST(Unit, SafeSetField_Sets_Arrays_Correctly)
 {
-    Game             g = {0};
+    Game                   g = {0};
     const StructFieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "grid");
 
     uint8_t new_grid[9];
@@ -333,7 +333,7 @@ TEST(Unit, Does_Not_Corrupt_Adjacent_Fields_When_Setting)
     g.ball.radius  = 40.0f;
 
     const StructFieldInfo *leaf = NULL;
-    void            *target_struct =
+    void                  *target_struct =
         resolve_field_path(&g, Game_Metadata, Game_FieldCount, "ball.radius", &leaf);
 
     TEST_ASSERT_NOT_NULL(target_struct);
@@ -371,7 +371,7 @@ TEST(Unit, Gan_Get_Names_Of_Arrays)
 TEST(Unit, Can_Use_MetaData_Macro)
 {
 
-    StructMetaData game_metadata = MetaData_FromName(Game);
+    StructMetaData game_metadata = StructMetaData_FromName(Game);
 
     TEST_ASSERT_EQUAL(Game_FieldCount, game_metadata.count);
     TEST_ASSERT_POINTERS_EQUAL(Game_Metadata, game_metadata.fields);
@@ -445,7 +445,7 @@ TEST(Unit, CheckedEnum_InValidates_InValid_Member)
 
 TEST(Unit, CheckedEnum_Accepts_Valid_Member)
 {
-    Game             g = {0};
+    Game                   g = {0};
     const StructFieldInfo *f = find_field(Ball_Metadata, Ball_FieldCount, "size");
 
     TEST_ASSERT_TRUE(set_field_BallSize(&g.ball, f, BALL_TYPE_MEDIUM) == REFLECT_OK);
@@ -454,8 +454,8 @@ TEST(Unit, CheckedEnum_Accepts_Valid_Member)
 
 TEST(Unit, CheckedEnum_Rejects_Invalid_Member)
 {
-    Game g             = {0};
-    g.ball.size        = BALL_TYPE_SMALL;
+    Game g                   = {0};
+    g.ball.size              = BALL_TYPE_SMALL;
     const StructFieldInfo *f = find_field(Ball_Metadata, Ball_FieldCount, "size");
 
     TEST_ASSERT_FALSE(set_field_BallSize(&g.ball, f, (BallSize)-1) == REFLECT_OK);
@@ -464,8 +464,8 @@ TEST(Unit, CheckedEnum_Rejects_Invalid_Member)
 
 TEST(Unit, SafeSetField_Rejects_Invalid_Enum)
 {
-    Game g             = {0};
-    g.ball.size        = BALL_TYPE_SMALL;
+    Game g                   = {0};
+    g.ball.size              = BALL_TYPE_SMALL;
     const StructFieldInfo *f = find_field(Ball_Metadata, Ball_FieldCount, "size");
 
     int bad_val = -23;
@@ -490,7 +490,7 @@ DEFINE_ENUM_SETTER(bit_flags, 99, bit_flags, check_sys_flags);
 TEST(Unit, CustomValidator_Accepts_And_Rejects_Correctly)
 {
     StructFieldInfo custom_field = {"flags", 99, 0, sizeof(bit_flags), 1, FIELD_ACCESS_RW};
-    bit_flags flags        = 0;
+    bit_flags       flags        = 0;
 
     TEST_ASSERT_TRUE(set_field_bit_flags(&flags, &custom_field, FLAG_A | FLAG_B) == REFLECT_OK);
     TEST_ASSERT_EQUAL_INT(FLAG_A | FLAG_B, flags);
@@ -516,7 +516,7 @@ TEST(Unit, Can_Use_Reverse_Lookup_For_Enum)
 
 TEST(Unit, FieldGetter_Extracts_Valid_Data)
 {
-    Vector2          v = {3.14f, 2.71f};
+    Vector2                v = {3.14f, 2.71f};
     const StructFieldInfo *f = find_field(Vector2_Metadata, Vector2_FieldCount, "x");
 
     float extracted_value = 0.0f;
@@ -527,8 +527,9 @@ TEST(Unit, FieldGetter_Extracts_Valid_Data)
 
 TEST(Unit, FieldGetter_Rejects_Type_Mismatch)
 {
-    Vector2          v = {3.14f, 2.71f};
-    const StructFieldInfo *f = find_field(Vector2_Metadata, Vector2_FieldCount, "x"); // x is TYPE_FLOAT
+    Vector2                v = {3.14f, 2.71f};
+    const StructFieldInfo *f =
+        find_field(Vector2_Metadata, Vector2_FieldCount, "x"); // x is TYPE_FLOAT
 
     int extracted_value = 99;
 
@@ -576,7 +577,7 @@ TEST(Unit, FieldGetter_Respects_Arrays)
 
 TEST(Unit, FieldGetter_Rejects_OutOfBounds_Read)
 {
-    Game             g = {0};
+    Game                   g = {0};
     const StructFieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "history");
 
     float out_history[MAX_ARR_LEN + 1];
@@ -585,7 +586,7 @@ TEST(Unit, FieldGetter_Rejects_OutOfBounds_Read)
 
 TEST(Unit, GetFieldValue_Enforces_Bounds_And_Null_Safety)
 {
-    Vector2          v = {1.0f, 1.0f};
+    Vector2                v = {1.0f, 1.0f};
     const StructFieldInfo *f =
         find_field(Vector2_Metadata, Vector2_FieldCount, "x"); // size is 4 (sizeof(float))
 
@@ -599,14 +600,15 @@ TEST(Unit, GetFieldValue_Enforces_Bounds_And_Null_Safety)
 
 TEST(Unit, Can_Use_Find_Struct_Macro)
 {
-    const StructFieldInfo *f = Find_Struct_Field(MetaData_FromName(Game), "health");
+    const StructFieldInfo *f = Find_Struct_Field(StructMetaData_FromName(Game), "health");
     TEST_ASSERT_NOT_NULL(f);
     TEST_ASSERT_EQUAL(TYPE_FLOAT, f->type);
 }
 
 TEST(Unit, Can_Use_Find_Enum_Macro)
 {
-    const EnumMemberInfo *f = Find_Enum_Member(EnumMetaData_FromName(BallSize), "BALL_TYPE_SMALL");
+    const EnumMemberInfo *f =
+        Find_Enum_Member(EnumMetaData_FromName(BallSize), "BALL_TYPE_SMALL");
 
     TEST_ASSERT_NOT_NULL(f);
     TEST_ASSERT_EQUAL(BALL_TYPE_SMALL, f->value);
@@ -655,7 +657,8 @@ TEST(Unit, ResolveMetaData_Finds_Top_Level)
 
 TEST(Unit, ResolveMetaData_Finds_Nested_Field)
 {
-    const StructFieldInfo *f = resolve_field_metadata(Game_Metadata, Game_FieldCount, "ball.speed.y");
+    const StructFieldInfo *f =
+        resolve_field_metadata(Game_Metadata, Game_FieldCount, "ball.speed.y");
 
     TEST_ASSERT_NOT_NULL(f);
     TEST_ASSERT_EQUAL_STRING("y", f->name);
@@ -695,8 +698,8 @@ TEST(Unit, ResolveMetadata_Is_Null_Safe)
 
 TEST(Unit, ReflectQuery_Works_On_Top_Level)
 {
-    Game             g    = {0};
-    StructMetaData   meta = MetaData_FromName(Game);
+    Game                   g    = {0};
+    StructMetaData         meta = StructMetaData_FromName(Game);
     const StructFieldInfo *leaf = NULL;
 
     void *target = reflect_query(&g, &meta, "health", &leaf);
@@ -709,8 +712,8 @@ TEST(Unit, ReflectQuery_Works_On_Top_Level)
 
 TEST(Unit, ReflectQuery_Routes_Nested_Path)
 {
-    Game             g    = {0};
-    StructMetaData   meta = MetaData_FromName(Game);
+    Game                   g    = {0};
+    StructMetaData         meta = StructMetaData_FromName(Game);
     const StructFieldInfo *leaf = NULL;
 
     void *target = reflect_query(&g, &meta, "ball.speed.x", &leaf);
@@ -723,8 +726,8 @@ TEST(Unit, ReflectQuery_Routes_Nested_Path)
 
 TEST(Unit, ReflectQuery_Routes_Array_Paths)
 {
-    Game             g    = {0};
-    StructMetaData   meta = MetaData_FromName(Game);
+    Game                   g    = {0};
+    StructMetaData         meta = StructMetaData_FromName(Game);
     const StructFieldInfo *leaf = NULL;
 
     void *target = reflect_query(&g, &meta, "enemy_positions[5].y", &leaf);
@@ -737,8 +740,8 @@ TEST(Unit, ReflectQuery_Routes_Array_Paths)
 
 TEST(Unit, ReflectQuery_Handles_Invalid_And_Nulls)
 {
-    Game             g    = {0};
-    StructMetaData   meta = MetaData_FromName(Game);
+    Game                   g    = {0};
+    StructMetaData         meta = StructMetaData_FromName(Game);
     const StructFieldInfo *leaf = NULL;
 
     TEST_ASSERT_NULL(reflect_query(&g, &meta, "invalid_field", &leaf));
@@ -751,8 +754,8 @@ TEST(Unit, ReflectQuery_Handles_Invalid_And_Nulls)
 
 TEST(Unit, GetArrayElement_Gets_Valid_Element)
 {
-    Game             g = {0};
-    const StructFieldInfo *f = Find_Struct_Field(MetaData_FromName(Game), "grid");
+    Game                   g = {0};
+    const StructFieldInfo *f = Find_Struct_Field(StructMetaData_FromName(Game), "grid");
 
     for (int i = 0; i < 9; i++)
     {
@@ -774,7 +777,7 @@ TEST(Unit, GetArrayElement_Gets_Struct)
     g.enemy_positions[2].x = 45.0f;
     g.enemy_positions[2].y = 45.0f;
 
-    const StructFieldInfo *f = Find_Struct_Field(MetaData_FromName(Game), "enemy_positions");
+    const StructFieldInfo *f = Find_Struct_Field(StructMetaData_FromName(Game), "enemy_positions");
 
     Vector2 out_vec = {0};
     TEST_ASSERT_EQUAL(REFLECT_OK, get_array_element(&g, f, 2, &out_vec, sizeof(Vector2)));
@@ -784,7 +787,7 @@ TEST(Unit, GetArrayElement_Gets_Struct)
 
 TEST(Unit, GetArrayElement_Rejects_OutOfBounds_Index)
 {
-    Game             g = {0};
+    Game                   g = {0};
     const StructFieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "grid");
 
     uint8_t out_val = 0;
@@ -796,7 +799,7 @@ TEST(Unit, GetArrayElement_Rejects_OutOfBounds_Index)
 
 TEST(Unit, GetArrayElement_Rejects_Size_Mismatch)
 {
-    Game             g = {0};
+    Game                   g = {0};
     const StructFieldInfo *f = find_field(Game_Metadata, Game_FieldCount, "history"); // float array
 
     double out_val = 0;
@@ -806,9 +809,9 @@ TEST(Unit, GetArrayElement_Rejects_Size_Mismatch)
 
 TEST(Unit, GetArrayElement_Is_Null_Safe)
 {
-    Game             g       = {0};
+    Game                   g       = {0};
     const StructFieldInfo *f       = find_field(Game_Metadata, Game_FieldCount, "grid");
-    uint8_t          out_val = 0;
+    uint8_t                out_val = 0;
 
     TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR,
                       get_array_element(NULL, f, 0, &out_val, sizeof(uint8_t)));
@@ -907,7 +910,7 @@ TEST(Unit, DynamicArray_Rejects_OutOfBounds)
     g.waypoints     = malloc(g.num_waypoints * sizeof(Vector2));
 
     const StructFieldInfo *f          = find_field(Game_Metadata, Game_FieldCount, "waypoints");
-    Vector2          payload[3] = {0};
+    Vector2                payload[3] = {0};
 
     TEST_ASSERT_EQUAL(REFLECT_ERR_OUT_OF_BOUNDS, set_dynamic_Game_waypoints(&g, f, payload, 3));
 
@@ -921,7 +924,7 @@ TEST(Unit, DynamicArray_Is_Null_Safe)
     g.waypoints     = NULL;
 
     const StructFieldInfo *f          = find_field(Game_Metadata, Game_FieldCount, "waypoints");
-    Vector2          payload[1] = {0};
+    Vector2                payload[1] = {0};
 
     TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, set_dynamic_Game_waypoints(&g, f, payload, 1));
     TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, set_dynamic_Game_waypoints(NULL, f, payload, 1));
@@ -934,8 +937,9 @@ TEST(Unit, DynamicArray_Rejects_Type_Mismatch)
     game.num_waypoints = 5;
     game.waypoints     = malloc(5 * sizeof(Vector2));
 
-    const StructFieldInfo *wrong_field = find_field(Game_Metadata, Game_FieldCount, "num_waypoints");
-    Vector2          payload[1]  = {0};
+    const StructFieldInfo *wrong_field =
+        find_field(Game_Metadata, Game_FieldCount, "num_waypoints");
+    Vector2 payload[1] = {0};
 
     TEST_ASSERT_EQUAL(REFLECT_ERR_TYPE_MISMATCH,
                       set_dynamic_Game_waypoints(&game, wrong_field, payload, 1));
@@ -950,7 +954,7 @@ TEST(Unit, DynamicArray_Handles_Zero_Length)
     game.waypoints     = NULL;
 
     const StructFieldInfo *f          = find_field(Game_Metadata, Game_FieldCount, "waypoints");
-    Vector2          payload[1] = {0};
+    Vector2                payload[1] = {0};
 
     TEST_ASSERT_EQUAL(REFLECT_ERR_OUT_OF_BOUNDS, set_dynamic_Game_waypoints(&game, f, payload, 1));
 
@@ -959,6 +963,14 @@ TEST(Unit, DynamicArray_Handles_Zero_Length)
 
 TEST(Unit, Can_Get_Constant_Types)
 {
+    Game game = {.name = "TESTING"};
+
+    const StructFieldInfo *field = Find_Struct_Field(StructMetaData_FromName(Game), "name");
+    const char            *name;
+
+    get_field_conststr(&game, field, &name);
+
+    TEST_ASSERT_EQUAL_STRING("TESTING", name);
 }
 
 TEST_GROUP_RUNNER(Unit)

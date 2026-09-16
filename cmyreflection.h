@@ -71,7 +71,7 @@ typedef struct
     size_t                 count;  /*!< Number of members in struct */
 } StructMetaData;
 
-#define MetaData_FromName(StructName)                                                              \
+#define StructMetaData_FromName(StructName)                                                              \
     (StructMetaData)                                                                               \
     {                                                                                              \
         StructName##_Metadata, StructName##_FieldCount                                             \
