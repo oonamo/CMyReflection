@@ -1,5 +1,5 @@
 import cmy_reflector
-from cmy_reflector import CBuilder, Reflector
+from cmy_reflector import CBuilder, Macro, Reflector
 
 
 def default_def(macro, default) -> str:
@@ -17,9 +17,14 @@ printer = cmy_reflector.Plugin(
     description="Provides run time printing for primitive types",
     includes=["<stdio.h>", "<stdlib.h>", "<inttypes.h>"],
     macros=[
-        "#define CMY_PLUGIN_PRINTER_ENABLED 1",
-        default_def("CMY_PRINTER_MAX_BUF_LEN", "256"),
-        default_def("CMY_PRINTF", "printf"),
+        Macro.define("CMY_HAS_PRINTER_PLUGIN", "1", "Printer plugin is available"),
+        Macro.default("CMY_PLUGIN_PRINTER_ENABLED", "1", "Enables the printer plugin"),
+        Macro.default(
+            "CMY_PRINTER_MAX_BUF_LEN",
+            "256",
+            "Default buffer len for printing (_MSC_VER)",
+        ),
+        Macro.default("CMY_PRINTF", "printf", "Defines the printf implementation"),
     ],
 )
 
@@ -33,32 +38,6 @@ def setup(reflector):
     reflector.define_member_extension(
         "display", "const char*", requires="CMY_PLUGIN_PRINTER_ENABLED"
     )
-
-
-@printer.function()
-def print_field(reflector):
-    return """\
-static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field)
-{
-    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
-
-#ifdef _MSV_VER
-    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
-    char buf[CMY_PRINTER_MAX_BUF_LEN];
-#else // May have VLA support
-    size_t buflen = field->count > 256 ? field->count : 256;
-    char buf[buflen];
-#endif
-
-    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
-    if (res != REFLECT_OK) {
-        return res;
-    }
-
-    CMY_PRINTF("%s", buf);
-    return REFLECT_OK;
-}
-"""
 
 
 @printer.struct_field_tag("format", enforce_value=True)
@@ -255,5 +234,32 @@ def handle_field_str(
     )
 
     return (func_def, case_def)
+
+
+@printer.function(requires="CMY_PLUGIN_PRINTER_ENABLED")
+def print_field(reflector):
+    return """\
+static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field)
+{
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+#ifdef _MSV_VER
+    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
+    char buf[CMY_PRINTER_MAX_BUF_LEN];
+#else // May have VLA support
+    size_t buflen = field->count > 256 ? field->count : 256;
+    char buf[buflen];
+#endif
+
+    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    CMY_PRINTF("%s", buf);
+    return REFLECT_OK;
+}
+"""
+
 
 cmy_reflector.add_plugin(printer)

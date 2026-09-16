@@ -32,36 +32,46 @@ typedef enum {
  *    - Provides tag: @no_print (Enums)
  *    - Provides tag: @format(value) (Struct Fields)
  *    - Provides tag: @display(value) (Enum Members)
+ *    - Provides macro: CMY_HAS_PRINTER_PLUGIN (Value: 1) - Printer plugin is available
+ *    - Provides macro: CMY_PLUGIN_PRINTER_ENABLED (Default: 1) - Enables the printer plugin
+ *    - Provides macro: CMY_PRINTER_MAX_BUF_LEN (Default: 256) - Default buffer len for printing (_MSC_VER)
+ *    - Provides macro: CMY_PRINTF (Default: printf) - Defines the printf implementation
  *    - Provides router: ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen)
  *      + Types: Permissions, AccountState, char_arr, char, uint32_t, bool,
  *        uint64_t, size_t
- *    - Provides function: static inline ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen)
- *    - Provides function: static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field)
+ *    - Provides function: ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen)
+ *    - Provides function: ReflectResult print_field(const void* instance, const StructFieldInfo* field)
  */
 
 
-#define CMY_PLUGIN_PRINTER_ENABLED 1
+#define CMY_HAS_PRINTER_PLUGIN 1
+#ifndef CMY_PLUGIN_PRINTER_ENABLED
+#    define CMY_PLUGIN_PRINTER_ENABLED 1
+#endif //CMY_PLUGIN_PRINTER_ENABLED
 #ifndef CMY_PRINTER_MAX_BUF_LEN
 #    define CMY_PRINTER_MAX_BUF_LEN 256
-#endif // CMY_PRINTER_MAX_BUF_LEN
+#endif //CMY_PRINTER_MAX_BUF_LEN
 #ifndef CMY_PRINTF
 #    define CMY_PRINTF printf
-#endif // CMY_PRINTF
+#endif //CMY_PRINTF
 
 
 // ########################################
 // Printer Declarations
 // ########################################
-static inline ReflectResult get_field_AccountState_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline ReflectResult get_field_Permissions_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline ReflectResult get_field_bool_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline ReflectResult get_field_char_arr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline ReflectResult get_field_char_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline ReflectResult get_field_size_t_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline ReflectResult get_field_u32_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline ReflectResult get_field_u64_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field);
+#ifdef CMY_PLUGIN_PRINTER_ENABLED
+static inline  ReflectResult get_field_AccountState_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline  ReflectResult get_field_Permissions_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline  ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline  ReflectResult get_field_bool_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline  ReflectResult get_field_char_arr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline  ReflectResult get_field_char_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline  ReflectResult get_field_size_t_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline  ReflectResult get_field_u32_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline  ReflectResult get_field_u64_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline  ReflectResult print_field(const void* instance, const StructFieldInfo* field);
+#endif // CMY_PLUGIN_PRINTER_ENABLED
+
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -159,6 +169,7 @@ DEFINE_DYNAMIC_ARRAY_GETTER(User_posts, TYPE_POST_PTR, Post *, Post)
 // ==========================================
 // Plugin: Printer
 // ==========================================
+#ifdef CMY_PLUGIN_PRINTER_ENABLED
 static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field)
 {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
@@ -180,6 +191,7 @@ static inline ReflectResult print_field(const void* instance, const StructFieldI
     return REFLECT_OK;
 }
 
+#endif // CMY_PLUGIN_PRINTER_ENABLED
 #ifdef CMY_PLUGIN_PRINTER_ENABLED
 static inline ReflectResult get_field_Permissions_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
     if (!instance || !field) {
