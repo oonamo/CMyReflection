@@ -54,6 +54,9 @@ typedef struct
     // cmy:format("%s")
     char email[64];
 
+    const char* name;
+    char* str;
+
     // cmy:readonly
     uint64_t account_id;
 

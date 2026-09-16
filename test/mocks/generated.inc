@@ -12,6 +12,8 @@ typedef enum {
     TYPE_CHAR,
     TYPE_CHAR_ARR,
     TYPE_CHAR_PTR,
+    TYPE_CONSTCHAR,
+    TYPE_CONSTCHAR_PTR,
     TYPE_DAMAGE_COMPONENT,
     TYPE_ENUM_BALLSIZE,
     TYPE_ENUM_DEVICESTATE,
@@ -165,6 +167,12 @@ DEFINE_FIELD_GETTER(Vector2_ptr, TYPE_VECTOR2_PTR, Vector2 *)
 DEFINE_ARRAY_SETTER(Vector2_arr, TYPE_VECTOR2_ARR, Vector2 *, Vector2)
 DEFINE_ARRAY_GETTER(Vector2_arr, TYPE_VECTOR2_ARR, Vector2 *, Vector2)
 
+DEFINE_FIELD_SETTER(conststr, TYPE_CONSTCHAR_PTR, const char *)
+DEFINE_FIELD_GETTER(conststr, TYPE_CONSTCHAR_PTR, const char *)
+
+DEFINE_FIELD_SETTER(constchar, TYPE_CONSTCHAR, const char)
+DEFINE_FIELD_GETTER(constchar, TYPE_CONSTCHAR, const char)
+
 DEFINE_ARRAY_SETTER(char_arr, TYPE_CHAR_ARR, char *, char)
 DEFINE_ARRAY_GETTER(char_arr, TYPE_CHAR_ARR, char *, char)
 
@@ -214,6 +222,7 @@ const StructFieldInfo Game_Metadata[] = {
     { "num_waypoints", TYPE_SIZE_T, offsetof(Game, num_waypoints), sizeof(size_t), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "waypoints", TYPE_VECTOR2_PTR, offsetof(Game, waypoints), sizeof(Vector2 *), 1, FIELD_ACCESS_RW, "num_waypoints", NULL },
     { "enemy_positions", TYPE_VECTOR2_ARR, offsetof(Game, enemy_positions), sizeof(Vector2[20]), 20, FIELD_ACCESS_RW, NULL, NULL },
+    { "name", TYPE_CONSTCHAR_PTR, offsetof(Game, name), sizeof(const char *), 1, FIELD_ACCESS_RW, NULL, NULL },
 };
 const size_t Game_FieldCount = sizeof(Game_Metadata) / sizeof(StructFieldInfo);
 
@@ -354,6 +363,8 @@ ReflectResult safe_set_field(void* instance, const StructFieldInfo* field, const
       case TYPE_SIZE_T: return set_field_size_t(instance, field, *(size_t*)value);
       case TYPE_VECTOR2_PTR: return set_field_Vector2_ptr(instance, field, *(Vector2 **)value);
       case TYPE_VECTOR2_ARR: return set_field_Vector2_arr(instance, field, (Vector2*)value, element_count);
+      case TYPE_CONSTCHAR_PTR: return set_field_conststr(instance, field, *(const char **)value);
+      case TYPE_CONSTCHAR: return set_field_constchar(instance, field, *(const char*)value);
       case TYPE_CHAR_ARR: return set_field_char_arr(instance, field, (char*)value, element_count);
       case TYPE_UINT64_T: return set_field_u64(instance, field, *(uint64_t*)value);
       case TYPE_IOTDEVICE_ARR: return set_field_IoTDevice_arr(instance, field, (IoTDevice*)value, element_count);
@@ -367,6 +378,8 @@ const char* get_name_of_type(FieldType type) {
      case TYPE_CHAR: return "TYPE_CHAR";
      case TYPE_CHAR_ARR: return "TYPE_CHAR_ARR";
      case TYPE_CHAR_PTR: return "TYPE_CHAR_PTR";
+     case TYPE_CONSTCHAR: return "TYPE_CONSTCHAR";
+     case TYPE_CONSTCHAR_PTR: return "TYPE_CONSTCHAR_PTR";
      case TYPE_DAMAGE_COMPONENT: return "TYPE_DAMAGE_COMPONENT";
      case TYPE_ENUM_BALLSIZE: return "TYPE_ENUM_BALLSIZE";
      case TYPE_ENUM_DEVICESTATE: return "TYPE_ENUM_DEVICESTATE";
@@ -404,6 +417,7 @@ FieldType get_base_type(FieldType type) {
       case TYPE_FLOAT_ARR: return TYPE_FLOAT;
       case TYPE_VECTOR2_PTR: return TYPE_VEC2;
       case TYPE_VECTOR2_ARR: return TYPE_VEC2;
+      case TYPE_CONSTCHAR_PTR: return TYPE_CONSTCHAR;
       case TYPE_CHAR_ARR: return TYPE_CHAR;
       case TYPE_IOTDEVICE_ARR: return TYPE_STRUCT_IOTDEVICE;
         default: return type;

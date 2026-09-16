@@ -146,6 +146,10 @@ class FuncDef:
         q = f"{self.qualifiers} " if with_qualifiers else ""
         return f"{q}{self.rettype} {self.name}{self.params};"
 
+    def doc_string(self) -> str:
+        """Used for the documentation block"""
+        return f"{self.rettype} {self.name}(...)"
+
 
 @dataclass(frozen=True)
 class FunctionPrimitive:
@@ -166,7 +170,7 @@ class TypeContext:
 class Plugin:
     name: str
     version: str = "1.0.0"
-    description: str = ""
+    description: str = "No description"
 
     maintainers: list[str] = dataclasses.field(default_factory=list)
     includes: list[str] = dataclasses.field(default_factory=list)
@@ -271,10 +275,15 @@ class Plugin:
             types = mapped_types.get(mapper.signature, []) if mapped_types else []
 
             if mapper.description:
+                sig = SIG_REGEX.match(mapper.signature)
+                if sig:
+                    sig_str = f"{sig.group('rettype').strip()} {sig.group('fname')}(..)"
+                else:
+                    sig_str = mapper.signature
                 lines.append(
                     self.format_description(
                         mapper.description,
-                        f" *    - Provides router: {mapper.signature} - {{}}",
+                        f" *    - Provides router: {sig_str} - {{}}",
                         " *      {}",
                     )
                 )
@@ -300,13 +309,13 @@ class Plugin:
                     lines.append(
                         self.format_description(
                             proto.description,
-                            f" *    - Provides function: {proto.fdef.prototype_string(with_qualifiers=False).rstrip(';')} - {{}}",
+                            f" *    - Provides function: {proto.fdef.doc_string()} - {{}}",
                             " *        {}",
                         )
                     )
                 else:
                     lines.append(
-                        f" *    - Provides function: {proto.fdef.prototype_string(with_qualifiers=False).rstrip(';')}"
+                        f" *    - Provides function: {proto.fdef.doc_string()}"
                     )
 
         return "\n".join(lines)
@@ -1665,6 +1674,11 @@ class CVar:
     def as_const(self):
         """Defines the variable as a constant"""
         self.ctype = "const " + self.ctype
+        return self
+
+    def remove_const(self):
+        """Removes const qualifiers"""
+        self.ctype = self.ctype.replace("const", "")
         return self
 
     def as_static(self):

@@ -345,7 +345,7 @@ ReflectResult get_dynamic_array_data(const void            *instance,
             return REFLECT_ERR_TYPE_MISMATCH;                                                      \
         }                                                                                          \
         return get_dynamic_array_data(                                                             \
-            instance, field, out_data, element_count * sizeof(DownCastType));                      \
+            instance, field, (void *)out_data, element_count * sizeof(DownCastType));              \
     }
 
 #define DEFINE_DYNAMIC_ARRAY_SETTER(Suffix, EnumVal, CType, DownCastType, ParentEnumVal)           \
@@ -428,7 +428,7 @@ ReflectResult visit_struct_fields(const void        *instance,
         {                                                                                          \
             return REFLECT_ERR_TYPE_MISMATCH;                                                      \
         }                                                                                          \
-        return get_field_value(instance, field, out_value, sizeof(CType));                         \
+        return get_field_value(instance, field, (void *)out_value, sizeof(CType));                 \
     }
 
 #define DEFINE_ENUM_SETTER(Suffix, EnumVal, CType, validator)                                      \
@@ -470,7 +470,7 @@ ReflectResult visit_struct_fields(const void        *instance,
     }
 
 #define DEFINE_ARRAY_GETTER(Suffix, EnumVal, CType, DownCastType)                                  \
-    static inline bool get_field_##Suffix(                                                         \
+    static inline ReflectResult get_field_##Suffix(                                                \
         const void *instance, const StructFieldInfo *field, CType value, size_t element_count)     \
     {                                                                                              \
         if (!instance || !field)                                                                   \
@@ -485,7 +485,8 @@ ReflectResult visit_struct_fields(const void        *instance,
         {                                                                                          \
             return REFLECT_ERR_OUT_OF_BOUNDS;                                                      \
         }                                                                                          \
-        return get_field_value(instance, field, value, element_count * sizeof(DownCastType));      \
+        return get_field_value(                                                                    \
+            instance, field, (void *)value, element_count * sizeof(DownCastType));                 \
     }
 
 #if defined(CMYREFLECTION_USE_DEFAULT_TYPES)

@@ -957,6 +957,10 @@ TEST(Unit, DynamicArray_Handles_Zero_Length)
     TEST_ASSERT_EQUAL(REFLECT_ERR_NULL_PTR, set_dynamic_Game_waypoints(&game, f, payload, 0));
 }
 
+TEST(Unit, Can_Get_Constant_Types)
+{
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);

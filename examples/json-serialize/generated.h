@@ -12,6 +12,9 @@ typedef enum {
     TYPE_BOOL,
     TYPE_CHAR,
     TYPE_CHAR_ARR,
+    TYPE_CHAR_PTR,
+    TYPE_CONSTCHAR,
+    TYPE_CONSTCHAR_PTR,
     TYPE_ENUM_ACCOUNTSTATE,
     TYPE_ENUM_PERMISSIONS,
     TYPE_POST_PTR,
@@ -41,14 +44,14 @@ typedef enum {
  *      +  @display("enum a")
  *      +  ENUM_A
  *    - Provides macro: CMY_HAS_PRINTER_PLUGIN (Value: 1) - Printer plugin is available
- *    - Provides macro: CMY_PLUGIN_PRINTER_ENABLED (Default: 1) - Enables the printer plugin
+ *    - Provides macro: CMY_PLUGIN_PRINTER_ENABLED (Default: 1) - Enables the Printer plugin
  *    - Provides macro: CMY_PRINTER_MAX_BUF_LEN (Default: 256) - Default buffer len for printing (_MSC_VER)
  *    - Provides macro: CMY_PRINTF (Default: printf) - Defines the printf implementation
- *    - Provides router: ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) - Creates a get_type_as_str for the type for primitives and enums
+ *    - Provides router: ReflectResult get_field_as_str(..) - Creates a get_type_as_str for the type for primitives and enums
  *      By default, enums are enabled
  *      + Types: Permissions, AccountState, char_arr, char, uint32_t, bool,
- *        uint64_t, size_t
- *    - Provides function: ReflectResult print_field(const void* instance, const StructFieldInfo* field) - Prints a field, if it implements get_field_as_str
+ *        constchar*, char*, uint64_t, size_t
+ *    - Provides function: ReflectResult print_field(...) - Prints a field, if it implements get_field_as_str
  */
 
 
@@ -74,7 +77,9 @@ static inline  ReflectResult get_field_as_str(const void* instance, const Struct
 static inline  ReflectResult get_field_bool_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline  ReflectResult get_field_char_arr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline  ReflectResult get_field_char_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline  ReflectResult get_field_conststr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline  ReflectResult get_field_size_t_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline  ReflectResult get_field_str_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline  ReflectResult get_field_u32_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline  ReflectResult get_field_u64_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline  ReflectResult print_field(const void* instance, const StructFieldInfo* field);
@@ -159,6 +164,15 @@ DEFINE_FIELD_GETTER(u32, TYPE_UINT32_T, uint32_t)
 
 DEFINE_FIELD_SETTER(bool, TYPE_BOOL, bool)
 DEFINE_FIELD_GETTER(bool, TYPE_BOOL, bool)
+
+DEFINE_FIELD_SETTER(conststr, TYPE_CONSTCHAR_PTR, const char*)
+DEFINE_FIELD_GETTER(conststr, TYPE_CONSTCHAR_PTR, const char*)
+
+DEFINE_FIELD_SETTER(constchar, TYPE_CONSTCHAR, const char)
+DEFINE_FIELD_GETTER(constchar, TYPE_CONSTCHAR, const char)
+
+DEFINE_FIELD_SETTER(str, TYPE_CHAR_PTR, char*)
+DEFINE_FIELD_GETTER(str, TYPE_CHAR_PTR, char*)
 
 DEFINE_FIELD_SETTER(u64, TYPE_UINT64_T, uint64_t)
 DEFINE_FIELD_GETTER(u64, TYPE_UINT64_T, uint64_t)
@@ -269,9 +283,7 @@ static inline ReflectResult get_field_char_arr_as_str(const void* instance, cons
 }
 
 static inline ReflectResult get_field_char_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
-    if (!instance || !field) {
-        return REFLECT_ERR_NULL_PTR;
-    }
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
     char var;
     ReflectResult res = get_field_char(instance, field, &var);;
@@ -287,9 +299,7 @@ static inline ReflectResult get_field_char_as_str(const void* instance, const St
 }
 
 static inline ReflectResult get_field_u32_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
-    if (!instance || !field) {
-        return REFLECT_ERR_NULL_PTR;
-    }
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
     uint32_t var;
     ReflectResult res = get_field_u32(instance, field, &var);;
@@ -322,10 +332,40 @@ static inline ReflectResult get_field_bool_as_str(const void* instance, const St
     return REFLECT_OK;
 }
 
-static inline ReflectResult get_field_u64_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
-    if (!instance || !field) {
-        return REFLECT_ERR_NULL_PTR;
+static inline ReflectResult get_field_conststr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    const char* var;
+    ReflectResult res = get_field_conststr(instance, field, &var);;
+    if (res != REFLECT_OK) {
+        return res;
     }
+
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
+
+    const char* fmt = (ext && ext->format) ? ext->format : "%s";
+    snprintf(out_buf, buflen, fmt, var);
+    return REFLECT_OK;
+}
+
+static inline ReflectResult get_field_str_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    char* var;
+    ReflectResult res = get_field_str(instance, field, &var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
+
+    const char* fmt = (ext && ext->format) ? ext->format : "%s";
+    snprintf(out_buf, buflen, fmt, var);
+    return REFLECT_OK;
+}
+
+static inline ReflectResult get_field_u64_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
     uint64_t var;
     ReflectResult res = get_field_u64(instance, field, &var);;
@@ -341,9 +381,7 @@ static inline ReflectResult get_field_u64_as_str(const void* instance, const Str
 }
 
 static inline ReflectResult get_field_size_t_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
-    if (!instance || !field) {
-        return REFLECT_ERR_NULL_PTR;
-    }
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
     size_t var;
     ReflectResult res = get_field_size_t(instance, field, &var);;
@@ -367,6 +405,8 @@ static inline ReflectResult get_field_as_str(const void* instance, const StructF
       case TYPE_CHAR: return get_field_char_as_str(instance, field, out_buf, buflen);
       case TYPE_UINT32_T: return get_field_u32_as_str(instance, field, out_buf, buflen);
       case TYPE_BOOL: return get_field_bool_as_str(instance, field, out_buf, buflen);
+      case TYPE_CONSTCHAR_PTR: return get_field_conststr_as_str(instance, field, out_buf, buflen);
+      case TYPE_CHAR_PTR: return get_field_str_as_str(instance, field, out_buf, buflen);
       case TYPE_UINT64_T: return get_field_u64_as_str(instance, field, out_buf, buflen);
       case TYPE_SIZE_T: return get_field_size_t_as_str(instance, field, out_buf, buflen);
         default: return REFLECT_ERR_TYPE_MISMATCH;
@@ -406,6 +446,8 @@ const StructFieldExtension ext_User_email = {
 const StructFieldInfo User_Metadata[] = {
     { "username", TYPE_CHAR_ARR, offsetof(User, username), sizeof(char[32]), 32, FIELD_ACCESS_RW, NULL, (void*)&ext_User_username },
     { "email", TYPE_CHAR_ARR, offsetof(User, email), sizeof(char[64]), 64, FIELD_ACCESS_RW, NULL, (void*)&ext_User_email },
+    { "name", TYPE_CONSTCHAR_PTR, offsetof(User, name), sizeof(const char*), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "str", TYPE_CHAR_PTR, offsetof(User, str), sizeof(char*), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "account_id", TYPE_UINT64_T, offsetof(User, account_id), sizeof(uint64_t), 1, FIELD_ACCESS_READ, NULL, NULL },
     { "password_hash", TYPE_CHAR_ARR, offsetof(User, password_hash), sizeof(char[64]), 64, FIELD_ACCESS_WRITE, NULL, NULL },
     { "permissions", TYPE_ENUM_PERMISSIONS, offsetof(User, permissions), sizeof(Permissions), 1, FIELD_ACCESS_RW, NULL, NULL },
@@ -495,6 +537,9 @@ ReflectResult safe_set_field(void* instance, const StructFieldInfo* field, const
       case TYPE_CHAR: return set_field_char(instance, field, *(char*)value);
       case TYPE_UINT32_T: return set_field_u32(instance, field, *(uint32_t*)value);
       case TYPE_BOOL: return set_field_bool(instance, field, *(bool*)value);
+      case TYPE_CONSTCHAR_PTR: return set_field_conststr(instance, field, *(const char**)value);
+      case TYPE_CONSTCHAR: return set_field_constchar(instance, field, *(const char*)value);
+      case TYPE_CHAR_PTR: return set_field_str(instance, field, *(char**)value);
       case TYPE_UINT64_T: return set_field_u64(instance, field, *(uint64_t*)value);
       case TYPE_SIZE_T: return set_field_size_t(instance, field, *(size_t*)value);
       case TYPE_POST_PTR: return set_field_Post_ptr(instance, field, *(Post **)value);
@@ -508,6 +553,9 @@ const char* get_name_of_type(FieldType type) {
      case TYPE_BOOL: return "TYPE_BOOL";
      case TYPE_CHAR: return "TYPE_CHAR";
      case TYPE_CHAR_ARR: return "TYPE_CHAR_ARR";
+     case TYPE_CHAR_PTR: return "TYPE_CHAR_PTR";
+     case TYPE_CONSTCHAR: return "TYPE_CONSTCHAR";
+     case TYPE_CONSTCHAR_PTR: return "TYPE_CONSTCHAR_PTR";
      case TYPE_ENUM_ACCOUNTSTATE: return "TYPE_ENUM_ACCOUNTSTATE";
      case TYPE_ENUM_PERMISSIONS: return "TYPE_ENUM_PERMISSIONS";
      case TYPE_POST_PTR: return "TYPE_POST_PTR";
@@ -525,6 +573,8 @@ const char* get_name_of_type(FieldType type) {
 FieldType get_base_type(FieldType type) {
     switch(type) {
       case TYPE_CHAR_ARR: return TYPE_CHAR;
+      case TYPE_CONSTCHAR_PTR: return TYPE_CONSTCHAR;
+      case TYPE_CHAR_PTR: return TYPE_CHAR;
       case TYPE_POST_PTR: return TYPE_STRUCT_POST;
         default: return type;
     }

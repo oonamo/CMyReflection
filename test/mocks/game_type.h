@@ -86,4 +86,6 @@ typedef struct
     Vector2 *waypoints; // cmy:length(num_waypoints)
 
     Vector2 enemy_positions[20];
+
+    const char *name;
 } Game;
