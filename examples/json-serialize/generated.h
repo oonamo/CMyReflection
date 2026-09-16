@@ -29,10 +29,14 @@ typedef enum {
 /*
  * CMyReflection Active Plugins
  *  -> Printer (v0.0.0) by oonamo - Provides run time printing for primitive types
- *    - Provides function: static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field)
  *    - Provides tag: @no_print (Enums)
  *    - Provides tag: @format(value) (Struct Fields)
  *    - Provides tag: @display(value) (Enum Members)
+ *    - Provides router: ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen)
+ *      + Types: Permissions, AccountState, char_arr, char, uint32_t, bool,
+ *        uint64_t, size_t
+ *    - Provides function: static inline ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen)
+ *    - Provides function: static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field)
  */
 
 
@@ -45,6 +49,9 @@ typedef enum {
 #endif // CMY_PRINTF
 
 
+// ########################################
+// Printer Declarations
+// ########################################
 static inline ReflectResult get_field_AccountState_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult get_field_Permissions_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);

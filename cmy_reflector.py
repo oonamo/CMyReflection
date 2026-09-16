@@ -3,6 +3,7 @@ import dataclasses
 import importlib.util
 import re
 import sys
+import textwrap
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
@@ -104,7 +105,9 @@ class Plugin:
     def functions(self) -> tuple:
         return tuple(self._functions)
 
-    def generate_header(self, inferred_prototypes: list[str]) -> str:
+    def generate_header(
+        self, inferred_prototypes: list[str], mapped_types: dict[str, list[str]]
+    ) -> str:
         lines = []
         m_str = f" by {', '.join(self.maintainers)}" if self.maintainers else ""
         lines.append(
@@ -120,6 +123,23 @@ class Plugin:
         gen_str_for_tag_dict(self._enum_tags, "Enums")
         gen_str_for_tag_dict(self._struct_field_tags, "Struct Fields")
         gen_str_for_tag_dict(self._enum_member_tags, "Enum Members")
+
+        for mapper in self._type_mappers:
+            types = mapped_types.get(mapper.signature, []) if mapped_types else []
+
+            lines.append(f" *    - Provides router: {mapper.signature}")
+            if types:
+                types_joined = ", ".join(types)
+
+                wrapped_types = textwrap.fill(
+                    types_joined,
+                    width=80,
+                    initial_indent=" *      + Types: ",
+                    subsequent_indent=" *        ",
+                )
+                lines.extend(wrapped_types.splitlines())
+            else:
+                lines.append(" (No types mapped)")
 
         if inferred_prototypes:
             for proto in sorted(inferred_prototypes):
@@ -540,7 +560,11 @@ class Reflector:
         self.active_struct_tags = {}
         self.active_type_mappers = []
 
-        self.plugin_prototypes: dict[str, set[str]] = defaultdict(set)
+        self.private_plugin_prototypes: dict[str, set(str)] = defaultdict(set)
+        self.public_plugin_prototypes: dict[str, set[str]] = defaultdict(set)
+        self.plugin_mapped_types: dict[str, dict[str, list[str]]] = defaultdict(
+            lambda: defaultdict(list)
+        )
 
     def validate_tags(self):
         """Checks for any unregistered tags"""
@@ -1143,10 +1167,21 @@ FieldType get_base_type(FieldType type) {{
         macros = []
 
         for p in _PLUGINS:
-            lines.append(p.generate_header([]))
+            public_prototypes = self.public_plugin_prototypes.get(p.name, set())
+            mapped_types = self.plugin_mapped_types.get(p.name, [])
+            lines.append(
+                p.generate_header(public_prototypes, mapped_types=mapped_types)
+            )
 
-            if p.name in self.plugin_prototypes:
-                declarations.extend(sorted(self.plugin_prototypes[p.name]))
+            prototypes = public_prototypes | self.private_plugin_prototypes.get(
+                p.name, set()
+            )
+
+            if prototypes:
+                declarations.append(f"// {'#' * 40}")
+                declarations.append(f"// {p.name} Declarations")
+                declarations.append(f"// {'#' * 40}")
+                declarations.extend(sorted(prototypes))
 
             includes.update(p.includes)
             macros.extend(p.macros)
@@ -1187,16 +1222,16 @@ FieldType get_base_type(FieldType type) {{
                     f"Tag '{tag_name}' ({scope}) with value '{tag_value}' could not be validated. Reason:\n    {reason}"
                 )
 
-    def _add_proto(self, plugin: Plugin, c_code: str, append_to_description: bool):
+    def _add_proto(self, plugin: Plugin, c_code: str, public: bool):
         match = SIG_REGEX.match(c_code)
 
         if match:
             infered_sig = match.group(0).strip()
             prototype = f"{infered_sig};"
-            self.plugin_prototypes[plugin.name].add(prototype)
-
-            if append_to_description:
-                plugin.description += f"\n *    - Provides function: {infered_sig}"
+            if public:
+                self.public_plugin_prototypes[plugin.name].add(prototype)
+            else:
+                self.private_plugin_prototypes[plugin.name].add(prototype)
 
     def generate_plugin_extensions(self) -> str:
         extension_lines = ["// --- Plugin-Generated-Extensions ---"]
@@ -1229,6 +1264,9 @@ FieldType get_base_type(FieldType type) {{
 
                     if result:
                         func_code, case_code = result
+                        self.plugin_mapped_types[p.name][mapper.signature].append(
+                            type_name
+                        )
                         if func_code:
                             standalone_funcs.append(func_code)
                             self._add_proto(p, func_code, False)
@@ -1249,7 +1287,7 @@ static inline {mapper.signature} {{
                         plugin_code.append(f"#ifdef {mapper.requires}")
                     plugin_code.extend(standalone_funcs)
                     plugin_code.append(router)
-                    self._add_proto(p, router, False)
+                    self._add_proto(p, router, True)
                     if mapper.requires:
                         plugin_code.append(f"#endif // {mapper.requires}")
 
