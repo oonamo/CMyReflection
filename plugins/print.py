@@ -5,7 +5,6 @@ from cmy_reflector import CBuilder, Macro, Reflector
 def default_def(macro, default) -> str:
     return f"#ifndef {macro}\n#    define {macro} {default}\n#endif // {macro}"
 
-
 def print_specifier(type: str) -> str:
     return f'"%" PRI{type}'
 

@@ -54,6 +54,7 @@ class Macro:
 
     @classmethod
     def default(cls, name: str, value: str, description: str = ""):
+        """C Macro with a default value, if not defined (#ifndef <name> ...)"""
         return cls(
             name=name,
             value=value,
@@ -63,24 +64,28 @@ class Macro:
 
     @classmethod
     def define(cls, name: str, value: str, description: str = ""):
+        """Default C Macro definition (#define <name> <value>)"""
         return cls(
             name=name, value=value, macro_type=MacroType.DEFINE, description=description
         )
 
     @classmethod
     def undef(cls, name: str, value: str, description: str = ""):
+        """Undefines a C Macro (#undef <name>)"""
         return cls(
             name=name, value=value, macro_type=MacroType.UNDEF, description=description
         )
 
     @classmethod
     def raw(cls, name: str, value: str, description: str = ""):
+        """Creates a raw macro. No processing is done to 'value'"""
         return cls(
             name=name, value=value, macro_type=MacroType.RAW, description=description
         )
 
     @classmethod
     def include(cls, name: str, value: str, description: str = ""):
+        """Defines an include statement (Prefer to use include in the Plugin constructor)"""
         return cls(
             name=name,
             value=value,
@@ -89,6 +94,7 @@ class Macro:
         )
 
     def to_c_string(self) -> str:
+        """Converts a macro to it's C implementation"""
         if self.macro_type == MacroType.DEFAULT:
             return f"#ifndef {self.name}\n#    define {self.name} {self.value}\n#endif //{self.name}"
         elif self.macro_type == MacroType.DEFINE:
@@ -101,6 +107,7 @@ class Macro:
             return self.value
 
     def to_doc_string(self) -> str:
+        """Converts a macro to it's header doc string"""
         desc_str = f" - {self.description}" if self.description else ""
 
         if self.macro_type == MacroType.DEFAULT:
@@ -133,6 +140,7 @@ class FuncDef:
     params: str
 
     def prototype_string(self, with_qualifiers: bool = True) -> str:
+        """Converts a FuncDef to it's C prototype"""
         q = f"{self.qualifiers} " if with_qualifiers else ""
         return f"{q}{self.rettype} {self.name}{self.params};"
 
@@ -255,6 +263,8 @@ class Plugin:
         return func
 
     def function(self, requires: str = None, description: str = ""):
+        """Decorator to register a function"""
+
         def decorator(func):
             f = FunctionType(
                 func=func,
@@ -337,6 +347,8 @@ class Plugin:
         guard_clause: str = "",
         requires=None,
     ):
+        """Decorator for creating a function for all types"""
+
         def decorator(func):
             mapper = TypeMapper(
                 func=func,
@@ -524,6 +536,7 @@ class EnumMember:
         self.plugin_data = {}
 
     def gen_member_str(self) -> str:
+        """Generates a field in EnumMemberInfo"""
         return f'   {{ {self.name}, "{self.name}", {self.user_data_expr} }}'
 
 
@@ -730,12 +743,15 @@ class Reflector:
         return norm.strip()
 
     def is_arr(self, identifier: str) -> bool:
+        """Checks if the identifier is of an array"""
         return self.normalze_type_identifier(identifier).endswith("_arr")
 
     def is_struct(self, identifier: str) -> bool:
+        """Checks if the identifier is a struct"""
         return self.get_base_type_name(identifier) in self.structs
 
     def is_enum(self, identifier: str) -> bool:
+        """Checks if the identifier is an enum"""
         return self.get_base_type_name(identifier) in self.enums
 
     def load_plugins(self):
@@ -808,24 +824,30 @@ class Reflector:
         return self.enums.get(base)
 
     def has_struct_tag(self, identifier: str, tag_name: str) -> bool:
+        """Checks if the struct has a struct tag"""
         struct = self.get_struct(identifier)
         return struct is not None and tag_name in struct.tags
 
     def get_struct_tag(self, identifier: str, tag_name: str) -> str | None:
+        """Get's the value of the struct tag"""
         struct = self.get_struct(identifier)
         return struct.tags.get(tag_name) if struct else None
 
     def has_enum_tag(self, identifier: str, tag_name: str) -> bool:
+        """Get's the value of the enum tag"""
         enum = self.get_enum(identifier)
         return enum is not None and tag_name in enum.tags
 
     def define_field_extension(self, name: str, ctype: str, requires: str = None):
+        """Defines an extension to the StructFieldExtension type in C"""
         self.field_extension_members[name] = (ctype, requires)
 
     def define_member_extension(self, name: str, ctype: str, requires: str = None):
+        """Defines an extension to the EnumMemberExtension type in C"""
         self.member_extensions_members[name] = (ctype, requires)
 
     def set_field_extension(self, field: Field, name: str, value: str):
+        """Set's the value of an field extension in C"""
         if name not in self.field_extension_members:
             raise ValueError(
                 f"Validation Error: Cannot set extension '{name}' on field '{field.name}'. "
@@ -835,6 +857,7 @@ class Reflector:
         field.plugin_data[name] = value
 
     def set_member_extension(self, member: EnumMember, name: str, value: str):
+        """Sets's the value of a member extension in C"""
         if name not in self.member_extensions_members:
             raise ValueError(
                 f"Validation Error: Cannot set extension '{name}' on field '{member.name}'. "
@@ -877,6 +900,7 @@ class Reflector:
         return True
 
     def add_cenum(self, enum: CEnum) -> bool:
+        """Adds a CEnum if unique"""
         if enum.name in self.enums:
             return False
 
@@ -992,6 +1016,7 @@ class Reflector:
         return "\n".join(lines)
 
     def generate_enum_validators(self) -> str:
+        """Generates the validator function for enums"""
         funcs = ["// --- Auto-Generated Enum Validators ---"]
         for enum in self.enums.values():
             funcs.append(enum.generate_validator())
@@ -1154,6 +1179,7 @@ const char* get_name_of_type(FieldType type) {{
         return template
 
     def get_type_suffix(self, type_name: str) -> str:
+        """Gets the type suffix. (char_arr -> char), (char* -> char_ptr)"""
         if type_name == "unknown":
             return "unknown"
         aliased_name = (
@@ -1535,6 +1561,7 @@ static inline {mapper.signature} {{
 
 class CVar:
     def __init__(self, ctype: str, name: str, val: str = None):
+        """Declares a variable builder for C"""
         self.ctype = ctype
         self.name = name
         self._val = val
@@ -1542,18 +1569,22 @@ class CVar:
         self.after: str = None
 
     def val(self, val: str):
+        """Assigns the variable a value"""
         self._val = val
         return self
 
     def as_const(self):
+        """Defines the variable as a constant"""
         self.ctype = "const " + self.ctype
         return self
 
     def as_static(self):
+        """Defines the variable as static"""
         self.ctype = "static " + self.ctype
         return self
 
     def val_with_default(self, cond: str, val: str, default: str = None):
+        """Ternary assignment. Assigns the variable to a default value if condition is not met"""
         if self._val:
             raise ValueError(
                 f"Var '{self.ctype} {self.name}' already has value '{self._val}'."
@@ -1565,11 +1596,13 @@ class CVar:
         return self
 
     def checked(self, cond: str, ifbad: str):
+        """Checks for the condition, then calls ifbad"""
         indented_ifbad = ifbad.replace("\n", "\n    ")
         self.after = f"if ({cond}) {{\n    {indented_ifbad}\n}}\n"
         return self
 
     def gen_str(self) -> str:
+        """Generate the CVar as a string"""
         if self._val:
             var = f"{self.ctype} {self.name} = {self._val};"
         else:
@@ -1609,6 +1642,7 @@ class CVar:
 
 class CBuilder:
     def __init__(self, reflector: Reflector):
+        """Creates a safe, literate CBuilder for creating C code"""
         self.reflector = reflector
         self.valid_suffixes = set(
             [reflector.get_type_suffix(t) for t in reflector.type_map.keys()]
@@ -1622,6 +1656,7 @@ class CBuilder:
         return suffix in self.valid_suffixes
 
     def get_suffix_from_ident(self, identifier: str) -> str:
+        """Gets the suffix given an identifier"""
         if self._has_suffix(identifier):
             return identifier
         else:
@@ -1642,6 +1677,7 @@ class CBuilder:
         field_name: str = "field",
         array_len: str = None,
     ) -> str:
+        """Type checked wrapper for get_field_<suffix> function"""
         suffix = self.get_suffix_from_ident(identifier)
         if self.reflector.is_arr(identifier):
             if not array_len:
@@ -1654,22 +1690,27 @@ class CBuilder:
         return f"get_field_{suffix}({instance_name}, {field_name}, {val_ptr});"
 
     def struct_field_extension(self, field_name: str = "field"):
+        """Wrapper for GET_FIELD_EXT"""
         return f"GET_FIELD_EXT({field_name})"
 
     def enum_member_extension(self, member_name: str = "member"):
+        """Wrapper for GET_MEMBER_EXT"""
         return f"GET_MEMBER_EXT({member_name})"
 
     def struct_metadata(self, struct_name: str) -> str:
+        """Type checked wrapper for StructMetaData_FromName macro"""
         if not self.reflector.is_struct(struct_name):
             raise ValueError(f"'{struct_name}' has no struct metadata.")
         return f"StructMetaData_FromName({struct_name})"
 
     def enum_metadata(self, enum_name: str) -> str:
+        """Type checked wrapper for EnumMetaData_FromName macro"""
         if not self.reflector.is_enum(enum_name):
             raise ValueError(f"'{enum_name}' has no enum metadata.")
         return f"EnumMetaData_FromName({enum_name})"
 
     def check(self, cond: str, ifbad: str) -> str:
+        """Creates an if statement"""
         ifbad_indented = ifbad.replace("\n", "\n    ")
         return f"if ({cond}) {{\n    {ifbad_indented}\n}}\n"
 
@@ -1681,6 +1722,7 @@ class CBuilder:
         inline="inline",
         retval="ReflectResult",
     ) -> str:
+        """Generates the CBuilder as a function"""
         flat_lines = []
         for item in body_lines:
             if item is not None:
