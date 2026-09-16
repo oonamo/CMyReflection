@@ -19,6 +19,7 @@ printer = cmy_reflector.Plugin(
     macros=[
         "#define CMY_PLUGIN_PRINTER_ENABLED 1",
         default_def("CMY_PRINTER_MAX_BUF_LEN", "256"),
+        default_def("CMY_PRINTF", "printf"),
     ],
 )
 
@@ -34,12 +35,38 @@ def setup(reflector):
     )
 
 
-@printer.struct_field_tag("format")
+@printer.function()
+def print_field(reflector):
+    return """\
+static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field)
+{
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+#ifdef _MSV_VER
+    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
+    char buf[CMY_PRINTER_MAX_BUF_LEN];
+#else // May have VLA support
+    size_t buflen = field->count > 256 ? field->count : 256;
+    char buf[buflen];
+#endif
+
+    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    CMY_PRINTF("%s", buf);
+    return REFLECT_OK;
+}
+"""
+
+
+@printer.struct_field_tag("format", enforce_value=True)
 def handle_field_format(reflector, struct, field, tag_value):
     reflector.set_field_extension(field, "format", tag_value)
 
 
-@printer.enum_member_tag("display")
+@printer.enum_member_tag("display", enforce_value=True)
 def handle_member_format(reflector, enum, member, tag_value):
     reflector.set_member_extension(member, "display", tag_value)
 
@@ -228,49 +255,5 @@ def handle_field_str(
     )
 
     return (func_def, case_def)
-
-
-@printer.type_mapper(
-    signature="ReflectResult print_field(const void* instance, const StructFieldInfo* field)",
-    switch_var="field->type",
-    default_case="return REFLECT_ERR_TYPE_MISMATCH;",
-    guard_clause="if (!field) { return REFLECT_ERR_NULL_PTR; }",
-    requires="CMY_PLUGIN_PRINTER_ENABLED",
-)
-def handle_primitive_printers(
-    reflector: cmy_reflector.Reflector, type_name, type_enum, ctype, suffix
-):
-    if not has_field_str_attribute(reflector, type_name):
-        return
-
-    if reflector.is_enum(type_name):
-        enum = reflector.get_enum(type_name)
-        if "no_print" in enum.tags:
-            return
-
-    func_def = f"""\
-static inline ReflectResult print_field_{suffix}(const void* instance, const StructFieldInfo* field) {{
-    if (!instance || !field) {{ return REFLECT_ERR_NULL_PTR; }}
-
-#ifdef _MSC_VER
-    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
-    char buf[CMY_PRINTER_MAX_BUF_LEN];
-#else
-    size_t buflen = field->count > 256 ? field->count : 256;
-    char buf[buflen];
-#endif
-    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
-    if (res != REFLECT_OK) {{
-        return res;
-    }}
-
-    printf("%s", buf);
-    return REFLECT_OK;
-}}
-"""
-    switch_case = f"return print_field_{suffix}(instance, field);"
-
-    return (func_def, switch_case)
-
 
 cmy_reflector.add_plugin(printer)

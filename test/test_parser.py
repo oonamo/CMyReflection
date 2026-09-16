@@ -6,6 +6,7 @@ import pytest
 
 import cmy_reflector
 from cmy_reflector import (
+    SIG_REGEX,
     CBuilder,
     CVar,
     Plugin,
@@ -857,3 +858,12 @@ Tag 'isodd' (Struct) with value '2' could not be validated. Reason:
     The tag is not odd"""
     with pytest.raises(ValueError, match=re.escape(expected_err)):
         str(reflector)
+
+
+def test_SIG_regex():
+    f1 = "static inline void print(void* a) { int x = 0; }"
+    match = SIG_REGEX.match(f1)
+
+    assert match
+    sig = f"{match.group('rettype')} {match.group('fname')}{match.group('params')}"
+    assert sig == "void print(void* a)"

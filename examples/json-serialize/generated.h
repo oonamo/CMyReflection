@@ -29,11 +29,10 @@ typedef enum {
 /*
  * CMyReflection Active Plugins
  *  -> Printer (v0.0.0) by oonamo - Provides run time printing for primitive types
- *    - Provides tag: @format (Struct Fields)
- *    - Provides tag: @display (Enum Members)
- *    - Provides tag: @no_print (Struct)
- *    - Provides router: ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen)
- *    - Provides router: ReflectResult print_field(const void* instance, const StructFieldInfo* field)
+ *    - Provides function: static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field)
+ *    - Provides tag: @no_print (Enums)
+ *    - Provides tag: @format(value) (Struct Fields)
+ *    - Provides tag: @display(value) (Enum Members)
  */
 
 
@@ -41,6 +40,21 @@ typedef enum {
 #ifndef CMY_PRINTER_MAX_BUF_LEN
 #    define CMY_PRINTER_MAX_BUF_LEN 256
 #endif // CMY_PRINTER_MAX_BUF_LEN
+#ifndef CMY_PRINTF
+#    define CMY_PRINTF printf
+#endif // CMY_PRINTF
+
+
+static inline ReflectResult get_field_AccountState_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_Permissions_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_bool_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_char_arr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_char_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_size_t_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_u32_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_u64_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field);
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -138,6 +152,27 @@ DEFINE_DYNAMIC_ARRAY_GETTER(User_posts, TYPE_POST_PTR, Post *, Post)
 // ==========================================
 // Plugin: Printer
 // ==========================================
+static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field)
+{
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+#ifdef _MSV_VER
+    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
+    char buf[CMY_PRINTER_MAX_BUF_LEN];
+#else // May have VLA support
+    size_t buflen = field->count > 256 ? field->count : 256;
+    char buf[buflen];
+#endif
+
+    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    CMY_PRINTF("%s", buf);
+    return REFLECT_OK;
+}
+
 #ifdef CMY_PLUGIN_PRINTER_ENABLED
 static inline ReflectResult get_field_Permissions_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
     if (!instance || !field) {
@@ -307,155 +342,6 @@ static inline ReflectResult get_field_as_str(const void* instance, const StructF
       case TYPE_BOOL: return get_field_bool_as_str(instance, field, out_buf, buflen);
       case TYPE_UINT64_T: return get_field_u64_as_str(instance, field, out_buf, buflen);
       case TYPE_SIZE_T: return get_field_size_t_as_str(instance, field, out_buf, buflen);
-        default: return REFLECT_ERR_TYPE_MISMATCH;
-    }
-}
-
-#endif // CMY_PLUGIN_PRINTER_ENABLED
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
-static inline ReflectResult print_field_AccountState(const void* instance, const StructFieldInfo* field) {
-    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
-
-#ifdef _MSC_VER
-    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
-    char buf[CMY_PRINTER_MAX_BUF_LEN];
-#else
-    size_t buflen = field->count > 256 ? field->count : 256;
-    char buf[buflen];
-#endif
-    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
-    if (res != REFLECT_OK) {
-        return res;
-    }
-
-    printf("%s", buf);
-    return REFLECT_OK;
-}
-
-static inline ReflectResult print_field_char_arr(const void* instance, const StructFieldInfo* field) {
-    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
-
-#ifdef _MSC_VER
-    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
-    char buf[CMY_PRINTER_MAX_BUF_LEN];
-#else
-    size_t buflen = field->count > 256 ? field->count : 256;
-    char buf[buflen];
-#endif
-    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
-    if (res != REFLECT_OK) {
-        return res;
-    }
-
-    printf("%s", buf);
-    return REFLECT_OK;
-}
-
-static inline ReflectResult print_field_char(const void* instance, const StructFieldInfo* field) {
-    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
-
-#ifdef _MSC_VER
-    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
-    char buf[CMY_PRINTER_MAX_BUF_LEN];
-#else
-    size_t buflen = field->count > 256 ? field->count : 256;
-    char buf[buflen];
-#endif
-    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
-    if (res != REFLECT_OK) {
-        return res;
-    }
-
-    printf("%s", buf);
-    return REFLECT_OK;
-}
-
-static inline ReflectResult print_field_u32(const void* instance, const StructFieldInfo* field) {
-    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
-
-#ifdef _MSC_VER
-    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
-    char buf[CMY_PRINTER_MAX_BUF_LEN];
-#else
-    size_t buflen = field->count > 256 ? field->count : 256;
-    char buf[buflen];
-#endif
-    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
-    if (res != REFLECT_OK) {
-        return res;
-    }
-
-    printf("%s", buf);
-    return REFLECT_OK;
-}
-
-static inline ReflectResult print_field_bool(const void* instance, const StructFieldInfo* field) {
-    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
-
-#ifdef _MSC_VER
-    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
-    char buf[CMY_PRINTER_MAX_BUF_LEN];
-#else
-    size_t buflen = field->count > 256 ? field->count : 256;
-    char buf[buflen];
-#endif
-    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
-    if (res != REFLECT_OK) {
-        return res;
-    }
-
-    printf("%s", buf);
-    return REFLECT_OK;
-}
-
-static inline ReflectResult print_field_u64(const void* instance, const StructFieldInfo* field) {
-    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
-
-#ifdef _MSC_VER
-    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
-    char buf[CMY_PRINTER_MAX_BUF_LEN];
-#else
-    size_t buflen = field->count > 256 ? field->count : 256;
-    char buf[buflen];
-#endif
-    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
-    if (res != REFLECT_OK) {
-        return res;
-    }
-
-    printf("%s", buf);
-    return REFLECT_OK;
-}
-
-static inline ReflectResult print_field_size_t(const void* instance, const StructFieldInfo* field) {
-    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
-
-#ifdef _MSC_VER
-    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
-    char buf[CMY_PRINTER_MAX_BUF_LEN];
-#else
-    size_t buflen = field->count > 256 ? field->count : 256;
-    char buf[buflen];
-#endif
-    ReflectResult res = get_field_as_str(instance, field, buf, buflen);
-    if (res != REFLECT_OK) {
-        return res;
-    }
-
-    printf("%s", buf);
-    return REFLECT_OK;
-}
-
-static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field) {
-    if (!field) { return REFLECT_ERR_NULL_PTR; }
-    switch(field->type) {
-      case TYPE_ENUM_ACCOUNTSTATE: return print_field_AccountState(instance, field);
-      case TYPE_CHAR_ARR: return print_field_char_arr(instance, field);
-      case TYPE_CHAR: return print_field_char(instance, field);
-      case TYPE_UINT32_T: return print_field_u32(instance, field);
-      case TYPE_BOOL: return print_field_bool(instance, field);
-      case TYPE_UINT64_T: return print_field_u64(instance, field);
-      case TYPE_SIZE_T: return print_field_size_t(instance, field);
         default: return REFLECT_ERR_TYPE_MISMATCH;
     }
 }
