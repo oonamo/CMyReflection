@@ -1,26 +1,26 @@
 import cmy_reflector
 from cmy_reflector import CBuilder, Macro, Reflector
 
+PLUGIN_NAME = "Printer"
+PLUGIN_VERSION = "0.0.0"
+PLUGIN_MAINTAINERS = ["oonamo"]
+PLUGIN_DESCRIPTION = "Provides run time printing for primitive types"
+PLUGIN_DEFINE_MACRO = f"CMY_HAS_{PLUGIN_NAME.upper()}_PLUGIN"
+PLUGIN_ENABLED_MACRO = f"CMY_PLUGIN_{PLUGIN_NAME.upper()}_ENABLED"
 
-def default_def(macro, default) -> str:
-    return f"#ifndef {macro}\n#    define {macro} {default}\n#endif // {macro}"
-
-
-def print_specifier(type: str) -> str:
-    return f'"%" PRI{type}'
-
+PRINTER_MAX_BUF_LEN = "CMY_PRINTER_MAX_BUF_LEN"
 
 printer = cmy_reflector.Plugin(
-    name="Printer",
-    version="0.0.0",
-    maintainers=["oonamo"],
-    description="Provides run time printing for primitive types",
+    name=PLUGIN_NAME,
+    version=PLUGIN_VERSION,
+    maintainers=PLUGIN_MAINTAINERS,
+    description=PLUGIN_DESCRIPTION,
     includes=["<stdio.h>", "<stdlib.h>", "<inttypes.h>"],
     macros=[
-        Macro.define("CMY_HAS_PRINTER_PLUGIN", "1", "Printer plugin is available"),
-        Macro.default("CMY_PLUGIN_PRINTER_ENABLED", "1", "Enables the printer plugin"),
+        Macro.define(PLUGIN_DEFINE_MACRO, "1", f"{PLUGIN_NAME} plugin is available"),
+        Macro.default(PLUGIN_ENABLED_MACRO, "1", f"Enables the {PLUGIN_NAME} plugin"),
         Macro.default(
-            "CMY_PRINTER_MAX_BUF_LEN",
+            PRINTER_MAX_BUF_LEN,
             "256",
             "Default buffer len for printing (_MSC_VER)",
         ),
@@ -32,11 +32,11 @@ printer = cmy_reflector.Plugin(
 @printer.setup
 def setup(reflector):
     reflector.define_field_extension(
-        "format", "const char*", requires="CMY_PLUGIN_PRINTER_ENABLED"
+        "format", "const char*", requires=PLUGIN_ENABLED_MACRO
     )
 
     reflector.define_member_extension(
-        "display", "const char*", requires="CMY_PLUGIN_PRINTER_ENABLED"
+        "display", "const char*", requires=PLUGIN_ENABLED_MACRO
     )
 
 
@@ -78,15 +78,28 @@ def handle_no_print(reflector, struct_or_enum, tag_value):
     pass
 
 
+def q(s: str) -> str:
+    return f'"{s}"'
+
+
+def print_specifier(type: str) -> str:
+    return f'"%" PRI{type}'
+
+
 _PRIMITIVE_FORMATS = {
-    "int": '"%d"',
-    "float": '"%f"',
-    "double": '"%lf"',
-    "char": '"%c"',
-    "char*": '"%s"',
-    "const char*": '"%s"',
-    "constchar*": '"%s"',
-    "size_t": '"%zu"',
+    "int": q("%d"),
+    "unsignedint": q("%u"),
+    "short": q("%hd"),
+    "unsignedshort": q("%hu"),
+    "long": q("%ld"),
+    "unsignedlong": q("%lu"),
+    "char": q("%c"),
+    "unsignedchar": q("%hhu"),
+    "float": q("%f"),
+    "double": q("%lf"),
+    "char*": q("%s"),
+    "constchar*": q("%s"),
+    "size_t": q("%zu"),
     "uint8_t": print_specifier("u8"),
     "uint16_t": print_specifier("u16"),
     "uint32_t": print_specifier("u32"),
@@ -194,7 +207,33 @@ def _generate_type_str(
 ) -> list[str]:
     default_fmt = _PRIMITIVE_FORMATS[type_name]
     return [
-        cb.check("!instance || !field", "return REFLECT_ERR_NULL_PTR;"),
+        "if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }",
+        "",
+        cb.var(ctype, "var"),
+        cb.var(
+            "ReflectResult",
+            "res",
+            cb.struct_field_getter(suffix, "&var"),
+        ).checked("res != REFLECT_OK", "return res;"),
+        cb.var(
+            "StructFieldExtension*", "ext", cb.struct_field_extension("field")
+        ).as_const(),
+        "",
+        cb.var("char*", "fmt")
+        .val_with_default("ext && ext->format", "ext->format", default_fmt)
+        .as_const(),
+        "snprintf(out_buf, buflen, fmt, var);",
+        "return REFLECT_OK;",
+    ]
+
+
+def _generate_type_str(
+    reflector: Reflector, cb: CBuilder, type_name, type_enum, ctype, suffix
+) -> list[str]:
+    default_fmt = _PRIMITIVE_FORMATS[type_name]
+    return [
+        "if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }",
+        "",
         cb.var(ctype, "var"),
         cb.var(
             "ReflectResult",
@@ -218,7 +257,7 @@ def _generate_type_str(
     switch_var="field->type",
     default_case="return REFLECT_ERR_TYPE_MISMATCH;",
     guard_clause="if (!field) { return REFLECT_ERR_NULL_PTR; }",
-    requires="CMY_PLUGIN_PRINTER_ENABLED",
+    requires=PLUGIN_ENABLED_MACRO,
     description="""\
 Creates a get_type_as_str for the type for primitives and enums
 By default, enums are enabled
@@ -264,7 +303,7 @@ def handle_field_str(
 
 
 @printer.function(
-    requires="CMY_PLUGIN_PRINTER_ENABLED",
+    requires=PLUGIN_ENABLED_MACRO,
     description="Prints a field, if it implements get_field_as_str",
 )
 def print_field(reflector):
