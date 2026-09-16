@@ -243,7 +243,7 @@ static inline ReflectResult print_field(const void* instance, const StructFieldI
 {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
-#ifdef _MSV_VER
+#ifdef _MSC_VER
     size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
     char buf[CMY_PRINTER_MAX_BUF_LEN];
 #else // May have VLA support
