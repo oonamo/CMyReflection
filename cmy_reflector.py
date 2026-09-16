@@ -1130,7 +1130,7 @@ FieldType get_base_type(FieldType type) {{
             lines.append("")
 
         for inc in sorted(includes):
-            if not inc.startswith("<") and not inc.startwith('"'):
+            if not inc.startswith("<") and not inc.startswith('"'):
                 inc = f"<{inc}>"
             lines.append(f"#include {inc}")
 
