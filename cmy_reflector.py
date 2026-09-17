@@ -1492,7 +1492,7 @@ FieldType get_base_type(FieldType type) {{
         public: bool,
         requires: str | None = None,
         description: str | None = None,
-    ):
+    ) -> FuncDef:
         match = SIG_REGEX.match(c_code)
 
         if match:
@@ -1510,6 +1510,9 @@ FieldType get_base_type(FieldType type) {{
                 self.public_plugin_prototypes[plugin.name].add(func)
             else:
                 self.private_plugin_prototypes[plugin.name].add(func)
+
+            return fdef
+        return None
 
     def generate_plugin_extensions(self) -> str:
         extension_lines = ["// --- Plugin-Generated-Extensions ---"]
@@ -1548,11 +1551,13 @@ FieldType get_base_type(FieldType type) {{
                             type_name
                         )
                         if func_code:
-                            if "extern" not in func_code:
+                            fdef = self._add_proto(p, func_code, False, mapper.requires)
+                            if fdef and "extern" not in fdef.qualifiers:
                                 standalone_funcs.append(func_code)
-                            self._add_proto(p, func_code, False, mapper.requires)
                         if case_code:
-                            switch_cases.append(f"        case {type_enum}: {case_code}")
+                            switch_cases.append(
+                                f"        case {type_enum}: {case_code}"
+                            )
                 if switch_cases:
                     switch_body = "\n".join(switch_cases)
                     router = f"""\
