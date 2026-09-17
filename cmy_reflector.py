@@ -12,7 +12,7 @@ from types import MappingProxyType
 from typing import Any, Callable
 
 SIG_REGEX = re.compile(
-    r"^(?P<prefix>(?:\w+\s+)*)"
+    r"^\s*(?P<prefix>(?:\w+\s+)*)"
     r"(?P<rettype>[a-zA-Z_][\w\s\*]*?)"
     r"\s+(?P<fname>\w+)"
     r"\s*(?P<params>\([^)]*\))",
