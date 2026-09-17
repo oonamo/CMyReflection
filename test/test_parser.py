@@ -867,3 +867,7 @@ def test_SIG_regex():
     assert match
     sig = f"{match.group('rettype')} {match.group('fname')}{match.group('params')}"
     assert sig == "void print(void* a)"
+
+    f2 = "static inline ReflectResult to_json(const void* instance, FIELD_TYPE root_type, char* out_buf, size_t buflen)"
+    match = SIG_REGEX.match(f2)
+    assert match

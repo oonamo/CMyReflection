@@ -9,6 +9,7 @@
 // cmy:reflect
 // cmy:unchecked
 // cmy:no_print
+// cmy:json_serialize_function(serialize_permissions)
 typedef enum
 {
     PERM_CREATE = 1 << 0,
@@ -54,8 +55,8 @@ typedef struct
     // cmy:format("%s")
     char email[64];
 
-    const char* name;
-    char* str;
+    const char *name;
+    char       *str;
 
     // cmy:readonly
     uint64_t account_id;

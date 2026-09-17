@@ -12,9 +12,45 @@ typedef struct
 
 static Session g_session = {0};
 
+ReflectResult
+serialize_permissions(const void *instance, const StructFieldInfo *field, _cmy_json_state *state)
+{
+    if (!instance)
+    {
+        CMY_JSON_WRITE(state, "\"Permissions Bitmask\"");
+        return REFLECT_OK;
+    }
+
+    Permissions   permissions;
+    ReflectResult res = get_field_Permissions(instance, field, &permissions);
+    if (res != REFLECT_OK)
+    {
+        return res;
+    }
+
+    CMY_JSON_WRITE(state, "\"");
+    if (permissions & PERM_CREATE)
+    {
+        CMY_JSON_WRITE(state, "c");
+    }
+    if (permissions & PERM_DELETE)
+    {
+        CMY_JSON_WRITE(state, "d");
+    }
+    if (permissions & PERM_UPDATE)
+    {
+        CMY_JSON_WRITE(state, "u");
+    }
+    CMY_JSON_WRITE(state, "\"");
+
+    return REFLECT_OK;
+}
+
 static User default_acount(void)
 {
     User u = {.username           = "oonamo",
+              .name               = "onam",
+              .str                = "my cool str",
               .email              = "myemail@provider.com",
               .account_id         = 0x13532,
               .password_hash      = "hash123",
@@ -217,7 +253,9 @@ int main()
         .current_parent_type = TYPE_STRUCT_USER,
     };
 
-    printf("{");
-    visit_struct_fields(&user, TYPE_STRUCT_USER, json_account_serializer, &state);
-    printf("\n}\n");
+    char buf[1024];
+    to_json(&user, TYPE_STRUCT_USER, buf, 1024);
+
+    printf("%s", buf);
+    // visit_struct_fields(&user, TYPE_STRUCT_USER, json_account_serializer, &state);
 }
