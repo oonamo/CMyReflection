@@ -1506,6 +1506,8 @@ FieldType get_base_type(FieldType type) {{
                 switch_cases = []
 
                 for type_name, type_enum in self.type_map.items():
+                    if type_name == "unknown":
+                        continue
                     ctype = self.ctypes.get(type_name, type_name)
                     suffix = self.get_type_suffix(type_name)
 

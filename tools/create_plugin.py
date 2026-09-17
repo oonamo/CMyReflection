@@ -151,7 +151,7 @@ def handle_my_enum_member_tag(
 # ----------------------------------------
 @plugin.type_mapper(
     signature="ReflectResult process_field(const void* instance, const StructFieldInfo* field)",
-    guard_clause="if (!instance || !field) { return REFLECT_ERR_NULL_PTR: }",
+    guard_clause="if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }",
     switch_var="field->type",
     default_case="return REFLECT_ERR_TYPE_MISMATCH;",
     requires=PLUGIN_ENABLED_MACRO,
@@ -172,19 +172,24 @@ def map_types(
     builder = CBuilder(reflector)
     func_name = f"process_{suffix}_field"
 
+    val = builder.var(ctype, "val")
+
+    # Ensures correct parameter is being passed for array types
+    val_param = val.name if reflector.is_arr(type_name) else f"&{val.name}"
+
     # Use CBuilder to generate a safer, declarative C Code
     c_lines = [
-        builder.var(ctype, "val"),
+        val,
         builder.var(
             "ReflectResult",
             "res",
             builder.struct_field_getter(
-                suffix, "&val", instance_name="instance", field_name="field"
+                suffix, val_param, instance_name="instance", field_name="field"
             ),
         ).checked("res != REFLECT_OK", "return res;"),
         "",
         "// TODO: Do someething with val!",
-        "(void)val;",
+        f"(void){val.name};",
         "return REFLECT_OK;",
     ]
 
