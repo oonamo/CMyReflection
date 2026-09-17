@@ -1166,29 +1166,21 @@ class Reflector:
     def generate_declarations(self) -> str:
         """Generates the declarations for the metadata"""
         lines = ["// --- Metadata Declarations"]
-        has_field_extension = False
-        has_member_extension = False
         for struct in self.structs.values():
             lines.append(struct.generate_declaration())
-
-            if any(field.plugin_data for field in struct.fields):
-                has_field_extension = True
 
         for enum in self.enums.values():
             lines.append(enum.generate_declaration())
 
-            if any(member.plugin_data for member in enum.members):
-                has_member_extension = True
-
         lines.append("")
 
-        if has_field_extension:
+        if self.field_extension_members:
             lines.append("""\
 #define GET_FIELD_EXT(field_ptr) \\
     ((field_ptr) && (field_ptr)->user_data ? (const StructFieldExtension*)((field_ptr)->user_data) : NULL)
 """)
 
-        if has_member_extension:
+        if self.member_extensions_members:
             lines.append("""\
 #define GET_MEMBER_EXT(member_ptr) \\
     ((member_ptr) && (member_ptr)->user_data ? ((const EnumMemberExtension*)(member_ptr->user_data)) : NULL)
@@ -1600,9 +1592,7 @@ static inline {mapper.signature} {{
                     plugin_code.append(f"#ifdef {mapper.requires}")
                 plugin_code.extend(standalone_funcs)
                 plugin_code.append(router)
-                self._add_proto(
-                    p, router, False, mapper.requires, mapper.description
-                )
+                self._add_proto(p, router, False, mapper.requires, mapper.description)
                 if mapper.requires:
                     plugin_code.append(f"#endif // {mapper.requires}")
 
