@@ -12,21 +12,18 @@ typedef struct
 
 static Session g_session = {0};
 
-ReflectResult
-serialize_permissions(const void *instance, const StructFieldInfo *field, _cmy_json_state *state)
+ReflectResult serialize_permissions(const void            *exact_data_ptr,
+                                    FIELD_TYPE             actual_type,
+                                    const StructFieldInfo *field_ctx,
+                                    _cmy_json_state       *state)
 {
-    if (!instance)
+    if (!exact_data_ptr)
     {
         CMY_JSON_WRITE(state, "\"Permissions Bitmask\"");
         return REFLECT_OK;
     }
 
-    Permissions   permissions;
-    ReflectResult res = get_field_Permissions(instance, field, &permissions);
-    if (res != REFLECT_OK)
-    {
-        return res;
-    }
+    Permissions permissions = *(Permissions *)exact_data_ptr;
 
     CMY_JSON_WRITE(state, "\"");
     if (permissions & PERM_CREATE)
@@ -253,9 +250,15 @@ int main()
         .current_parent_type = TYPE_STRUCT_USER,
     };
 
-    char buf[1024];
-    to_json(&user, TYPE_STRUCT_USER, buf, 1024);
+    char buf[2056];
+    char schema[2056];
+    to_json(&user, TYPE_STRUCT_USER, buf, sizeof(buf));
+    to_json(NULL, TYPE_STRUCT_USER, schema, sizeof(schema));
 
-    printf("%s", buf);
+    printf("%s\n", buf);
+    printf("%s\n", schema);
+
+    printf("ptr of array: %p\n", user.posts);
+    printf("addr of first element: %p", &user.posts[0]);
     // visit_struct_fields(&user, TYPE_STRUCT_USER, json_account_serializer, &state);
 }

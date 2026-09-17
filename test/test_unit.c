@@ -607,8 +607,7 @@ TEST(Unit, Can_Use_Find_Struct_Macro)
 
 TEST(Unit, Can_Use_Find_Enum_Macro)
 {
-    const EnumMemberInfo *f =
-        Find_Enum_Member(EnumMetaData_FromName(BallSize), "BALL_TYPE_SMALL");
+    const EnumMemberInfo *f = Find_Enum_Member(EnumMetaData_FromName(BallSize), "BALL_TYPE_SMALL");
 
     TEST_ASSERT_NOT_NULL(f);
     TEST_ASSERT_EQUAL(BALL_TYPE_SMALL, f->value);
@@ -973,6 +972,17 @@ TEST(Unit, Can_Get_Constant_Types)
     TEST_ASSERT_EQUAL_STRING("TESTING", name);
 }
 
+#define EQ TEST_ASSERT_EQUAL
+
+TEST(Unit, Type_Size_Function_Is_Accurate)
+{
+    EQ(sizeof(int), get_type_size(TYPE_INT));
+    EQ(sizeof(float), get_type_size(TYPE_FLOAT));
+    EQ(sizeof(char), get_type_size(TYPE_CHAR));
+    EQ(sizeof(Game), get_type_size(TYPE_STRUCT_GAME));
+    EQ(sizeof(Vector2 *), get_type_size(TYPE_VECTOR2_PTR));
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -1051,4 +1061,5 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, DynamicArray_Is_Null_Safe)
     RUN_TEST_CASE(Unit, DynamicArray_Rejects_Type_Mismatch)
     RUN_TEST_CASE(Unit, DynamicArray_Handles_Zero_Length)
+    RUN_TEST_CASE(Unit, Type_Size_Function_Is_Accurate)
 }

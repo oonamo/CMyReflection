@@ -424,5 +424,39 @@ FieldType get_base_type(FieldType type) {
     }
 }
 
+size_t get_type_size(FIELD_TYPE type) {
+    switch(type) {
+        case TYPE_ENUM_BALLSIZE: return sizeof(BallSize);
+        case TYPE_VEC2: return sizeof(Vector2);
+        case TYPE_STRUCT_BALL: return sizeof(Ball);
+        case TYPE_STRUCT_GAME: return sizeof(Game);
+        case TYPE_STRUCT_SENSORDATA: return sizeof(SensorData);
+        case TYPE_ENUM_DEVICESTATE: return sizeof(DeviceState);
+        case TYPE_STRUCT_IOTDEVICE: return sizeof(IoTDevice);
+        case TYPE_ENUM_MANAGERPERMISSIONS: return sizeof(ManagerPermissions);
+        case TYPE_STRUCT_DEVICEMANAGER: return sizeof(DeviceManager);
+        case TYPE_DAMAGE_COMPONENT: return sizeof(DamageComponent);
+        case TYPE_FLOAT: return sizeof(float);
+        case TYPE_INT: return sizeof(int);
+        case TYPE_CHAR_PTR: return sizeof(char   *);
+        case TYPE_CHAR: return sizeof(char);
+        case TYPE_UINT8_T: return sizeof(uint8_t);
+        case TYPE_UINT32_T: return sizeof(uint32_t);
+        case TYPE_UNSIGNEDCHAR: return sizeof(unsigned char);
+        case TYPE_LONGLONG: return sizeof(long long);
+        case TYPE_UINT8_T_ARR: return sizeof(uint8_t *);
+        case TYPE_UNSIGNEDCHAR_ARR: return sizeof(unsigned char *);
+        case TYPE_FLOAT_ARR: return sizeof(float *);
+        case TYPE_SIZE_T: return sizeof(size_t);
+        case TYPE_VECTOR2_PTR: return sizeof(Vector2 *);
+        case TYPE_VECTOR2_ARR: return sizeof(Vector2 *);
+        case TYPE_CONSTCHAR_PTR: return sizeof(const char *);
+        case TYPE_CONSTCHAR: return sizeof(const char);
+        case TYPE_CHAR_ARR: return sizeof(char *);
+        case TYPE_UINT64_T: return sizeof(uint64_t);
+        case TYPE_IOTDEVICE_ARR: return sizeof(IoTDevice *);
+        default: return 0;
+    }
+}
 #endif // REFLECTION_IMPLEMENTATION
 

@@ -85,9 +85,8 @@ def handle_struct_serialize_func(reflector: Reflector, enum: CEnum, tag_value: s
 # Type Mappers
 # ----------------------------------------
 @plugin.type_mapper(
-    signature="ReflectResult json_serialize_custom(const void* instance, const StructFieldInfo* field, _cmy_json_state* state)",
-    guard_clause="if (!field) { return REFLECT_ERR_NULL_PTR; }",
-    switch_var="field->type",
+    signature="ReflectResult json_serialize_custom(const void* exact_data_ptr, FIELD_TYPE actual_type, const StructFieldInfo* field_ctx, _cmy_json_state* state)",
+    switch_var="actual_type",
     default_case="return REFLECT_ERR_TYPE_MISMATCH;",
     requires=PLUGIN_ENABLED_MACRO,
     description="Process fields dynamically based on their type",
@@ -105,10 +104,25 @@ def map_custom_serializer(
 
     custom_func = tag
 
-    func_def = f"extern ReflectResult {custom_func}(const void* instance, const StructFieldInfo* field, _cmy_json_state* state);"
-    case_def = f"return {custom_func}(instance, field, state);"
+    func_def = f"extern ReflectResult {custom_func}(const void* exact_data_ptr, FIELD_TYPE actual_type, const StructFieldInfo* field_ctx, _cmy_json_state* state);"
+    case_def = f"return {custom_func}(exact_data_ptr, actual_type, field_ctx, state);"
 
     return (func_def, case_def)
+
+
+@plugin.type_mapper(
+    signature="bool json_is_string_type(FIELD_TYPE type)",
+    switch_var="type",
+    default_case="return false;",
+    requires=PLUGIN_ENABLED_MACRO,
+    description="Checks if a type represents a string",
+)
+def map_json_quotes(
+    reflector: Reflector, type_name: str, type_enum: str, ctype: str, suffix: str
+) -> (str | None, str | None):
+    if type_name in ["char*", "constchar*", "char_arr", "constchar_arr"]:
+        return (None, "return true;")
+    return None
 
 
 @plugin.type_mapper(
@@ -163,14 +177,68 @@ typedef struct
 # ----------------------------------------
 # Standalone Functions
 # ----------------------------------------
+@plugin.function(
+    requires=PLUGIN_ENABLED_MACRO, description="Serialize a value into valid json"
+)
+def json_serialize_value(reflector: Reflector) -> str:
+    return r"""
+static inline void json_serialize_value(const void* exact_data_ptr, FIELD_TYPE actual_type, const StructFieldInfo* field_ctx, _cmy_json_state* state)
+{
+    if (json_serialize_custom(exact_data_ptr, actual_type, field_ctx, state) == REFLECT_OK)
+    {
+        return;
+    }
+
+    StructMetaData meta;
+    if (get_struct_metadata(actual_type, &meta) == REFLECT_OK) {
+        CMY_JSON_WRITE(state, "{\n");
+
+        _cmy_json_state nested_state = *state;
+        nested_state.indent += 4;
+        nested_state.is_first_field = true;
+        nested_state.current_parent_type = actual_type;
+
+        visit_struct_fields(exact_data_ptr, actual_type, _json_traversal_iterator, &nested_state);
+
+        state->_current_offset = nested_state._current_offset;
+        CMY_JSON_WRITE(state, "\n%*s}", state->indent + 4, "");
+        return;
+    }
+
+    char val_buf[256] = "null";
+    if (exact_data_ptr) {
+        StructFieldInfo element_field = *field_ctx;
+        element_field.type = actual_type;
+        element_field.offset = 0;
+
+        if (!json_is_string_type(actual_type)) {
+            element_field.count = 1;
+        }
+
+        if (get_field_as_str(exact_data_ptr, &element_field, val_buf, sizeof(val_buf)) != REFLECT_OK) {
+            snprintf(val_buf, sizeof(val_buf), "%s", "could not get type as str");
+        }
+    } else {
+        snprintf(val_buf, sizeof(val_buf), "%s", get_name_of_type(actual_type));
+    }
+
+    if (!exact_data_ptr || json_needs_quote(actual_type)) {
+        CMY_JSON_WRITE(state, "\"%s\"", val_buf);
+    } else {
+        CMY_JSON_WRITE(state, "%s", val_buf);
+    }
+}
+"""
+
+
 @plugin.function(requires=PLUGIN_ENABLED_MACRO, description="Json Traversal serializer")
 def json_traverse(reflector: Reflector) -> str:
     return r"""
-void _json_traversal_iterator(const void            *base_instance,
+static inline void _json_traversal_iterator(const void            *base_instance,
                              const StructFieldInfo  *field,
                              void                   *user_data)
 {
-    if (!field || !(field->flags & FIELD_ACCESS_WRITE)) { return; }
+    if (!field || !(field->flags & FIELD_ACCESS_READ)) { return; }
 
     _cmy_json_state *state = (_cmy_json_state*)user_data;
     if (!state->is_first_field) {
@@ -182,41 +250,68 @@ void _json_traversal_iterator(const void            *base_instance,
     // Print Key
     CMY_JSON_WRITE(state, "%*s\"%s\": ", state->indent + 4, "", field->name);
 
-    if (json_serialize_custom(base_instance, field, state) == REFLECT_OK)
-    {
+    bool is_string = json_is_string_type(field->type);
+    bool is_dynamic = field->length_field_name != NULL;
+    bool is_arr = (is_dynamic || (field->count > 1)) && !is_string;
+
+    if (is_arr) {
+        if (!base_instance) {
+            const char* type_name = get_name_of_type(get_base_type(field->type));
+            if (is_dynamic) {
+                CMY_JSON_WRITE(state, "[\"%s (dynamic: %s)\"]", type_name, field->length_field_name);
+            } else if (is_arr) {
+                CMY_JSON_WRITE(state, "[\"%s (max: %zu)\"]", type_name, field->count);
+            }
+            return;
+        }
+
+        size_t array_len = 0;
+        const void* array_ptr = NULL;
+        FIELD_TYPE base_type = get_base_type(field->type);
+        size_t base_size = get_type_size(base_type);
+
+        if (is_dynamic) {
+            if (get_dynamic_array_length(base_instance, state->current_parent_type, field, &array_len) != REFLECT_OK) {
+                CMY_JSON_WRITE(state, "null");
+                return;
+            }
+            if (get_field_value(base_instance, field, (void*)&array_ptr, sizeof(void*)) != REFLECT_OK)
+            {
+                CMY_JSON_WRITE(state, "null");
+                return;
+            }
+        } else {
+            array_len = field->count;
+            array_ptr = (const char*)base_instance + field->offset;
+        }
+
+        CMY_JSON_WRITE(state, "[\n");
+        _cmy_json_state arr_state = *state;
+        arr_state.indent += 4;
+        for (size_t i = 0; i < array_len; i++)
+        {
+            CMY_JSON_WRITE(&arr_state, "%*s", arr_state.indent + 4, "");
+            void* ith_element = (char*)array_ptr + (i * base_size);
+
+            if (!ith_element) {
+                CMY_JSON_WRITE(&arr_state, "null");
+            } else {
+                json_serialize_value(ith_element, base_type, field, &arr_state);
+            }
+
+            if (i < array_len - 1) {
+                CMY_JSON_WRITE(&arr_state, ",\n");
+            } else {
+                CMY_JSON_WRITE(&arr_state, "\n");
+            }
+        }
+        state->_current_offset = arr_state._current_offset;
+        CMY_JSON_WRITE(state, "%*s]", state->indent + 4, "");
+
         return;
-    }
-
-    StructMetaData meta;
-
-    // If is struct
-    if (get_struct_metadata(field->type, &meta) == REFLECT_OK) {
-        CMY_JSON_WRITE(state, "{\n");
-
-        _cmy_json_state nested_state = *state;
-        nested_state.indent += 4;
-        nested_state.is_first_field = true;
-        nested_state.current_parent_type = field->type;
-
-        const void* nested_instance = base_instance ? ((const char*)base_instance + field->offset) : NULL;
-        visit_struct_fields(nested_instance, field->type, _json_traversal_iterator, &nested_state);
-
-        state->_current_offset = nested_state._current_offset;
-        CMY_JSON_WRITE(state, "\n%*s}", state->indent + 4, "");
-        return;
-    }
-
-    char val_buf[256] = "null";
-    if (base_instance) {
-        get_field_as_str(base_instance, field, val_buf, sizeof(val_buf));
     } else {
-        snprintf(val_buf, sizeof(val_buf), "%s", get_name_of_type(field->type));
-    }
-
-    if (json_needs_quote(field->type)) {
-        CMY_JSON_WRITE(state, "\"%s\"", val_buf);
-    } else {
-        CMY_JSON_WRITE(state, "%s", val_buf);
+        const void* data_ptr = base_instance ? ((const char*)base_instance + field->offset) : NULL;
+        json_serialize_value(data_ptr, field->type, field, state);
     }
 }
 """
