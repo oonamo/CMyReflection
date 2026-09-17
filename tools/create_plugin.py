@@ -1,8 +1,10 @@
 import os
+import sys
 
 CYAN = "\033[96m"
 GREEN = "\033[92m"
 YELLOW = "\033[93m"
+RED = "\033[31m"
 BOLD = "\033[1m"
 RESET = "\033[0m"
 
@@ -28,7 +30,7 @@ def ask_bool(question: str, default: str = None):
 
 
 def gen_template():
-    print(f"{GREEN}CMyReflection Plugin Generator{RESET}\n")
+    print(f"{BOLD}{GREEN}CMyReflection Plugin Generator{RESET}\n")
 
     name = ask("Plugin Name", "MyPlugin")
     version = ask("Version", "0.0.0")
@@ -39,6 +41,11 @@ def gen_template():
     target_dir = os.path.join(os.path.dirname(__file__), "..", "plugins")
     os.makedirs(target_dir, exist_ok=True)
     filepath = os.path.join(target_dir, filename)
+
+    if os.path.exists(filepath):
+        if not ask_bool(f"A file exists in {filepath}, Overwrite it?", False):
+            print(f"\n{BOLD}{RED}Exiting as file already exists.{RESET}")
+            sys.exit(1)
 
     file_header = f"""\
 import cmy_reflector
@@ -222,6 +229,12 @@ cmy_reflector.add(plugin)
 """
         )
 
+    print(f"\n{GREEN}✔ Plugin successfully generated at:{RESET} {filepath}\n")
+
 
 if __name__ == "__main__":
-    gen_template()
+    try:
+        gen_template()
+    except KeyboardInterrupt:
+        print(f"\n{YELLOW}Plugin Generation Cancelled{RESET}")
+        sys.exit(0)
