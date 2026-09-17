@@ -1548,10 +1548,11 @@ FieldType get_base_type(FieldType type) {{
                             type_name
                         )
                         if func_code:
-                            standalone_funcs.append(func_code)
+                            if "extern" not in func_code:
+                                standalone_funcs.append(func_code)
                             self._add_proto(p, func_code, False, mapper.requires)
                         if case_code:
-                            switch_cases.append(f"      case {type_enum}: {case_code}")
+                            switch_cases.append(f"        case {type_enum}: {case_code}")
                 if switch_cases:
                     switch_body = "\n".join(switch_cases)
                     router = f"""\
