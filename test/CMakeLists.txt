@@ -96,3 +96,6 @@ endfunction()
 add_compile_test(strict_compile_test reflection_impl.c dummy.c)
 add_compile_test(test_defaults use_defaults.c)
 add_compile_test(use_custom_enum use_custom_enum.c)
+
+
+add_subdirectory(plugins)
