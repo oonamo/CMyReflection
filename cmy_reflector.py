@@ -1157,6 +1157,8 @@ class Reflector:
 
         lines.append(self.generate_basetype_caster())
 
+        lines.append(self.generate_type_size_function())
+
         lines.append("#endif // REFLECTION_IMPLEMENTATION")
 
         return "\n".join(lines)
@@ -1347,6 +1349,23 @@ ReflectResult safe_set_field(void* instance, const StructFieldInfo* field, const
 }}
 """
         return template
+
+    def generate_type_size_function(self) -> str:
+        lines = [
+            "size_t get_type_size(FIELD_TYPE type) {",
+            "    switch(type) {",
+        ]
+        for type_name, type_enum in self.type_map.items():
+            if type_name == "unknown":
+                continue
+            ctype = self.ctypes.get(type_name, type_name)
+            lines.append(f"        case {type_enum}: return sizeof({ctype});")
+
+        lines.append("        default: return 0;")
+        lines.append("    }")
+        lines.append("}")
+
+        return "\n".join(lines)
 
     def generate_basetype_caster(self) -> str:
         switch_cases = []

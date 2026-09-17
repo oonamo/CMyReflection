@@ -71,7 +71,7 @@ typedef struct
     size_t                 count;  /*!< Number of members in struct */
 } StructMetaData;
 
-#define StructMetaData_FromName(StructName)                                                              \
+#define StructMetaData_FromName(StructName)                                                        \
     (StructMetaData)                                                                               \
     {                                                                                              \
         StructName##_Metadata, StructName##_FieldCount                                             \
@@ -240,6 +240,15 @@ find_member(const EnumMemberInfo *meta, size_t member_count, const char *name);
  * @return String name of the member, NULL if not found
  */
 const char *get_enum_member_name(const EnumMemberInfo *meta, size_t member_count, int value);
+
+/**
+ * @brief Get's the size of the type
+ *
+ * @param type [in] Type to check size
+ *
+ * @return The size of the type, or 0 if not found
+ */
+size_t get_type_size(FIELD_TYPE type);
 
 /**
  * @brief Safely sets a field value
