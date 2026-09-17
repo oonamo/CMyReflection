@@ -225,7 +225,7 @@ static inline ReflectResult plugin_do_work(const void* instance, const StructFie
 # ----------------------------------------
 # Registration
 # ----------------------------------------
-cmy_reflector.add(plugin)
+cmy_reflector.add_plugin(plugin)
 """
         )
 
