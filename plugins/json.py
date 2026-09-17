@@ -29,6 +29,19 @@ plugin = Plugin(
     macros=[
         Macro.define(PLUGIN_DEFINE_MACRO, "1", f"{PLUGIN_NAME} plugin is available"),
         Macro.default(PLUGIN_ENABLED_MACRO, "1", f"Enables the {PLUGIN_NAME} plugin"),
+        Macro.raw(
+            "CMY_JSON_DEBUG",
+            """\
+#ifndef CMY_JSON_DEBUG
+    #ifdef NDEBUG
+        #define CMY_JSON_DEBUG 1
+    #else
+        #define CMY_JSON_DEBUG 0
+    #endif
+#endif
+""",
+            "Adds debug information during certain operations",
+        ),
         # Add Custom Macros Here
         # Macro.raw, Macro.include, Macro.default, Macro.define,
     ],
@@ -206,6 +219,9 @@ static inline void json_serialize_value(const void* exact_data_ptr, FIELD_TYPE a
     }
 
     char val_buf[256] = "null";
+    bool force_quotes = false;
+    bool is_explicit_null = false;
+
     if (exact_data_ptr) {
         StructFieldInfo element_field = *field_ctx;
         element_field.type = actual_type;
@@ -216,13 +232,22 @@ static inline void json_serialize_value(const void* exact_data_ptr, FIELD_TYPE a
         }
 
         if (get_field_as_str(exact_data_ptr, &element_field, val_buf, sizeof(val_buf)) != REFLECT_OK) {
-            snprintf(val_buf, sizeof(val_buf), "%s", "could not get type as str");
+#if CMY_JSON_DEBUG
+            snprintf(val_buf, sizeof(val_buf), "<unsupported: %s at %p>", get_name_of_type(actual_type), exact_data_ptr);
+#else
+            snprintf(val_buf, sizeof(val_buf), "<unsupported: %s>", get_name_of_type(actual_type));
+#endif
+            force_quotes = true;
+        }
+        else if (strcmp(val_buf, "(null)") == 0) {
+            snprintf(val_buf, sizeof(val_buf), "null");
+            is_explicit_null = true;
         }
     } else {
         snprintf(val_buf, sizeof(val_buf), "%s", get_name_of_type(actual_type));
     }
 
-    if (!exact_data_ptr || json_needs_quote(actual_type)) {
+    if (force_quotes || !exact_data_ptr || (json_needs_quote(actual_type) && !is_explicit_null)) {
         CMY_JSON_WRITE(state, "\"%s\"", val_buf);
     } else {
         CMY_JSON_WRITE(state, "%s", val_buf);
