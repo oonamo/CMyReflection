@@ -24,7 +24,7 @@ plugin = Plugin(
     version=PLUGIN_VERSION,
     maintainers=PLUGIN_MAINTAINERS,
     description=PLUGIN_DESCRIPTION,
-    includes=["<stdbool.h>", "<stdint.h>"],
+    includes=["<stdbool.h>", "<stdint.h>", "<stdarg.h>"],
     depends_on=["Printer"],
     macros=[
         Macro.define(PLUGIN_DEFINE_MACRO, "1", f"{PLUGIN_NAME} plugin is available"),
@@ -164,26 +164,27 @@ def map_needs_quote(
 @plugin.emit_header
 def create_struct(reflector: Reflector):
     return r"""
+
+typedef void (*CMyJsonFlushCb)(const char* chunk, size_t len, void* ctx);
+
+typedef bool (*CMyJsonResizeCb)(char** buffer, size_t* capacity, size_t needed_size, void* ctx);
+
 typedef struct
 {
+    char* _buf;
+    size_t _capacity;
+    size_t _current_offset;
+
     int indent;
     bool is_first_field;
     FIELD_TYPE current_parent_type;
 
-    char* _buf;
-    size_t _max_len;
-    size_t _current_offset;
+    CMyJsonFlushCb flush_cb;
+    CMyJsonResizeCb resize_cb;
+    void* cb_ctx;
 } _cmy_json_state;
 
-#define CMY_JSON_WRITE(state_ptr, fmt, ...)                               \
-        do {                                                              \
-            if ((state_ptr)->_current_offset < (state_ptr)->_max_len) {   \
-                (state_ptr)->_current_offset += snprintf(                 \
-                    (state_ptr)->_buf + (state_ptr)->_current_offset,     \
-                    (state_ptr)->_max_len - (state_ptr)->_current_offset, \
-                    fmt, ##__VA_ARGS__);                                  \
-            }                                                             \
-        } while(0);
+#define CMY_JSON_WRITE(state_ptr, ...) json_write_internal(state_ptr, __VA_ARGS__)
 """.strip()
 
 
@@ -252,6 +253,53 @@ static inline void json_serialize_value(const void* exact_data_ptr, FIELD_TYPE a
     } else {
         CMY_JSON_WRITE(state, "%s", val_buf);
     }
+}
+"""
+
+
+@plugin.function(requires=PLUGIN_ENABLED_MACRO, description="Internal Writing Function")
+def json_write_internal(reflector: Reflector) -> str:
+    return r"""
+static inline void json_write_internal(_cmy_json_state* state, const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+
+    va_list args_copy;
+    va_copy(args_copy, args);
+    int written = vsnprintf(state->_buf + state->_current_offset,
+                           state->_capacity - state->_current_offset,
+                           fmt, args_copy);
+    va_end(args_copy);
+    if (written < 0) {
+        va_end(args);
+        return;
+    }
+
+    // +1 for \0
+    size_t needed_capacity = state->_current_offset + written + 1;
+
+    if (needed_capacity > state->_capacity) {
+        if (state->flush_cb) {
+            state->flush_cb(state->_buf, state->_current_offset, state->cb_ctx);
+            state->_current_offset = 0;
+
+            vsnprintf(state->_buf, state->_capacity, fmt, args);
+            state->_current_offset = written;
+        } else if (state->resize_cb) {
+            if (state->resize_cb(&state->_buf, &state->_capacity, needed_capacity, state->cb_ctx)) {
+                int written = snprintf(state->_buf + state->_current_offset,
+                           state->_capacity - state->_current_offset,
+                           fmt, args);
+                state->_current_offset += written;
+            }
+            // TODO: Signal error?
+        }
+    } else {
+        state->_current_offset += written;
+    }
+
+    va_end(args);
 }
 """
 
@@ -357,7 +405,7 @@ static inline ReflectResult to_json(const void* instance, FIELD_TYPE root_type, 
         .is_first_field = true,
         .current_parent_type = root_type,
         ._buf = out_buf,
-        ._max_len = buflen,
+        ._capacity = buflen,
         ._current_offset = 0,
     };
 

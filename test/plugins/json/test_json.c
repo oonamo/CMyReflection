@@ -15,7 +15,7 @@ TEST_SETUP(Json)
 {
     memset(json_buffer, 0, sizeof(json_buffer));
     state._buf                = json_buffer;
-    state._max_len            = sizeof(json_buffer);
+    state._capacity           = sizeof(json_buffer);
     state._current_offset     = 0;
     state.indent              = 0;
     state.is_first_field      = true;
@@ -54,7 +54,7 @@ ReflectResult serialize_interactions(const void            *exact_data_ptr,
 
     if (interactions & POST_FRIENDS_ONLY)
     {
-        CMY_JSON_WRITE(lstate, "f")
+        CMY_JSON_WRITE(lstate, "f");
     }
     else
     {
@@ -63,7 +63,7 @@ ReflectResult serialize_interactions(const void            *exact_data_ptr,
 
     if (interactions & POST_DOWNLOAD)
     {
-        CMY_JSON_WRITE(lstate, "d")
+        CMY_JSON_WRITE(lstate, "d");
     }
     else
     {

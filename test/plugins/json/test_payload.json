@@ -1,36 +1,36 @@
 {
-        "username": "oonamo",
-        "email": "test@domain.com",
-        "bio": "EE",
-        "status": "Active",
-        "settings": {
-            "prefers_dark_mode": true,
-            "login_attempts": 5
+    "username": "oonamo",
+    "email": "test@domain.com",
+    "bio": "EE",
+    "status": "Active",
+    "settings": {
+        "prefers_dark_mode": true,
+        "login_attempts": 5
+    },
+    "is_verified": true,
+    "post_count": 2,
+    "posts": [
+        {
+            "title": "Hello World",
+            "likes": 100,
+            "interactions": "sf-"
         },
-        "is_verified": true,
-        "post_count": 2,
-        "posts": [
-            {
-                "title": "Hello World",
-                "likes": 100,
-                "interactions": "sf-"
-            },
-            {
-                "title": "CMyReflection",
-                "likes": 250,
-                "interactions": "s-d"
-            }
-        ],
-        "friends": [
-            "Alice",
-            "Bob",
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
-        ]
-    }
+        {
+            "title": "CMyReflection",
+            "likes": 250,
+            "interactions": "s-d"
+        }
+    ],
+    "friends": [
+        "Alice",
+        "Bob",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    ]
+}
