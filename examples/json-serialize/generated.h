@@ -344,12 +344,12 @@ static inline ReflectResult get_field_char_arr_as_str(const void* instance, cons
     }
 
     #ifdef _MSC_VER
+        if (field->count > CMY_PRINTER_MAX_BUF_LEN) { return REFLECT_ERR_OUT_OF_BOUNDS; }
         char var[CMY_PRINTER_MAX_BUF_LEN];;
-        size_t arr_len = CMY_PRINTER_MAX_BUF_LEN;
     #else
         char var[field->count];
-        size_t arr_len = field->count;
     #endif
+    size_t arr_len = field->count;
 
     ReflectResult res = get_field_char_arr(instance, field, var, arr_len);;
     if (res != REFLECT_OK) {
