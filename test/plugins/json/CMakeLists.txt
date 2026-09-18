@@ -4,6 +4,7 @@ FetchContent_MakeAvailable(unity)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 set(GENERATED_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/json.generated.h")
 set(REFLECTION_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/test_json_types.h")
+file(GLOB_RECURSE PLUGIN_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/plugins/*.py")
 
 set(PRINT_EXT
   "${PROJECT_SOURCE_DIR}/plugins/print.py"
@@ -15,7 +16,7 @@ set(JSON_EXT
 add_custom_command(
   OUTPUT ${GENERATED_HEADER}
   COMMAND Python3::Interpreter "${PROJECT_SOURCE_DIR}/cmy_reflector.py" "${REFLECTION_SOURCE_FILES}" -o "${GENERATED_HEADER}" --plugin ${PRINT_EXT} --plugin ${JSON_EXT}
-  DEPENDS "${PROJECT_SOURCE_DIR}/cmy_reflector.py" ${REFLECTION_SOURCE_FILES}
+  DEPENDS "${PROJECT_SOURCE_DIR}/cmy_reflector.py" ${REFLECTION_SOURCE_FILES} ${PLUGIN_FILES}
   COMMENT "Generating C reflection data..."
 )
 

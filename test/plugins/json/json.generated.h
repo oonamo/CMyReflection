@@ -9,13 +9,20 @@
 #define CMYREFLECTION_AUTOGEN_H
 #define CMYREFLECTION_REGISTRY
 typedef enum {
+    TYPE_BOOL,
     TYPE_CHAR,
     TYPE_CHAR_ARR,
     TYPE_CHAR_PTR,
-    TYPE_POST,
+    TYPE_CHAR_PTR_ARR,
+    TYPE_ENUM_ACCOUNTSTATE,
+    TYPE_ENUM_POSTINTERACTION,
+    TYPE_INT,
     TYPE_POST_PTR,
     TYPE_SIZE_T,
+    TYPE_STRUCT_ACCOUNTSETTINGS,
+    TYPE_STRUCT_POST,
     TYPE_STRUCT_USER,
+    TYPE_UINT32_T,
     TYPE_UNKNOWN,
 } FieldType;
 
@@ -41,7 +48,8 @@ typedef enum {
  *    - Provides macro: CMY_PRINTF (Default: printf) - Defines the printf implementation
  *    - Provides router: ReflectResult get_field_as_str(..) - Creates a get_type_as_str for the type for primitives and enums
  *      By default, enums are enabled
- *      + Types: char_arr, char, char*, size_t
+ *      + Types: PostInteraction, AccountState, char*, char, uint32_t, bool,
+ *        int, char_arr, size_t
  *    - Provides function: ReflectResult print_field(...) - Prints a field, if it implements get_field_as_str
  *  -> json (v0.0.1) by oonamo - A json serializer plugin
  *    - Provides tag: @json_serialize_function(value) (Structs) - Function to call to serialize this type
@@ -60,12 +68,13 @@ typedef enum {
  *      +  void MyCoolEnum_Serializer(const void* instance, const StructFieldInfo* field, _cmy_json_state* state);
  *    - Provides macro: CMY_HAS_JSON_PLUGIN (Value: 1) - json plugin is available
  *    - Provides macro: CMY_PLUGIN_JSON_ENABLED (Default: 1) - Enables the json plugin
+ *    - Provides macro: CMY_JSON_DEBUG  - Adds debug information during certain operations
  *    - Provides router: ReflectResult json_serialize_custom(..) - Process fields dynamically based on their type
- (No types mapped)
+ *      + Types: PostInteraction
  *    - Provides router: bool json_is_string_type(..) - Checks if a type represents a string
- *      + Types: char_arr, char*
+ *      + Types: char*, char_arr
  *    - Provides router: bool json_needs_quote(..) - Dynamically determines if the type requires JSON quotes
- *      + Types: char_arr, char*
+ *      + Types: PostInteraction, AccountState, char*, char_arr
  *    - Provides function: void _json_traversal_iterator(...) - Json Traversal serializer
  *    - Provides function: void json_serialize_value(...) - Serialize a value into valid json
  *    - Provides function: ReflectResult to_json(...) - Converts a given type to a json string
@@ -111,17 +120,30 @@ typedef struct
 #ifndef CMY_PLUGIN_JSON_ENABLED
 #    define CMY_PLUGIN_JSON_ENABLED 1
 #endif //CMY_PLUGIN_JSON_ENABLED
+#ifndef CMY_JSON_DEBUG
+    #ifdef NDEBUG
+        #define CMY_JSON_DEBUG 1
+    #else
+        #define CMY_JSON_DEBUG 0
+    #endif
+#endif
+
 
 
 // ########################################
 // Printer Declarations
 // ########################################
 #ifdef CMY_PLUGIN_PRINTER_ENABLED
+static inline  ReflectResult get_field_AccountState_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline  ReflectResult get_field_PostInteraction_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline  ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline  ReflectResult get_field_bool_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline  ReflectResult get_field_char_arr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline  ReflectResult get_field_char_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline  ReflectResult get_field_int_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline  ReflectResult get_field_size_t_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline  ReflectResult get_field_str_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline  ReflectResult get_field_u32_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline  ReflectResult print_field(const void* instance, const StructFieldInfo* field);
 #endif // CMY_PLUGIN_PRINTER_ENABLED
 
@@ -136,6 +158,7 @@ static inline  bool json_is_string_type(FIELD_TYPE type);
 static inline  bool json_needs_quote(FIELD_TYPE type);
 static inline  ReflectResult json_serialize_custom(const void* exact_data_ptr, FIELD_TYPE actual_type, const StructFieldInfo* field_ctx, _cmy_json_state* state);
 static inline  void json_serialize_value(const void* exact_data_ptr, FIELD_TYPE actual_type, const StructFieldInfo* field_ctx, _cmy_json_state* state);
+extern  ReflectResult serialize_interactions(const void* exact_data_ptr, FIELD_TYPE actual_type, const StructFieldInfo* field_ctx, _cmy_json_state* state);
 static inline  ReflectResult to_json(const void* instance, FIELD_TYPE root_type, char* out_buf, size_t buflen);
 #endif // CMY_PLUGIN_JSON_ENABLED
 
@@ -157,8 +180,19 @@ typedef struct {
 #endif // CMY_PLUGIN_PRINTER_ENABLED
 } EnumMemberExtension;
 // --- Metadata Declarations
+extern const StructFieldInfo Post_Metadata[];
+extern const size_t Post_FieldCount;
+extern const StructFieldInfo AccountSettings_Metadata[];
+extern const size_t AccountSettings_FieldCount;
 extern const StructFieldInfo User_Metadata[];
 extern const size_t User_FieldCount;
+extern const EnumMemberInfo PostInteraction_Members[];
+extern const size_t PostInteraction_MemberCount;
+extern const EnumMemberInfo AccountState_Members[];
+extern const size_t AccountState_MemberCount;
+extern const EnumMemberExtension ext_AccountState_ACCOUNT_ACTIVE;
+extern const EnumMemberExtension ext_AccountState_ACCOUNT_INACTIVE;
+extern const EnumMemberExtension ext_AccountState_ACCOUNT_DELETED;
 
 #define GET_FIELD_EXT(field_ptr) \
     ((field_ptr) && (field_ptr)->user_data ? (const StructFieldExtension*)((field_ptr)->user_data) : NULL)
@@ -167,17 +201,52 @@ extern const size_t User_FieldCount;
     ((member_ptr) && (member_ptr)->user_data ? ((const EnumMemberExtension*)(member_ptr->user_data)) : NULL)
 
 // --- Auto-Generated Enum Validators ---
+
+// PostInteraction is unchecked
+
+static inline bool is_valid_AccountState(AccountState value) {
+    switch(value) {
+      case ACCOUNT_ACTIVE:
+      case ACCOUNT_INACTIVE:
+      case ACCOUNT_DELETED:
+           return true;
+    default:
+        return false;
+    }
+}
+
+DEFINE_FIELD_SETTER(PostInteraction, TYPE_ENUM_POSTINTERACTION, PostInteraction)
+DEFINE_FIELD_GETTER(PostInteraction, TYPE_ENUM_POSTINTERACTION, PostInteraction)
+
+DEFINE_FIELD_SETTER(Post, TYPE_STRUCT_POST, Post)
+DEFINE_FIELD_GETTER(Post, TYPE_STRUCT_POST, Post)
+
+DEFINE_ENUM_SETTER(AccountState, TYPE_ENUM_ACCOUNTSTATE, AccountState, is_valid_AccountState)
+DEFINE_FIELD_GETTER(AccountState, TYPE_ENUM_ACCOUNTSTATE, AccountState)
+
+DEFINE_FIELD_SETTER(AccountSettings, TYPE_STRUCT_ACCOUNTSETTINGS, AccountSettings)
+DEFINE_FIELD_GETTER(AccountSettings, TYPE_STRUCT_ACCOUNTSETTINGS, AccountSettings)
+
 DEFINE_FIELD_SETTER(User, TYPE_STRUCT_USER, User)
 DEFINE_FIELD_GETTER(User, TYPE_STRUCT_USER, User)
 
-DEFINE_ARRAY_SETTER(char_arr, TYPE_CHAR_ARR, char *, char)
-DEFINE_ARRAY_GETTER(char_arr, TYPE_CHAR_ARR, char *, char)
+DEFINE_FIELD_SETTER(str, TYPE_CHAR_PTR, char           *)
+DEFINE_FIELD_GETTER(str, TYPE_CHAR_PTR, char           *)
 
 DEFINE_FIELD_SETTER(char, TYPE_CHAR, char)
 DEFINE_FIELD_GETTER(char, TYPE_CHAR, char)
 
-DEFINE_FIELD_SETTER(str, TYPE_CHAR_PTR, char*)
-DEFINE_FIELD_GETTER(str, TYPE_CHAR_PTR, char*)
+DEFINE_FIELD_SETTER(u32, TYPE_UINT32_T, uint32_t)
+DEFINE_FIELD_GETTER(u32, TYPE_UINT32_T, uint32_t)
+
+DEFINE_FIELD_SETTER(bool, TYPE_BOOL, bool)
+DEFINE_FIELD_GETTER(bool, TYPE_BOOL, bool)
+
+DEFINE_FIELD_SETTER(int, TYPE_INT, int)
+DEFINE_FIELD_GETTER(int, TYPE_INT, int)
+
+DEFINE_ARRAY_SETTER(char_arr, TYPE_CHAR_ARR, char *, char)
+DEFINE_ARRAY_GETTER(char_arr, TYPE_CHAR_ARR, char *, char)
 
 DEFINE_FIELD_SETTER(size_t, TYPE_SIZE_T, size_t)
 DEFINE_FIELD_GETTER(size_t, TYPE_SIZE_T, size_t)
@@ -185,8 +254,8 @@ DEFINE_FIELD_GETTER(size_t, TYPE_SIZE_T, size_t)
 DEFINE_FIELD_SETTER(Post_ptr, TYPE_POST_PTR, Post *)
 DEFINE_FIELD_GETTER(Post_ptr, TYPE_POST_PTR, Post *)
 
-DEFINE_FIELD_SETTER(Post, TYPE_POST, Post)
-DEFINE_FIELD_GETTER(Post, TYPE_POST, Post)
+DEFINE_ARRAY_SETTER(str_arr, TYPE_CHAR_PTR_ARR, char * *, char  *)
+DEFINE_ARRAY_GETTER(str_arr, TYPE_CHAR_PTR_ARR, char * *, char  *)
 
 DEFINE_DYNAMIC_ARRAY_SETTER(User_posts, TYPE_POST_PTR, Post *, Post, TYPE_STRUCT_USER)
 DEFINE_DYNAMIC_ARRAY_GETTER(User_posts, TYPE_POST_PTR, Post *, Post)
@@ -220,20 +289,53 @@ static inline ReflectResult print_field(const void* instance, const StructFieldI
 
 #endif // CMY_PLUGIN_PRINTER_ENABLED
 #ifdef CMY_PLUGIN_PRINTER_ENABLED
-static inline ReflectResult get_field_char_arr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+static inline ReflectResult get_field_PostInteraction_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
     if (!instance || !field) {
         return REFLECT_ERR_NULL_PTR;
     }
 
-    #ifdef _MSC_VER
-        char var[CMY_PRINTER_MAX_BUF_LEN];;
-        size_t arr_len = CMY_PRINTER_MAX_BUF_LEN;
-    #else
-        char var[field->count];
-        size_t arr_len = field->count;
-    #endif
+    PostInteraction var;
+    ReflectResult res = get_field_PostInteraction(instance, field, &var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
 
-    ReflectResult res = get_field_char_arr(instance, field, var, arr_len);;
+    const EnumMetaData meta = EnumMetaData_FromName(PostInteraction);
+    const char* enum_val = get_enum_member_name(meta.members, meta.count, var);
+    const EnumMemberInfo* info = (enum_val) ? Find_Enum_Member(meta, enum_val) : NULL;
+    const EnumMemberExtension* ext = GET_MEMBER_EXT(info);
+
+    const char* fmt = (ext && ext->display) ? ext->display : (enum_val ? enum_val : "<unknown>");
+    snprintf(out_buf, buflen, "%s", fmt);
+    return REFLECT_OK;
+}
+
+static inline ReflectResult get_field_AccountState_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!instance || !field) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    AccountState var;
+    ReflectResult res = get_field_AccountState(instance, field, &var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    const EnumMetaData meta = EnumMetaData_FromName(AccountState);
+    const char* enum_val = get_enum_member_name(meta.members, meta.count, var);
+    const EnumMemberInfo* info = (enum_val) ? Find_Enum_Member(meta, enum_val) : NULL;
+    const EnumMemberExtension* ext = GET_MEMBER_EXT(info);
+
+    const char* fmt = (ext && ext->display) ? ext->display : (enum_val ? enum_val : "<unknown>");
+    snprintf(out_buf, buflen, "%s", fmt);
+    return REFLECT_OK;
+}
+
+static inline ReflectResult get_field_str_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    char           * var;
+    ReflectResult res = get_field_str(instance, field, &var);;
     if (res != REFLECT_OK) {
         return res;
     }
@@ -261,11 +363,70 @@ static inline ReflectResult get_field_char_as_str(const void* instance, const St
     return REFLECT_OK;
 }
 
-static inline ReflectResult get_field_str_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+static inline ReflectResult get_field_u32_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
-    char* var;
-    ReflectResult res = get_field_str(instance, field, &var);;
+    uint32_t var;
+    ReflectResult res = get_field_u32(instance, field, &var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
+
+    const char* fmt = (ext && ext->format) ? ext->format : "%" PRIu32;
+    snprintf(out_buf, buflen, fmt, var);
+    return REFLECT_OK;
+}
+
+static inline ReflectResult get_field_bool_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!instance || !field) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    bool var;
+    ReflectResult res = get_field_bool(instance, field, &var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
+    (void)ext;
+
+    snprintf(out_buf, buflen, "%s", var ? "true" : "false");
+    return REFLECT_OK;
+}
+
+static inline ReflectResult get_field_int_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+
+    int var;
+    ReflectResult res = get_field_int(instance, field, &var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
+
+    const char* fmt = (ext && ext->format) ? ext->format : "%d";
+    snprintf(out_buf, buflen, fmt, var);
+    return REFLECT_OK;
+}
+
+static inline ReflectResult get_field_char_arr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!instance || !field) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    #ifdef _MSC_VER
+        char var[CMY_PRINTER_MAX_BUF_LEN];;
+        size_t arr_len = CMY_PRINTER_MAX_BUF_LEN;
+    #else
+        char var[field->count];
+        size_t arr_len = field->count;
+    #endif
+
+    ReflectResult res = get_field_char_arr(instance, field, var, arr_len);;
     if (res != REFLECT_OK) {
         return res;
     }
@@ -296,9 +457,14 @@ static inline ReflectResult get_field_size_t_as_str(const void* instance, const 
 static inline ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
     if (!field) { return REFLECT_ERR_NULL_PTR; }
     switch(field->type) {
-        case TYPE_CHAR_ARR: return get_field_char_arr_as_str(instance, field, out_buf, buflen);
-        case TYPE_CHAR: return get_field_char_as_str(instance, field, out_buf, buflen);
+        case TYPE_ENUM_POSTINTERACTION: return get_field_PostInteraction_as_str(instance, field, out_buf, buflen);
+        case TYPE_ENUM_ACCOUNTSTATE: return get_field_AccountState_as_str(instance, field, out_buf, buflen);
         case TYPE_CHAR_PTR: return get_field_str_as_str(instance, field, out_buf, buflen);
+        case TYPE_CHAR: return get_field_char_as_str(instance, field, out_buf, buflen);
+        case TYPE_UINT32_T: return get_field_u32_as_str(instance, field, out_buf, buflen);
+        case TYPE_BOOL: return get_field_bool_as_str(instance, field, out_buf, buflen);
+        case TYPE_INT: return get_field_int_as_str(instance, field, out_buf, buflen);
+        case TYPE_CHAR_ARR: return get_field_char_arr_as_str(instance, field, out_buf, buflen);
         case TYPE_SIZE_T: return get_field_size_t_as_str(instance, field, out_buf, buflen);
         default: return REFLECT_ERR_TYPE_MISMATCH;
     }
@@ -335,6 +501,9 @@ static inline void json_serialize_value(const void* exact_data_ptr, FIELD_TYPE a
     }
 
     char val_buf[256] = "null";
+    bool force_quotes = false;
+    bool is_explicit_null = false;
+
     if (exact_data_ptr) {
         StructFieldInfo element_field = *field_ctx;
         element_field.type = actual_type;
@@ -345,13 +514,22 @@ static inline void json_serialize_value(const void* exact_data_ptr, FIELD_TYPE a
         }
 
         if (get_field_as_str(exact_data_ptr, &element_field, val_buf, sizeof(val_buf)) != REFLECT_OK) {
-            snprintf(val_buf, sizeof(val_buf), "%s", "could not get type as str");
+#if CMY_JSON_DEBUG
+            snprintf(val_buf, sizeof(val_buf), "<unsupported: %s at %p>", get_name_of_type(actual_type), exact_data_ptr);
+#else
+            snprintf(val_buf, sizeof(val_buf), "<unsupported: %s>", get_name_of_type(actual_type));
+#endif
+            force_quotes = true;
+        }
+        else if (strcmp(val_buf, "(null)") == 0) {
+            snprintf(val_buf, sizeof(val_buf), "null");
+            is_explicit_null = true;
         }
     } else {
         snprintf(val_buf, sizeof(val_buf), "%s", get_name_of_type(actual_type));
     }
 
-    if (!exact_data_ptr || json_needs_quote(actual_type)) {
+    if (force_quotes || !exact_data_ptr || (json_needs_quote(actual_type) && !is_explicit_null)) {
         CMY_JSON_WRITE(state, "\"%s\"", val_buf);
     } else {
         CMY_JSON_WRITE(state, "%s", val_buf);
@@ -470,7 +648,10 @@ static inline ReflectResult to_json(const void* instance, FIELD_TYPE root_type, 
 #ifdef CMY_PLUGIN_JSON_ENABLED
 static inline ReflectResult json_serialize_custom(const void* exact_data_ptr, FIELD_TYPE actual_type, const StructFieldInfo* field_ctx, _cmy_json_state* state) {
     
-    return REFLECT_ERR_TYPE_MISMATCH;
+    switch(actual_type) {
+        case TYPE_ENUM_POSTINTERACTION: return serialize_interactions(exact_data_ptr, actual_type, field_ctx, state);
+        default: return REFLECT_ERR_TYPE_MISMATCH;
+    }
 }
 
 #endif // CMY_PLUGIN_JSON_ENABLED
@@ -478,8 +659,8 @@ static inline ReflectResult json_serialize_custom(const void* exact_data_ptr, FI
 static inline bool json_is_string_type(FIELD_TYPE type) {
     
     switch(type) {
-        case TYPE_CHAR_ARR: return true;
         case TYPE_CHAR_PTR: return true;
+        case TYPE_CHAR_ARR: return true;
         default: return false;
     }
 }
@@ -489,8 +670,10 @@ static inline bool json_is_string_type(FIELD_TYPE type) {
 static inline bool json_needs_quote(FIELD_TYPE type) {
     
     switch(type) {
-        case TYPE_CHAR_ARR: return true;
+        case TYPE_ENUM_POSTINTERACTION: return true;
+        case TYPE_ENUM_ACCOUNTSTATE: return true;
         case TYPE_CHAR_PTR: return true;
+        case TYPE_CHAR_ARR: return true;
         default: return false;
     }
 }
@@ -502,20 +685,74 @@ static inline bool json_needs_quote(FIELD_TYPE type) {
 #ifdef REFLECTION_IMPLEMENTATION
 
 // --- Generated from test_json_types.h ---
+const StructFieldInfo Post_Metadata[] = {
+    { "title", TYPE_CHAR_PTR, offsetof(Post, title), sizeof(char           *), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "likes", TYPE_UINT32_T, offsetof(Post, likes), sizeof(uint32_t), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "interactions", TYPE_ENUM_POSTINTERACTION, offsetof(Post, interactions), sizeof(PostInteraction), 1, FIELD_ACCESS_RW, NULL, NULL },
+};
+const size_t Post_FieldCount = sizeof(Post_Metadata) / sizeof(StructFieldInfo);
+
+const StructFieldInfo AccountSettings_Metadata[] = {
+    { "prefers_dark_mode", TYPE_BOOL, offsetof(AccountSettings, prefers_dark_mode), sizeof(bool), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "login_attempts", TYPE_INT, offsetof(AccountSettings, login_attempts), sizeof(int), 1, FIELD_ACCESS_RW, NULL, NULL },
+};
+const size_t AccountSettings_FieldCount = sizeof(AccountSettings_Metadata) / sizeof(StructFieldInfo);
+
 const StructFieldInfo User_Metadata[] = {
     { "username", TYPE_CHAR_ARR, offsetof(User, username), sizeof(char[64]), 64, FIELD_ACCESS_RW, NULL, NULL },
     { "email", TYPE_CHAR_ARR, offsetof(User, email), sizeof(char[64]), 64, FIELD_ACCESS_RW, NULL, NULL },
-    { "bio", TYPE_CHAR_PTR, offsetof(User, bio), sizeof(char*), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "bio", TYPE_CHAR_PTR, offsetof(User, bio), sizeof(char *), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "password_hash", TYPE_CHAR_ARR, offsetof(User, password_hash), sizeof(char[16]), 16, FIELD_ACCESS_WRITE, NULL, NULL },
+    { "status", TYPE_ENUM_ACCOUNTSTATE, offsetof(User, status), sizeof(AccountState), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "settings", TYPE_STRUCT_ACCOUNTSETTINGS, offsetof(User, settings), sizeof(AccountSettings), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "is_verified", TYPE_BOOL, offsetof(User, is_verified), sizeof(bool), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "post_count", TYPE_SIZE_T, offsetof(User, post_count), sizeof(size_t), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "posts", TYPE_POST_PTR, offsetof(User, posts), sizeof(Post *), 1, FIELD_ACCESS_RW, "post_count", NULL },
+    { "friends", TYPE_CHAR_PTR_ARR, offsetof(User, friends), sizeof(char *[MAX_FRIEND_COUNT]), MAX_FRIEND_COUNT, FIELD_ACCESS_RW, NULL, NULL },
 };
 const size_t User_FieldCount = sizeof(User_Metadata) / sizeof(StructFieldInfo);
+
+const EnumMemberInfo PostInteraction_Members[] = {
+   { POST_SAVE, "POST_SAVE", NULL },
+   { POST_FRIENDS_ONLY, "POST_FRIENDS_ONLY", NULL },
+   { POST_DOWNLOAD, "POST_DOWNLOAD", NULL },
+};
+const size_t PostInteraction_MemberCount = sizeof(PostInteraction_Members) / sizeof(EnumMemberInfo);
+
+const EnumMemberExtension ext_AccountState_ACCOUNT_ACTIVE = {
+#ifdef CMY_PLUGIN_PRINTER_ENABLED
+.display = "Active",
+#endif // CMY_PLUGIN_PRINTER_ENABLED
+};
+const EnumMemberExtension ext_AccountState_ACCOUNT_INACTIVE = {
+#ifdef CMY_PLUGIN_PRINTER_ENABLED
+.display = "Inactive",
+#endif // CMY_PLUGIN_PRINTER_ENABLED
+};
+const EnumMemberExtension ext_AccountState_ACCOUNT_DELETED = {
+#ifdef CMY_PLUGIN_PRINTER_ENABLED
+.display = "Deleted",
+#endif // CMY_PLUGIN_PRINTER_ENABLED
+};
+const EnumMemberInfo AccountState_Members[] = {
+   { ACCOUNT_ACTIVE, "ACCOUNT_ACTIVE", (void*)&ext_AccountState_ACCOUNT_ACTIVE },
+   { ACCOUNT_INACTIVE, "ACCOUNT_INACTIVE", (void*)&ext_AccountState_ACCOUNT_INACTIVE },
+   { ACCOUNT_DELETED, "ACCOUNT_DELETED", (void*)&ext_AccountState_ACCOUNT_DELETED },
+};
+const size_t AccountState_MemberCount = sizeof(AccountState_Members) / sizeof(EnumMemberInfo);
 
 // --- Auto-Generated Type Registry
 ReflectResult get_struct_metadata(FieldType type, StructMetaData* out_meta) {
     if (!out_meta) return REFLECT_ERR_NULL_PTR;
     switch(type) {
+      case TYPE_STRUCT_POST:
+          out_meta->fields = Post_Metadata;
+          out_meta->count = Post_FieldCount;
+          return REFLECT_OK;
+      case TYPE_STRUCT_ACCOUNTSETTINGS:
+          out_meta->fields = AccountSettings_Metadata;
+          out_meta->count = AccountSettings_FieldCount;
+          return REFLECT_OK;
       case TYPE_STRUCT_USER:
           out_meta->fields = User_Metadata;
           out_meta->count = User_FieldCount;
@@ -528,7 +765,14 @@ ReflectResult get_struct_metadata(FieldType type, StructMetaData* out_meta) {
 ReflectResult get_enum_metadata(FieldType type, EnumMetaData* out_meta) {
     if (!out_meta) return REFLECT_ERR_NULL_PTR;
     switch(type) {
-
+      case TYPE_ENUM_POSTINTERACTION:
+          out_meta->members = PostInteraction_Members;
+          out_meta->count = PostInteraction_MemberCount;
+          return REFLECT_OK;
+      case TYPE_ENUM_ACCOUNTSTATE:
+          out_meta->members = AccountState_Members;
+          out_meta->count = AccountState_MemberCount;
+          return REFLECT_OK;
         default: return REFLECT_ERR_ENUM_INVALID;
     }
 }
@@ -538,13 +782,20 @@ ReflectResult get_enum_metadata(FieldType type, EnumMetaData* out_meta) {
 ReflectResult safe_set_field(void* instance, const StructFieldInfo* field, const void* value, size_t element_count) {
     if (!instance || !field || !value) return false;
     switch(field->type) {
+      case TYPE_ENUM_POSTINTERACTION: return set_field_PostInteraction(instance, field, *(PostInteraction*)value);
+      case TYPE_STRUCT_POST: return set_field_Post(instance, field, *(Post*)value);
+      case TYPE_ENUM_ACCOUNTSTATE: return set_field_AccountState(instance, field, *(AccountState*)value);
+      case TYPE_STRUCT_ACCOUNTSETTINGS: return set_field_AccountSettings(instance, field, *(AccountSettings*)value);
       case TYPE_STRUCT_USER: return set_field_User(instance, field, *(User*)value);
-      case TYPE_CHAR_ARR: return set_field_char_arr(instance, field, (char*)value, element_count);
+      case TYPE_CHAR_PTR: return set_field_str(instance, field, *(char           **)value);
       case TYPE_CHAR: return set_field_char(instance, field, *(char*)value);
-      case TYPE_CHAR_PTR: return set_field_str(instance, field, *(char**)value);
+      case TYPE_UINT32_T: return set_field_u32(instance, field, *(uint32_t*)value);
+      case TYPE_BOOL: return set_field_bool(instance, field, *(bool*)value);
+      case TYPE_INT: return set_field_int(instance, field, *(int*)value);
+      case TYPE_CHAR_ARR: return set_field_char_arr(instance, field, (char*)value, element_count);
       case TYPE_SIZE_T: return set_field_size_t(instance, field, *(size_t*)value);
       case TYPE_POST_PTR: return set_field_Post_ptr(instance, field, *(Post **)value);
-      case TYPE_POST: return set_field_Post(instance, field, *(Post*)value);
+      case TYPE_CHAR_PTR_ARR: return set_field_str_arr(instance, field, (char  **)value, element_count);
         default: return REFLECT_ERR_TYPE_INVALID;
     }
 }
@@ -552,13 +803,20 @@ ReflectResult safe_set_field(void* instance, const StructFieldInfo* field, const
 // --- Auto-Generated enum->name converter
 const char* get_name_of_type(FieldType type) {
     switch(type) {
+     case TYPE_BOOL: return "TYPE_BOOL";
      case TYPE_CHAR: return "TYPE_CHAR";
      case TYPE_CHAR_ARR: return "TYPE_CHAR_ARR";
      case TYPE_CHAR_PTR: return "TYPE_CHAR_PTR";
-     case TYPE_POST: return "TYPE_POST";
+     case TYPE_CHAR_PTR_ARR: return "TYPE_CHAR_PTR_ARR";
+     case TYPE_ENUM_ACCOUNTSTATE: return "TYPE_ENUM_ACCOUNTSTATE";
+     case TYPE_ENUM_POSTINTERACTION: return "TYPE_ENUM_POSTINTERACTION";
+     case TYPE_INT: return "TYPE_INT";
      case TYPE_POST_PTR: return "TYPE_POST_PTR";
      case TYPE_SIZE_T: return "TYPE_SIZE_T";
+     case TYPE_STRUCT_ACCOUNTSETTINGS: return "TYPE_STRUCT_ACCOUNTSETTINGS";
+     case TYPE_STRUCT_POST: return "TYPE_STRUCT_POST";
      case TYPE_STRUCT_USER: return "TYPE_STRUCT_USER";
+     case TYPE_UINT32_T: return "TYPE_UINT32_T";
      case TYPE_UNKNOWN: return "TYPE_UNKNOWN";
         default: return NULL;
     };
@@ -566,22 +824,30 @@ const char* get_name_of_type(FieldType type) {
 
 FieldType get_base_type(FieldType type) {
     switch(type) {
-      case TYPE_CHAR_ARR: return TYPE_CHAR;
       case TYPE_CHAR_PTR: return TYPE_CHAR;
-      case TYPE_POST_PTR: return TYPE_POST;
+      case TYPE_CHAR_ARR: return TYPE_CHAR;
+      case TYPE_POST_PTR: return TYPE_STRUCT_POST;
+      case TYPE_CHAR_PTR_ARR: return TYPE_CHAR_PTR;
         default: return type;
     }
 }
 
 size_t get_type_size(FIELD_TYPE type) {
     switch(type) {
+        case TYPE_ENUM_POSTINTERACTION: return sizeof(PostInteraction);
+        case TYPE_STRUCT_POST: return sizeof(Post);
+        case TYPE_ENUM_ACCOUNTSTATE: return sizeof(AccountState);
+        case TYPE_STRUCT_ACCOUNTSETTINGS: return sizeof(AccountSettings);
         case TYPE_STRUCT_USER: return sizeof(User);
-        case TYPE_CHAR_ARR: return sizeof(char *);
+        case TYPE_CHAR_PTR: return sizeof(char           *);
         case TYPE_CHAR: return sizeof(char);
-        case TYPE_CHAR_PTR: return sizeof(char*);
+        case TYPE_UINT32_T: return sizeof(uint32_t);
+        case TYPE_BOOL: return sizeof(bool);
+        case TYPE_INT: return sizeof(int);
+        case TYPE_CHAR_ARR: return sizeof(char *);
         case TYPE_SIZE_T: return sizeof(size_t);
         case TYPE_POST_PTR: return sizeof(Post *);
-        case TYPE_POST: return sizeof(Post);
+        case TYPE_CHAR_PTR_ARR: return sizeof(char * *);
         default: return 0;
     }
 }
