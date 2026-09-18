@@ -130,7 +130,7 @@ def map_custom_serializer(
     requires=PLUGIN_ENABLED_MACRO,
     description="Checks if a type represents a string",
 )
-def map_json_quotes(
+def map_is_string(
     reflector: Reflector, type_name: str, type_enum: str, ctype: str, suffix: str
 ) -> (str | None, str | None):
     if type_name in ["char*", "constchar*", "char_arr", "constchar_arr"]:
@@ -145,14 +145,14 @@ def map_json_quotes(
     requires=PLUGIN_ENABLED_MACRO,
     description="Dynamically determines if the type requires JSON quotes",
 )
-def map_json_quotes(
+def map_needs_quote(
     reflector: Reflector, type_name: str, type_enum: str, ctype: str, suffix: str
 ) -> (str | None, str | None):
     needs_quotes = False
 
     if reflector.is_enum(type_name):
         needs_quotes = True
-    elif type_name in ["char*", "constchar*", "char_arr"]:
+    elif type_name in ["char*", "constchar*", "char_arr", "constchar_arr"]:
         needs_quotes = True
 
     if needs_quotes:
@@ -214,7 +214,7 @@ static inline void json_serialize_value(const void* exact_data_ptr, FIELD_TYPE a
         visit_struct_fields(exact_data_ptr, actual_type, _json_traversal_iterator, &nested_state);
 
         state->_current_offset = nested_state._current_offset;
-        CMY_JSON_WRITE(state, "\n%*s}", state->indent + 4, "");
+        CMY_JSON_WRITE(state, "\n%*s}", state->indent, "");
         return;
     }
 
@@ -273,7 +273,7 @@ static inline void _json_traversal_iterator(const void            *base_instance
     }
 
     // Print Key
-    CMY_JSON_WRITE(state, "%*s\"%s\": ", state->indent + 4, "", field->name);
+    CMY_JSON_WRITE(state, "%*s\"%s\": ", state->indent, "", field->name);
 
     bool is_string = json_is_string_type(field->type);
     bool is_dynamic = field->length_field_name != NULL;
@@ -313,9 +313,10 @@ static inline void _json_traversal_iterator(const void            *base_instance
         CMY_JSON_WRITE(state, "[\n");
         _cmy_json_state arr_state = *state;
         arr_state.indent += 4;
+
         for (size_t i = 0; i < array_len; i++)
         {
-            CMY_JSON_WRITE(&arr_state, "%*s", arr_state.indent + 4, "");
+            CMY_JSON_WRITE(&arr_state, "%*s", arr_state.indent, "");
             void* ith_element = (char*)array_ptr + (i * base_size);
 
             if (!ith_element) {
@@ -331,7 +332,7 @@ static inline void _json_traversal_iterator(const void            *base_instance
             }
         }
         state->_current_offset = arr_state._current_offset;
-        CMY_JSON_WRITE(state, "%*s]", state->indent + 4, "");
+        CMY_JSON_WRITE(state, "%*s]", state->indent, "");
 
         return;
     } else {
