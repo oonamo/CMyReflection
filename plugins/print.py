@@ -178,12 +178,12 @@ def _generate_char_arr_str(
     return [
         cb.check("!instance || !field", "return REFLECT_ERR_NULL_PTR;"),
         "#ifdef _MSC_VER",
+        "    if (field->count > CMY_PRINTER_MAX_BUF_LEN) { return REFLECT_ERR_OUT_OF_BOUNDS; }",
         "    " + cb.var("char", "var[CMY_PRINTER_MAX_BUF_LEN];"),
-        "    " + cb.var("size_t", "arr_len", "CMY_PRINTER_MAX_BUF_LEN"),
         "#else",
         "    " + cb.var("char", "var[field->count]"),
-        "    " + cb.var("size_t", "arr_len", "field->count"),
         "#endif",
+        cb.var("size_t", "arr_len", "field->count"),
         "",
         cb.var(
             "ReflectResult",
