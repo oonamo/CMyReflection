@@ -37,4 +37,10 @@ set_target_properties(test_json PROPERTIES
 target_link_libraries(test_json PRIVATE unity)
 target_sources(test_json PRIVATE ${JSON_TEST_SOURCES})
 target_include_directories(test_json PUBLIC ${PROJECT_SOURCE_DIR})
+target_compile_definitions(test_json PRIVATE
+  "TEST_OUT_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\""
+)
 add_test(NAME JsonTests COMMAND test_json -v)
+
+add_test(NAME NodeJsonValidation COMMAND node ${CMAKE_CURRENT_SOURCE_DIR}/validate_json.js)
+set_tests_properties(NodeJsonValidation PROPERTIES DEPENDS JsonTests)

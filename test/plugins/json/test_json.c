@@ -97,6 +97,25 @@ TEST(Json, Serializes_Strings)
 
     json_serialize_value(&u, TYPE_STRUCT_USER, NULL, &state);
 
+    char filepath[512];
+
+#ifdef TEST_OUT_DIR
+    snprintf(filepath, sizeof(filepath), "%s/test_payload.json", TEST_OUT_DIR);
+#else
+    snprintf(filepath, sizeof(filepath), "test_payload.json");
+#endif
+
+    FILE *fp = fopen(filepath, "w");
+    if (fp)
+    {
+        fputs(state._buf, fp);
+        fclose(fp);
+    }
+    else
+    {
+        TEST_FAIL_MESSAGE("Could not open test_payload.json for writing");
+    }
+
     // 1. String
     TEST_ASSERT_NOT_NULL_MESSAGE(strstr(state._buf, Q("username") ": " Q("oonamo")),
                                  "Static string failed");
