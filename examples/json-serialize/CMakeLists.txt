@@ -16,7 +16,10 @@ set(JSON_EXT
 
 add_custom_command(
   OUTPUT ${GENERATED_HEADER}
-  COMMAND Python3::Interpreter "${PROJECT_SOURCE_DIR}/cmy_reflector.py" "${CMAKE_CURRENT_SOURCE_DIR}" -o "${GENERATED_HEADER}" --plugin ${PRINT_EXT} --plugin ${JSON_EXT}
+  COMMAND Python3::Interpreter "${PROJECT_SOURCE_DIR}/cmy_reflector.py"
+          --input "${CMAKE_CURRENT_SOURCE_DIR}"
+          --output "${GENERATED_HEADER}"
+          --plugin ${PRINT_EXT} ${JSON_EXT}
   DEPENDS "${PROJECT_SOURCE_DIR}/cmy_reflector.py" ${REFLECTION_SOURCE_FILES} ${PLUGIN_FILES}
   COMMENT "Generating C reflection data for json-serializer..."
 )

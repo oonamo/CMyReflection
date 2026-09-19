@@ -2023,11 +2023,13 @@ def main():
         description="A tool for generating reflection metadata"
     )
 
-    parser.add_argument("input_files", nargs="+", help="One or more input files")
+    parser.add_argument(
+        "-i", "--input", nargs="+", required=True, help="One or more input files"
+    )
 
     parser.add_argument(
         "-o",
-        "--output-file",
+        "--output",
         type=str,
         default=None,
         help="The file to write the generated C code to. Prints to stdout if omitted",
@@ -2035,8 +2037,9 @@ def main():
 
     parser.add_argument(
         "--plugin",
-        action="append",
+        nargs="+",
         type=Path,
+        default=[],
         help="Path to a specific plugin file (can be used multiple times)",
     )
 
@@ -2049,7 +2052,7 @@ def main():
 
     args = parser.parse_args()
 
-    target_files = gather_source_files(args.input_files)
+    target_files = gather_source_files(args.input)
 
     if not target_files:
         print("No target files found", file=sys.stderr)
@@ -2077,13 +2080,13 @@ def main():
     reflector.resolve()
     gen_file = str(reflector)
 
-    if args.output_file:
+    if args.output:
         try:
-            with open(args.output_file, "w") as f:
+            with open(args.output, "w") as f:
                 f.write(gen_file)
-            print(f"Wrote to {args.output_file}")
+            print(f"Wrote to {args.output}")
         except IOError:
-            print(f"Error: Could not write to {args.output_file}", file=sys.stderr)
+            print(f"Error: Could not write to {args.output}", file=sys.stderr)
     else:
         print(gen_file)
 

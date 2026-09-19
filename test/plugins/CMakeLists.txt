@@ -25,17 +25,12 @@ function(add_plugin_test_suite PLUGIN_NAME)
 
   set(GENERATED_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}.generated.h")
 
-  set(CLI_PLUGIN_ARGS "")
-  foreach(plugin_path ${ARGS_PLUGINS})
-    list(APPEND CLI_PLUGIN_ARGS "--plugin" "${plugin_path}")
-  endforeach()
-
   add_custom_command(
     OUTPUT ${GENERATED_HEADER}
     COMMAND Python3::Interpreter "${PROJECT_SOURCE_DIR}/cmy_reflector.py"
-            "${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_TYPES_HEADER}"
-            -o "${GENERATED_HEADER}"
-            ${CLI_PLUGIN_ARGS}
+            --input "${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_TYPES_HEADER}"
+            --output "${GENERATED_HEADER}"
+            --plugin ${ARGS_PLUGINS}
     DEPENDS "${PROJECT_SOURCE_DIR}/cmy_reflector.py"
             "${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_TYPES_HEADER}"
             ${ARGS_PLUGINS}

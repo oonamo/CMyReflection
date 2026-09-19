@@ -37,7 +37,9 @@ file(GLOB_RECURSE REFLECTION_SOURCE_FILES CONFIGURE_DEPENDS "mocks/*.h" "mocks/*
 
 add_custom_command(
   OUTPUT ${GENERATED_HEADER}
-  COMMAND Python3::Interpreter "${PROJECT_SOURCE_DIR}/cmy_reflector.py" "${CMAKE_CURRENT_SOURCE_DIR}/mocks" -o "${GENERATED_HEADER}"
+  COMMAND Python3::Interpreter "${PROJECT_SOURCE_DIR}/cmy_reflector.py"
+          --input "${CMAKE_CURRENT_SOURCE_DIR}/mocks"
+          --output "${GENERATED_HEADER}"
   DEPENDS "${PROJECT_SOURCE_DIR}/cmy_reflector.py" ${REFLECTION_SOURCE_FILES}
   COMMENT "Generating C reflection data..."
 )

@@ -45,7 +45,7 @@ def test_array_setter_generation(tmp_path: Path):
     script_path = Path(__file__).parent.parent / "cmy_reflector.py"
 
     result = subprocess.run(
-        ["python3", str(script_path), str(src_dir), "-o", str(out_file)],
+        ["python3", str(script_path), "-i", str(src_dir), "-o", str(out_file)],
         capture_output=True,
         text=True,
     )
@@ -271,7 +271,7 @@ def test_parser_does_not_generate_validator_for_unchecked_enums(tmp_path: Path):
     script_path = Path(__file__).parent.parent / "cmy_reflector.py"
 
     result = subprocess.run(
-        ["python3", str(script_path), str(src_dir), "-o", str(out_file)],
+        ["python3", str(script_path), "-i", str(src_dir), "-o", str(out_file)],
         capture_output=True,
         text=True,
     )
@@ -377,7 +377,7 @@ def test_parser_generates_correct_basetype(tmp_path: Path):
     script_path = Path(__file__).parent.parent / "cmy_reflector.py"
 
     result = subprocess.run(
-        ["python3", str(script_path), str(src_dir), "-o", str(out_file)],
+        ["python3", str(script_path), "-i", str(src_dir), "-o", str(out_file)],
         capture_output=True,
         text=True,
     )
