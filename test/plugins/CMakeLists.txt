@@ -66,6 +66,9 @@ function(add_plugin_test_suite PLUGIN_NAME)
 
   if (ENABLE_ASAN)
     if(MSVC)
+      get_filename_component(MSVC_COMPILER_DIR ${CMAKE_C_COMPILER} DIRECTORY)
+      set_property(TEST CTest_${PLUGIN_NAME} APPEND PROPERTY
+        ENVIRONMENT "PATH=${MSVC_COMPILER_DIR};$ENV{PATH}")
       target_compile_options(test_${PLUGIN_NAME} PRIVATE /fsanitize=address /Zi)
       target_link_options(test_${PLUGIN_NAME} PRIVATE /INCREMENTAL:NO)
     else()
