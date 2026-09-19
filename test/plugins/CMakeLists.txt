@@ -18,7 +18,7 @@ function(add_plugin_test_suite PLUGIN_NAME)
 
   if(ARGS_PY_TEST)
     add_test(NAME PyTest_${PLUGIN_NAME}
-             COMMAND Python3::Interpreter -m pytest ${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_PY_TEST})
+             COMMAND Python3::Interpreter -m pytest ${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_PY_TEST} "-v")
   endif()
 
   set(GENERATED_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}.generated.h")

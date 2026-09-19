@@ -961,7 +961,7 @@ class Reflector:
         """Sets's the value of a member extension in C"""
         if name not in self.member_extensions_members:
             raise ValueError(
-                f"Validation Error: Cannot set extension '{name}' on field '{member.name}'. "
+                f"Validation Error: Cannot set extension '{name}' on member '{member.name}'. "
                 f"It must be registered first using reflector.define_member_extension()."
             )
         member.plugin_data[name] = value
