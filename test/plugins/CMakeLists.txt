@@ -10,6 +10,8 @@ FetchContent_MakeAvailable(unity)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
+option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+
 function(add_plugin_test_suite PLUGIN_NAME)
   set(options)
   set(oneValueArgs TYPES_HEADER PY_TEST)
@@ -60,6 +62,16 @@ function(add_plugin_test_suite PLUGIN_NAME)
 
   if(ARGS_PY_TEST)
     set_tests_properties(CTest_${PLUGIN_NAME} PROPERTIES DEPENDS PyTest_${PLUGIN_NAME})
+  endif()
+
+  if (ENABLE_ASAN)
+    if(MSVC)
+      target_compile_options(test_${PLUGIN_NAME} PRIVATE /fsanitize=address /Zi)
+      target_link_options(test_${PLUGIN_NAME} PRIVATE /INCREMENTAL:NO)
+    else()
+      target_compile_options(test_${PLUGIN_NAME} PRIVATE -fsanitize=address -g)
+      target_link_options(test_${PLUGIN_NAME} PRIVATE -fsanitize=address)
+    endif()
   endif()
 endfunction()
 

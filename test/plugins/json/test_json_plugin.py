@@ -47,7 +47,6 @@ def test_can_use_serialize_function():
     reflector.resolve()
 
     generated_content = str(reflector)
-    print(generated_content)
 
     for f in ["serializer_1", "serializer_2"]:
         func_def = f"extern ReflectResult {f}(const void* exact_data_ptr, FIELD_TYPE actual_type, const StructFieldInfo* field_ctx, _cmy_json_state* state);"
