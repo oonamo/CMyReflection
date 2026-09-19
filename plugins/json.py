@@ -42,8 +42,11 @@ plugin = Plugin(
 """,
             "Adds debug information during certain operations",
         ),
-        # Add Custom Macros Here
-        # Macro.raw, Macro.include, Macro.default, Macro.define,
+        Macro.define(
+            "CMY_JSON_WRITE(state_ptr, ...)",
+            "json_write_internal(state_ptr, __VA_ARGS__)",
+            "Wrapper for json writing function"
+        ),
     ],
 )
 
@@ -183,8 +186,6 @@ typedef struct
     CMyJsonResizeCb resize_cb;
     void* cb_ctx;
 } _cmy_json_state;
-
-#define CMY_JSON_WRITE(state_ptr, ...) json_write_internal(state_ptr, __VA_ARGS__)
 """.strip()
 
 

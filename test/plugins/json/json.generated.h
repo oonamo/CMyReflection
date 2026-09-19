@@ -69,6 +69,7 @@ typedef enum {
  *    - Provides macro: CMY_HAS_JSON_PLUGIN (Value: 1) - json plugin is available
  *    - Provides macro: CMY_PLUGIN_JSON_ENABLED (Default: 1) - Enables the json plugin
  *    - Provides macro: CMY_JSON_DEBUG  - Adds debug information during certain operations
+ *    - Provides macro: CMY_JSON_WRITE(state_ptr, ...) (Value: json_write_internal(state_ptr, __VA_ARGS__)) - Wrapper for json writing function
  *    - Provides router: ReflectResult json_serialize_custom(..) - Process fields dynamically based on their type
  *      + Types: PostInteraction
  *    - Provides router: bool json_is_string_type(..) - Checks if a type represents a string
@@ -104,8 +105,6 @@ typedef struct
     void* cb_ctx;
 } _cmy_json_state;
 
-#define CMY_JSON_WRITE(state_ptr, ...) json_write_internal(state_ptr, __VA_ARGS__)
-
 
 #define CMY_HAS_PRINTER_PLUGIN 1
 #ifndef CMY_PLUGIN_PRINTER_ENABLED
@@ -129,6 +128,7 @@ typedef struct
     #endif
 #endif
 
+#define CMY_JSON_WRITE(state_ptr, ...) json_write_internal(state_ptr, __VA_ARGS__)
 
 
 // ########################################
