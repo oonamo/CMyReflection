@@ -40,15 +40,37 @@ def setup(reflector):
     )
 
 
+def has_print_specifier(fmt_string: str) -> bool:
+    """Checks if a format specifier has a non escaped %. Does not check validity"""
+    stripped_fmt = fmt_string.replace("%%", "")
+    return "%" in stripped_fmt
+
+def validate_has_print_specifier(tag_name, tag_value) -> (bool, str):
+    return (
+        has_print_specifier(tag_value),
+        f"Tag '{tag_name}' with value '{tag_value}' doesn't appear to have a format specifier.",
+    )
+
+
+def validate_has_no_print_specifier(tag_name, tag_value) -> (bool, str):
+    return (
+        not has_print_specifier(tag_value),
+        f"Tag '{tag_name}' shouldn't have a format specifier here: '{tag_value}'.",
+    )
+
+
 @printer.struct_field_tag(
     "format",
     enforce_value=True,
+    validator=validate_has_print_specifier,
     description="""\
 Specify a C format specifier for a struct.
 Does not create a get_field_as_str function if not defined
 Example:
-+  @format("struct MyStruct @ addr: %p")
-+  typedef struct { ... } MyStruct;
++  typedef struct {
++      // cmy:format("my type: %x")
++      int x;
++  } MyStruct;
 """,
 )
 def handle_field_format(reflector, struct, field, tag_value):
@@ -58,6 +80,9 @@ def handle_field_format(reflector, struct, field, tag_value):
 @printer.enum_member_tag(
     "display",
     enforce_value=True,
+    # TODO: Technically, it can have it?
+    #   Should a warning be thrown instead?
+    # validator=validate_has_no_print_specifier,
     description="""\
 Specifies how an enum should be displayed.
 Defaults to name of the enum member if not provided
@@ -79,6 +104,7 @@ def handle_no_print(reflector, struct_or_enum, tag_value):
 
 
 def q(s: str) -> str:
+    """Helper for wrapping strings"""
     return f'"{s}"'
 
 
@@ -116,7 +142,7 @@ def has_field_str_attribute(reflector, type_name):
         return True
     if type_name in _PRIMITIVE_FORMATS:
         return True
-    if type_name in ["bool", "char_arr"]:
+    if type_name in ["bool", "char_arr", "constchar_arr"]:
         return True
     return False
 

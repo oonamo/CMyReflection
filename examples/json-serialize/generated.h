@@ -36,8 +36,10 @@ typedef enum {
  *    - Provides tag: @format(value) (Struct Fields) - Specify a C format specifier for a struct.
  *      Does not create a get_field_as_str function if not defined
  *      Example:
- *      +  @format("struct MyStruct @ addr: %p")
- *      +  typedef struct { ... } MyStruct;
+ *      +  typedef struct {
+ *      +      // cmy:format("my type: %x")
+ *      +      int x;
+ *      +  } MyStruct;
  *    - Provides tag: @display(value) (Enum Members) - Specifies how an enum should be displayed.
  *      Defaults to name of the enum member if not provided
  *      Example:
