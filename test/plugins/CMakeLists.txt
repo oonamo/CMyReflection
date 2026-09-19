@@ -64,3 +64,4 @@ function(add_plugin_test_suite PLUGIN_NAME)
 endfunction()
 
 add_subdirectory(json)
+add_subdirectory(print)
