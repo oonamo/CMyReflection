@@ -143,8 +143,8 @@ class FuncDef:
 
     def prototype_string(self, with_qualifiers: bool = True) -> str:
         """Converts a FuncDef to it's C prototype"""
-        q = f"{self.qualifiers} " if with_qualifiers else ""
-        return f"{q}{self.rettype} {self.name}{self.params};"
+        q = f"{self.qualifiers.strip()} " if with_qualifiers else ""
+        return f"{q}{self.rettype.strip()} {self.name}{self.params};"
 
     def doc_string(self) -> str:
         """Used for the documentation block"""

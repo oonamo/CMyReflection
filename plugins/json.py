@@ -86,7 +86,7 @@ def handle_enum_serialize_func(reflector: Reflector, enum: CEnum, tag_value: str
     description="""Function to call to serialize this type
 Example:
 +  @json_serialize_function(MyCoolStruct_Serializer)
-+  typedef enum { ... } MyCoolStruct;
++  typedef struct { ... } MyCoolStruct;
 +  // in a seperate file
 +  #include "reflection.h"
 +  void MyCoolStruct_Serializer(const void* instance, const StructFieldInfo* field, _cmy_json_state* state);
@@ -167,7 +167,6 @@ def map_needs_quote(
 @plugin.emit_header
 def create_struct(reflector: Reflector):
     return r"""
-
 typedef void (*CMyJsonFlushCb)(const char* chunk, size_t len, void* ctx);
 
 typedef bool (*CMyJsonResizeCb)(char** buffer, size_t* capacity, size_t needed_size, void* ctx);

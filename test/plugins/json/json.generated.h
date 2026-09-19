@@ -57,7 +57,7 @@ typedef enum {
  *    - Provides tag: @json_serialize_function(value) (Structs) - Function to call to serialize this type
  *      Example:
  *      +  @json_serialize_function(MyCoolStruct_Serializer)
- *      +  typedef enum { ... } MyCoolStruct;
+ *      +  typedef struct { ... } MyCoolStruct;
  *      +  // in a seperate file
  *      +  #include "reflection.h"
  *      +  void MyCoolStruct_Serializer(const void* instance, const StructFieldInfo* field, _cmy_json_state* state);
@@ -137,33 +137,33 @@ typedef struct
 // Printer Declarations
 // ########################################
 #ifdef CMY_PLUGIN_PRINTER_ENABLED
-static inline  ReflectResult get_field_AccountState_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_PostInteraction_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_bool_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_char_arr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_char_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_int_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_size_t_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_str_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_u32_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult print_field(const void* instance, const StructFieldInfo* field);
+static inline ReflectResult get_field_AccountState_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_PostInteraction_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_bool_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_char_arr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_char_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_int_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_size_t_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_str_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_u32_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field);
 #endif // CMY_PLUGIN_PRINTER_ENABLED
 
 // ########################################
 // json Declarations
 // ########################################
 #ifdef CMY_PLUGIN_JSON_ENABLED
-static inline  void _json_traversal_iterator(const void            *base_instance,
+static inline void _json_traversal_iterator(const void            *base_instance,
                              const StructFieldInfo  *field,
                              void                   *user_data);
-static inline  bool json_is_string_type(FIELD_TYPE type);
-static inline  bool json_needs_quote(FIELD_TYPE type);
-static inline  ReflectResult json_serialize_custom(const void* exact_data_ptr, FIELD_TYPE actual_type, const StructFieldInfo* field_ctx, _cmy_json_state* state);
-static inline  void json_serialize_value(const void* exact_data_ptr, FIELD_TYPE actual_type, const StructFieldInfo* field_ctx, _cmy_json_state* state);
-static inline  void json_write_internal(_cmy_json_state* state, const char* fmt, ...);
-extern  ReflectResult serialize_interactions(const void* exact_data_ptr, FIELD_TYPE actual_type, const StructFieldInfo* field_ctx, _cmy_json_state* state);
-static inline  ReflectResult to_json(const void* instance, FIELD_TYPE root_type, char* out_buf, size_t buflen);
+static inline bool json_is_string_type(FIELD_TYPE type);
+static inline bool json_needs_quote(FIELD_TYPE type);
+static inline ReflectResult json_serialize_custom(const void* exact_data_ptr, FIELD_TYPE actual_type, const StructFieldInfo* field_ctx, _cmy_json_state* state);
+static inline void json_serialize_value(const void* exact_data_ptr, FIELD_TYPE actual_type, const StructFieldInfo* field_ctx, _cmy_json_state* state);
+static inline void json_write_internal(_cmy_json_state* state, const char* fmt, ...);
+extern ReflectResult serialize_interactions(const void* exact_data_ptr, FIELD_TYPE actual_type, const StructFieldInfo* field_ctx, _cmy_json_state* state);
+static inline ReflectResult to_json(const void* instance, FIELD_TYPE root_type, char* out_buf, size_t buflen);
 #endif // CMY_PLUGIN_JSON_ENABLED
 
 

@@ -87,30 +87,30 @@ typedef enum {
 // Printer Declarations
 // ########################################
 #ifdef CMY_PLUGIN_PRINTER_ENABLED
-static inline  ReflectResult get_field_EnumType_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_char_arr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_char_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_conststr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_double_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_float_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_int16_t_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_int32_t_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_int64_t_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_int8_t_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_int_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_long_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_short_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_str_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_u16_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_u32_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_u64_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_u8_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_uint_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_unsignedchar_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_unsignedlong_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult get_field_unsignedshort_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline  ReflectResult print_field(const void* instance, const StructFieldInfo* field);
+static inline ReflectResult get_field_EnumType_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_char_arr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_char_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_conststr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_double_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_float_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_int16_t_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_int32_t_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_int64_t_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_int8_t_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_int_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_long_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_short_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_str_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_u16_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_u32_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_u64_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_u8_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_uint_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_unsignedchar_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_unsignedlong_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_unsignedshort_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field);
 #endif // CMY_PLUGIN_PRINTER_ENABLED
 
 
