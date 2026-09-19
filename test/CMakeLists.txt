@@ -62,6 +62,19 @@ target_sources(test_runner PRIVATE ${TEST_SOURCES})
 target_include_directories(test_runner PUBLIC ${PROJECT_SOURCE_DIR})
 add_test(NAME UnitTests COMMAND test_runner -v)
 
+if (ENABLE_ASAN)
+  if(MSVC)
+    get_filename_component(MSVC_COMPILER_DIR ${CMAKE_C_COMPILER} DIRECTORY)
+    set_property(TEST UnitTests APPEND PROPERTY
+      ENVIRONMENT "PATH=${MSVC_COMPILER_DIR};$ENV{PATH}")
+    target_compile_options(test_runner PRIVATE /fsanitize=address /Zi)
+    target_link_options(test_runner PRIVATE /INCREMENTAL:NO)
+  else()
+    target_compile_options(test_runner PRIVATE -fsanitize=address -g)
+    target_link_options(test_runner PRIVATE -fsanitize=address)
+  endif()
+endif()
+
 add_test(
   NAME  Python_Parser_Tests
   COMMAND Python3::Interpreter -m pytest "${CMAKE_CURRENT_SOURCE_DIR}/test_parser.py" -v
@@ -96,6 +109,8 @@ endfunction()
 add_compile_test(strict_compile_test reflection_impl.c dummy.c)
 add_compile_test(test_defaults use_defaults.c)
 add_compile_test(use_custom_enum use_custom_enum.c)
+
+
 
 
 add_subdirectory(plugins)

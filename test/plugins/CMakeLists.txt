@@ -78,5 +78,5 @@ function(add_plugin_test_suite PLUGIN_NAME)
   endif()
 endfunction()
 
-add_subdirectory(json)
 add_subdirectory(print)
+add_subdirectory(json)
