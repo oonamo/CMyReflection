@@ -68,4 +68,10 @@ typedef struct
     char *friends[MAX_FRIEND_COUNT];
 } User;
 
+// cmy:reflect
+typedef struct
+{
+    char *longstring;
+} LongString;
+
 #endif // _TEST_JSON_TYPES_H

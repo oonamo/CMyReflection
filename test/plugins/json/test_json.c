@@ -76,6 +76,10 @@ ReflectResult serialize_interactions(const void            *exact_data_ptr,
 
 #define Q(s) "\"" s "\""
 
+#define TEST_ASSERT_JSON_CONTAINS(expected_substr, json_str)                                       \
+    TEST_ASSERT_NOT_NULL_MESSAGE(strstr((json_str), (expected_substr)),                            \
+                                 "Expected substring not found in JSON output: " expected_substr)
+
 TEST(Json, Serializes_Strings)
 {
     Post my_posts[2] = {
@@ -95,7 +99,7 @@ TEST(Json, Serializes_Strings)
         .friends       = {"Alice", "Bob", NULL} // Rest are NULL
     };
 
-    json_serialize_value(&u, TYPE_STRUCT_USER, NULL, &state);
+    to_json(&u, TYPE_STRUCT_USER, json_buffer, sizeof(json_buffer));
 
     char filepath[512];
 
@@ -165,7 +169,7 @@ TEST(Json, Handles_Empty_And_Null_Pointers)
 {
     User u = {0};
 
-    json_serialize_value(&u, TYPE_STRUCT_USER, NULL, &state);
+    to_json(&u, TYPE_STRUCT_USER, json_buffer, sizeof(json_buffer));
 
     TEST_ASSERT_NOT_NULL_MESSAGE(strstr(state._buf, Q("bio") ": null"),
                                  "NULL char* did not result in null");
@@ -173,7 +177,7 @@ TEST(Json, Handles_Empty_And_Null_Pointers)
 
 TEST(Json, Generates_Valid_Schema)
 {
-    json_serialize_value(NULL, TYPE_STRUCT_USER, NULL, &state);
+    to_json(NULL, TYPE_STRUCT_USER, json_buffer, sizeof(json_buffer));
 
     TEST_ASSERT_NOT_NULL_MESSAGE(strstr(state._buf, Q("username") ": " Q("TYPE_CHAR_ARR")),
                                  "Schema primitive missing");
@@ -190,9 +194,47 @@ TEST(Json, Generates_Valid_Schema)
         "Schema static array missing");
 }
 
+TEST(Json, Handles_Long_Strings)
+{
+    LongString   l          = {0};
+    const size_t string_len = 400;
+
+    l.longstring = malloc(string_len + 1);
+    TEST_ASSERT_NOT_NULL(l.longstring);
+
+    for (size_t i = 0; i < string_len; i++)
+    {
+        l.longstring[i] = 'a' + (i % 26);
+    }
+    l.longstring[string_len] = '\0';
+
+    TEST_ASSERT_EQUAL(REFLECT_OK,
+                      to_json(&l, TYPE_STRUCT_LONGSTRING, json_buffer, sizeof(json_buffer)));
+
+    char expected_json[1024] = {0};
+    snprintf(
+        expected_json, sizeof(expected_json), "{\n    \"longstring\": \"%s\"\n}", l.longstring);
+
+    TEST_ASSERT_EQUAL_STRING(expected_json, json_buffer);
+
+    free(l.longstring);
+}
+
+TEST(Json, Escapes_Special_Characters)
+{
+    User u = {0};
+    u.bio  = "L1\nL2\n\t\"Hello World\"";
+
+    TEST_ASSERT_EQUAL(REFLECT_OK, to_json(&u, TYPE_STRUCT_USER, json_buffer, sizeof(json_buffer)));
+
+    TEST_ASSERT_JSON_CONTAINS(Q("bio") ": " Q("L1\\nL2\\n\\t\\\"Hello World\\\""), json_buffer);
+}
+
 TEST_GROUP_RUNNER(Json)
 {
     RUN_TEST_CASE(Json, Serializes_Strings);
     RUN_TEST_CASE(Json, Handles_Empty_And_Null_Pointers);
     RUN_TEST_CASE(Json, Generates_Valid_Schema);
+    RUN_TEST_CASE(Json, Handles_Long_Strings);
+    RUN_TEST_CASE(Json, Escapes_Special_Characters);
 }

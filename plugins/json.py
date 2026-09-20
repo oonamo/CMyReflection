@@ -45,7 +45,7 @@ plugin = Plugin(
         Macro.define(
             "CMY_JSON_WRITE(state_ptr, ...)",
             "json_write_internal(state_ptr, __VA_ARGS__)",
-            "Wrapper for json writing function"
+            "Wrapper for json writing function",
         ),
     ],
 )
@@ -164,12 +164,25 @@ def map_needs_quote(
     return None
 
 
+@plugin.type_mapper(
+    signature="bool json_is_string_array(FIELD_TYPE type)",
+    switch_var="type",
+    default_case="return false;",
+    requires=PLUGIN_ENABLED_MACRO,
+    description="Determines if a type is an inline array",
+)
+def map_is_string_array(
+    reflector: Reflector, type_name: str, type_enum: str, ctype: str, suffix: str
+) -> (str | None, str | None):
+    if type_name in ["char_arr", "constchar_arr"]:
+        return (None, "return true;")
+    return None
+
+
 @plugin.emit_header
 def create_struct(reflector: Reflector):
     return r"""
-typedef void (*CMyJsonFlushCb)(const char* chunk, size_t len, void* ctx);
-
-typedef bool (*CMyJsonResizeCb)(char** buffer, size_t* capacity, size_t needed_size, void* ctx);
+typedef void (*cmy_json_write_cb)(const char* chunk, size_t len, void* user_ctx);
 
 typedef struct
 {
@@ -181,10 +194,16 @@ typedef struct
     bool is_first_field;
     FIELD_TYPE current_parent_type;
 
-    CMyJsonFlushCb flush_cb;
-    CMyJsonResizeCb resize_cb;
+    cmy_json_write_cb write_cb;
     void* cb_ctx;
 } _cmy_json_state;
+
+typedef struct
+{
+    char* buf;
+    size_t capacity;
+    size_t offset;
+} _cmy_json_fixedbuf_ctx;
 """.strip()
 
 
@@ -216,6 +235,42 @@ static inline void json_serialize_value(const void* exact_data_ptr, FIELD_TYPE a
 
         state->_current_offset = nested_state._current_offset;
         CMY_JSON_WRITE(state, "\n%*s}", state->indent, "");
+        return;
+    }
+
+    if (exact_data_ptr && json_is_string_type(actual_type)) {
+        const StructFieldExtension* ext = GET_FIELD_EXT(field_ctx);
+        const char* fmt = (ext && ext->format) ? ext->format : "%s";
+
+        StructFieldInfo element_field = {0};
+        if (field_ctx) {
+            element_field = *field_ctx;
+            element_field.offset = 0;
+
+            if (!json_is_string_array(actual_type)) {
+                element_field.count = 0;
+            }
+        }
+
+        // Default
+        if (strcmp(fmt, "%s") == 0) {
+            const char* str_ptr = NULL;
+
+            // exact_data_ptr is ptr to static array
+            if (json_is_string_array(actual_type)) {
+                str_ptr = (const char*)exact_data_ptr;
+            } else {
+                get_field_value(exact_data_ptr, &element_field, (void*)&str_ptr, sizeof(const char*));
+            }
+
+            json_write_string_escaped(state, str_ptr);
+        } else {
+            char fmt_buf[256];
+            if (field_ctx) {
+                get_field_as_str(exact_data_ptr, &element_field, fmt_buf, sizeof(fmt_buf));
+            }
+            json_write_string_escaped(state, fmt_buf);
+        }
         return;
     }
 
@@ -262,44 +317,18 @@ def json_write_internal(reflector: Reflector) -> str:
     return r"""
 static inline void json_write_internal(_cmy_json_state* state, const char* fmt, ...)
 {
+    char scratch[128];
+
     va_list args;
     va_start(args, fmt);
-
-    va_list args_copy;
-    va_copy(args_copy, args);
-    int written = vsnprintf(state->_buf + state->_current_offset,
-                           state->_capacity - state->_current_offset,
-                           fmt, args_copy);
-    va_end(args_copy);
-    if (written < 0) {
-        va_end(args);
-        return;
-    }
-
-    // +1 for \0
-    size_t needed_capacity = state->_current_offset + written + 1;
-
-    if (needed_capacity > state->_capacity) {
-        if (state->flush_cb) {
-            state->flush_cb(state->_buf, state->_current_offset, state->cb_ctx);
-            state->_current_offset = 0;
-
-            vsnprintf(state->_buf, state->_capacity, fmt, args);
-            state->_current_offset = written;
-        } else if (state->resize_cb) {
-            if (state->resize_cb(&state->_buf, &state->_capacity, needed_capacity, state->cb_ctx)) {
-                int written = snprintf(state->_buf + state->_current_offset,
-                           state->_capacity - state->_current_offset,
-                           fmt, args);
-                state->_current_offset += written;
-            }
-            // TODO: Signal error?
-        }
-    } else {
-        state->_current_offset += written;
-    }
-
+    int written = vsnprintf(scratch, sizeof(scratch), fmt, args);
     va_end(args);
+
+    if (written < 0) { return; }
+
+    size_t len_to_write = (written < sizeof(scratch)) ? (size_t)written : sizeof(scratch) - 1;
+
+    state->write_cb(scratch, len_to_write, state->cb_ctx);
 }
 """
 
@@ -393,29 +422,105 @@ static inline void _json_traversal_iterator(const void            *base_instance
 
 @plugin.function(
     requires=PLUGIN_ENABLED_MACRO,
-    description="Converts a given type to a json string",
+    description="Internal fixed buffer callback wrapper",
+)
+def json_fixedbuf_cb(reflector: Reflector) -> str:
+    return r"""
+static void _fixed_buf_write_cb(const char* chunk, size_t len, void* user_ctx)
+{
+    _cmy_json_fixedbuf_ctx* mem = (_cmy_json_fixedbuf_ctx*)user_ctx;
+
+    size_t available = mem->capacity - mem->offset - 1;
+    if (available == 0) return;
+
+    size_t to_write = (len < available) ? len : available;
+
+    memcpy(mem->buf + mem->offset, chunk, to_write);
+    mem->offset += to_write;
+}
+"""
+
+
+@plugin.function(
+    requires=PLUGIN_ENABLED_MACRO, description="Safely escapes and streams strings"
+)
+def json_write_string_escaped(reflector: Reflector):
+    return r"""
+static inline void json_write_string_escaped(_cmy_json_state* state, const char* str)
+{
+    if (!str) {
+        state->write_cb("null", 4, state->cb_ctx);
+        return;
+    }
+
+    state->write_cb("\"", 1, state->cb_ctx);
+
+    const char* p = str;
+    while (*p) {
+        switch(*p) {
+            case '"':  state->write_cb("\\\"", 2, state->cb_ctx); break;
+            case '\\': state->write_cb("\\\\", 2, state->cb_ctx); break;
+            case '\b': state->write_cb("\\b",  2, state->cb_ctx); break;
+            case '\f': state->write_cb("\\f",  2, state->cb_ctx); break;
+            case '\n': state->write_cb("\\n",  2, state->cb_ctx); break;
+            case '\r': state->write_cb("\\r",  2, state->cb_ctx); break;
+            case '\t': state->write_cb("\\t", 2, state->cb_ctx); break;
+            default:   state->write_cb(p, 1, state->cb_ctx); break;
+        }
+        p++;
+    }
+
+    state->write_cb("\"", 1, state->cb_ctx);
+}
+"""
+
+
+@plugin.function(
+    requires=PLUGIN_ENABLED_MACRO,
+    description="Converts a given type to a json string (streamed)",
+)
+def to_json_stream(reflector: Reflector) -> str:
+    return r"""
+static inline ReflectResult to_json_stream(const void* instance, FIELD_TYPE root_type, cmy_json_write_cb write_cb, void* user_ctx)
+{
+    if (!write_cb) { return REFLECT_ERR_NULL_PTR; }
+
+    _cmy_json_state state = {
+        .indent = 0,
+        .is_first_field = true,
+        .current_parent_type = root_type,
+        .write_cb = write_cb,
+        .cb_ctx = user_ctx,
+    };
+
+    json_serialize_value(instance, root_type, NULL, &state);
+
+    return REFLECT_OK;
+}
+"""
+
+
+@plugin.function(
+    requires=PLUGIN_ENABLED_MACRO,
+    description="Converts a given type to a json string using a fixed buffer",
 )
 def to_json(reflector: Reflector) -> str:
     return r"""
 static inline ReflectResult to_json(const void* instance, FIELD_TYPE root_type, char* out_buf, size_t buflen)
 {
     if (!out_buf || buflen == 0) { return REFLECT_ERR_NULL_PTR; }
-    _cmy_json_state state = {
-        .indent = 0,
-        .is_first_field = true,
-        .current_parent_type = root_type,
-        ._buf = out_buf,
-        ._capacity = buflen,
-        ._current_offset = 0,
+
+    _cmy_json_fixedbuf_ctx ctx = {
+        .buf = out_buf,
+        .capacity = buflen,
+        .offset = 0
     };
 
-    CMY_JSON_WRITE(&state, "{\n");
+    ReflectResult res = to_json_stream(instance, root_type, _fixed_buf_write_cb, &ctx);
 
-    visit_struct_fields(instance, root_type, _json_traversal_iterator, &state);
+    ctx.buf[ctx.offset] = '\0';
 
-    CMY_JSON_WRITE(&state, "\n}");
-
-    return REFLECT_OK;
+    return res;
 }
 """
 
