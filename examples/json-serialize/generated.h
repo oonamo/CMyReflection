@@ -71,6 +71,7 @@ typedef enum {
  *      +  void MyCoolEnum_Serializer(const void* instance, const StructFieldInfo* field, _cmy_json_state* state);
  *    - Provides macro: CMY_HAS_JSON_PLUGIN (Value: 1) - json plugin is available
  *    - Provides macro: CMY_PLUGIN_JSON_ENABLED (Default: 1) - Enables the json plugin
+ *    - Provides macro: CMY_JSON_FMT_BUF_LEN (Default: 256) - Buffer length to use for custom format strings
  *    - Provides macro: CMY_JSON_DEBUG  - Adds debug information during certain operations
  *    - Provides macro: CMY_JSON_WRITE(state_ptr, ...) (Value: json_write_internal(state_ptr, __VA_ARGS__)) - Wrapper for json writing function
  *    - Provides router: ReflectResult json_serialize_custom(..) - Process fields dynamically based on their type
@@ -132,6 +133,9 @@ typedef struct
 #ifndef CMY_PLUGIN_JSON_ENABLED
 #    define CMY_PLUGIN_JSON_ENABLED 1
 #endif //CMY_PLUGIN_JSON_ENABLED
+#ifndef CMY_JSON_FMT_BUF_LEN
+#    define CMY_JSON_FMT_BUF_LEN 256
+#endif //CMY_JSON_FMT_BUF_LEN
 #ifndef CMY_JSON_DEBUG
     #ifdef NDEBUG
         #define CMY_JSON_DEBUG 1
@@ -569,7 +573,7 @@ static inline void json_serialize_value(const void* exact_data_ptr, FIELD_TYPE a
 
             json_write_string_escaped(state, str_ptr);
         } else {
-            char fmt_buf[256];
+            char fmt_buf[CMY_JSON_FMT_BUF_LEN];
             if (field_ctx) {
                 get_field_as_str(exact_data_ptr, &element_field, fmt_buf, sizeof(fmt_buf));
             }

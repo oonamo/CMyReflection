@@ -230,6 +230,54 @@ TEST(Json, Escapes_Special_Characters)
     TEST_ASSERT_JSON_CONTAINS(Q("bio") ": " Q("L1\\nL2\\n\\t\\\"Hello World\\\""), json_buffer);
 }
 
+// Generic string implementation
+typedef struct
+{
+    char  *buf;
+    size_t capacity;
+    size_t offset;
+} dynamic_string_ctx;
+
+static void dynamic_write_cb(const char *chunk, size_t len, void *user_ctx)
+{
+    dynamic_string_ctx *ctx = (dynamic_string_ctx *)user_ctx;
+
+    // Generic grow buffer (+1 for null terminator)
+    if (ctx->offset + len + 1 > ctx->capacity)
+    {
+        size_t new_cap = ctx->capacity == 0 ? 64 : ctx->capacity * 2;
+
+        // Apply growth factor until needed capacity is met
+        while (ctx->offset + len + 1 > new_cap)
+        {
+            new_cap *= 2;
+        }
+
+        ctx->buf = realloc(ctx->buf, new_cap);
+        TEST_ASSERT_NOT_NULL_MESSAGE(ctx->buf, "Memroy allocation failes during json stream");
+        ctx->capacity = new_cap;
+    }
+
+    memcpy(ctx->buf + ctx->offset, chunk, len);
+    ctx->offset += len;
+    ctx->buf[ctx->offset] = '\0';
+}
+
+TEST(Json, Stream_Dynamic_Allocation)
+{
+    User u = {0};
+    u.bio  = "This string is dynamically allocated. We will verify it's validity";
+
+    dynamic_string_ctx ctx = {0};
+
+    TEST_ASSERT_EQUAL(REFLECT_OK, to_json_stream(&u, TYPE_STRUCT_USER, dynamic_write_cb, &ctx));
+    TEST_ASSERT_NOT_NULL(ctx.buf);
+
+    TEST_ASSERT_JSON_CONTAINS(
+        Q("bio") ": " Q("This string is dynamically allocated. We will verify it's validity"),
+        ctx.buf);
+}
+
 TEST_GROUP_RUNNER(Json)
 {
     RUN_TEST_CASE(Json, Serializes_Strings);
@@ -237,4 +285,5 @@ TEST_GROUP_RUNNER(Json)
     RUN_TEST_CASE(Json, Generates_Valid_Schema);
     RUN_TEST_CASE(Json, Handles_Long_Strings);
     RUN_TEST_CASE(Json, Escapes_Special_Characters);
+    RUN_TEST_CASE(Json, Stream_Dynamic_Allocation);
 }

@@ -29,6 +29,11 @@ plugin = Plugin(
     macros=[
         Macro.define(PLUGIN_DEFINE_MACRO, "1", f"{PLUGIN_NAME} plugin is available"),
         Macro.default(PLUGIN_ENABLED_MACRO, "1", f"Enables the {PLUGIN_NAME} plugin"),
+        Macro.default(
+            "CMY_JSON_FMT_BUF_LEN",
+            "256",
+            "Buffer length to use for custom format strings",
+        ),
         Macro.raw(
             "CMY_JSON_DEBUG",
             """\
@@ -265,7 +270,7 @@ static inline void json_serialize_value(const void* exact_data_ptr, FIELD_TYPE a
 
             json_write_string_escaped(state, str_ptr);
         } else {
-            char fmt_buf[256];
+            char fmt_buf[CMY_JSON_FMT_BUF_LEN];
             if (field_ctx) {
                 get_field_as_str(exact_data_ptr, &element_field, fmt_buf, sizeof(fmt_buf));
             }
