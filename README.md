@@ -1,14 +1,16 @@
 # CMyReflection
 
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/oonamo/CMyReflection/tests.yml?style=for-the-badge)
-![GitHub License](https://img.shields.io/github/license/oonamo/CMyReflection?style=for-the-badge)
-![Static Badge](https://img.shields.io/badge/Memory_Safety-ASAN_Tested-success?style=for-the-badge)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/oonamo/CMyReflection/tests.yml?style=flat-square)
+![GitHub License](https://img.shields.io/github/license/oonamo/CMyReflection?style=flat-square)
+![Memory Safety](https://img.shields.io/badge/Memory_Safety-ASAN_Tested-success?style=flat-square)
+![Static Badge](https://img.shields.io/badge/C_Standard-99%2B-blue?style=flat-square&logo=C)
+![Generator](https://img.shields.io/badge/Generator-Python_3.9+-blue?logo=python)
 
-A simple, reflection framework for C99+
+A simple reflection framework for C99+
 
 ## Features
 - **Registry** Look up nested structures through paths (gdb-like) `"my_struct_arr[2].x"`
-- **Optional Automatic code generation** with `cmy_reflector.py` that parses automatically parses annotations
+- **Optional Automatic code generation** with `cmy_reflector.py` that automatically parses annotations
 - **Single Header** (`cmyreflection.h`)
 - **Plugin System**
 - **Type Safety** Compile time definitions are created for runtime safety
@@ -73,13 +75,14 @@ typedef struct
 
 ### 2. Generate Reflection Data
 ```sh
-python3 cmy_reflector.py ./src/ -o reflection.generated.h
+# Recursively finds all *.h and *.c files in ./src
+python cmy_reflector.py -i ./src/ -o reflection.generated.h
 ```
 
 ### 3. Use in C Code
 ```c
-#define CMYREFLECTION_IMPLEMENTATION // defines the CMyReflection implementation
-#define REFLECTION_IMPLMENTATION // Defines the implementation for the generated header
+#define CMYREFLECTION_IMPLEMENTATION // Defines the CMyReflection implementation
+#define REFLECTION_IMPLEMENTATION // Defines the implementation for the generated header
 #include "reflection.generated.h"
 
 // ...
@@ -99,7 +102,7 @@ if (target && leaf)
 }
 
 const StructFieldInfo *location_field =
-    find_field(DeviceManager_MetaData, DeviceManager_FieldCount, "device_location");
+    find_field(DeviceManager_Metadata, DeviceManager_FieldCount, "device_location");
 char *location = "bedroom1";
 
 if (set_field_str(&manager, location_field, location) != REFLECT_OK)
@@ -145,7 +148,7 @@ add_custom_command(
             --input ${REFLECTION_SRC_FILES}
             --output ${REFLECTION_OUTPUT}
             --plugins "${cmyreflection_SOURCE_DIR}/plugins/print.py" ${MY_PLUGIN_FILES}
-    DEPENDS "${CMY_GENERATOR_SCRIPT}" "${REFLECTION_SRC_FILES}" "${MY_PLUGIN_FILES}"
+    DEPENDS "${CMY_GENERATOR_SCRIPT}" ${REFLECTION_SRC_FILES} ${MY_PLUGIN_FILES}
     COMMENT "Generating reflection metadata..."
 )
 
