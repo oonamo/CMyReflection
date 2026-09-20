@@ -1,17 +1,20 @@
 # CMyReflection
 
-A simple, 0-dependency, reflection framework for C99+
+A simple, reflection framework for C99+
+
+[![Build Status](https://github.com/oonamo/CMyReflection/actions/workflows/tests.yml/badge.svg)](https://github.com/oonamo/CMyReflection/actions)
 
 ## Features
 - **Registry** Look up nested structures through paths (gdb-like) `"my_struct_arr[2].x"`
+- **Optional Automatic code generation** with `cmy_reflector.py` that parses automatically parses annotations
 - **Single Header** (`cmyreflection.h`)
-- **Automatic code generation** with `cmy_reflector.py` that parses automatically parses annotations
+- **Plugin System**
 - **Type Safety** Compile time definitions are created for runtime safety
 - **Zero Allocation** Strictly uses stack or in-place objects
 
 ## Dependencies
-- python3
 - C99+ compiler
+- (Optional) python3 (Required for plugins and automatic code generation support)
 
 ## Usage
 ### 1. Annotate Structs & Enums
@@ -108,17 +111,44 @@ if (set_field_str(&manager, location_field, location) != REFLECT_OK)
 
 ## CMake Integration
 ```cmake
+include(FetchContent)
+
+# Declare and download CMyReflection
+FetchContent_Declare(
+    cmyreflection
+    GIT_REPOSITORY https://github.com/oonamo/CMyReflection.git
+    GIT_TAG        main
+)
+FetchContent_MakeAvailable(cmyreflection)
+
+# Set the Python Script Path
+set(CMY_GENERATOR_SCRIPT "${cmyreflection_SOURCE_DIR}/cmy_reflector.py")
+
+# Track reflection related files
+file(GLOB_RECURSE REFLECTION_SRC_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/include/*.h")
+file(GLOB_RECURSE MY_PLUGIN_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/plugins/*.py")
+
+# Set Reflection Output
+set(REFLECTION_OUTPUT "${PROJECT_SOURCE_DIR}/reflection.generated.h")
+
+# Ignore reflection file (Prevents CMake from rebuilding if file is generated with no changes)
+list(REMOVE_ITEM REFLECTION_SRC_FILES "${REFLECTION_OUTPUT}")
+
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
-file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
-
+# Run cmyreflection script when needed
 add_custom_command(
-    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/reflection.generated.h"
-    COMMAND Python3::Interpreter "${PROJECT_SOURCE_DIR}/cmy_reflector.py"
-            "${CMAKE_CURRENT_SOURCE_DIR}" -o "${CMAKE_CURRENT_BINARY_DIR}/reflection.generated.h"
-    DEPENDS "${PROJECT_SOURCE_DIR}/cmy_reflector.py" ${SRC_FILES}
-    COMMENT "Generating C reflection metadata..."
+    OUTPUT  "${REFLECTION_OUTPUT}"
+    COMMAND Python3::Interpreter "${CMY_GENERATOR_SCRIPT}"
+            --input ${REFLECTION_SRC_FILES}
+            --output ${REFLECTION_OUTPUT}
+            --plugins "${cmyreflection_SOURCE_DIR}/plugins/print.py" ${MY_PLUGIN_FILES}
+    DEPENDS "${CMY_GENERATOR_SCRIPT}" "${REFLECTION_SRC_FILES}" "${MY_PLUGIN_FILES}"
+    COMMENT "Generating reflection metadata..."
 )
+
+add_executable(example ${REFLECTION_SRC_FILES} ${REFLECTION_OUTPUT})
+target_link_libraries(example PRIVATE cmyreflection)
 ```
 
 ## Annotations
