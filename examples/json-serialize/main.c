@@ -45,15 +45,17 @@ ReflectResult serialize_permissions(const void            *exact_data_ptr,
 
 static User default_acount(void)
 {
-    User u = {.username           = "oonamo",
-              .name               = "onam",
-              .str                = "my cool str",
-              .email              = "myemail@provider.com",
-              .account_id         = 0x13532,
-              .password_hash      = "hash123",
-              .permissions        = PERM_CREATE | PERM_UPDATE,
-              .state              = ACCOUNT_ACTIVE,
-              .active_session_ptr = &g_session};
+    User u = {
+        .username           = "oonamo",                  // Default serialization
+        .name               = "onam",                    // Default serialization
+        .str                = "my\n \"cool\" str",       // \n Escaped, \" Escaped
+        .email              = "myemail@provider.com",    // Regular string
+        .account_id         = 0x13532,                   // Readoly, present in json
+        .password_hash      = "hash123",                 // Writeonly, not present in json
+        .permissions        = PERM_CREATE | PERM_UPDATE, // Serialized by serialize_permissions
+        .state              = ACCOUNT_ACTIVE,            // Converted to string
+        .active_session_ptr = &g_session                 // Private,
+    };
 
     u.post_count = 10;
     u.posts      = malloc(sizeof(Post) * u.post_count);
@@ -61,6 +63,7 @@ static User default_acount(void)
     strncpy(u.settings.language, "en", 32);
     u.settings.prefers_dark = true;
 
+    // Dynamic Array of Objects is rendered
     for (size_t i = 0; i < u.post_count; i++)
     {
         u.posts[i].likes = i;
@@ -70,6 +73,19 @@ static User default_acount(void)
     return u;
 }
 
+typedef struct
+{
+    FILE  *fp;
+    size_t bytes_written;
+} file_stream_t;
+
+void write_to_file(const char *chunk, size_t len, void *user_ctx)
+{
+    file_stream_t *ctx     = (file_stream_t *)user_ctx;
+    size_t         written = fwrite(chunk, 1, len, ctx->fp);
+    ctx->bytes_written += written;
+}
+
 int main()
 {
     User user = default_acount();
@@ -77,9 +93,37 @@ int main()
     char buf[2056];
     char schema[2056];
 
+    // Converts the User into JSON
     to_json(&user, TYPE_STRUCT_USER, buf, sizeof(buf));
-    to_json(NULL, TYPE_STRUCT_USER, schema, sizeof(schema));
-
     printf("%s\n", buf);
+
+    // Converts the User into a Schema
+    to_json(NULL, TYPE_STRUCT_USER, schema, sizeof(schema));
     printf("%s\n", schema);
+
+    char filepath[512];
+#ifdef EXAMPLE_OUT_DIR
+    snprintf(filepath, sizeof(filepath), "%s/json_example.json", EXAMPLE_OUT_DIR);
+#else
+    snprintf(filepath, sizeof(filepath), "json_example.json");
+#endif
+
+    FILE *fp = fopen(filepath, "w");
+    if (!fp)
+    {
+        printf("Failed to open file for writing.\n");
+        return 1;
+    }
+
+    file_stream_t fs = {
+        .fp            = fp,
+        .bytes_written = 0,
+    };
+
+    // Uses the stream function to write to disk
+    to_json_stream(&user, TYPE_STRUCT_USER, write_to_file, &fs);
+    fclose(fp);
+
+    printf("Succesfully streamed %zu bytes to file '%s'.\n", fs.bytes_written, filepath);
+    return 0;
 }

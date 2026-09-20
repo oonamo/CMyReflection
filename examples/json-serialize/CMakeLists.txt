@@ -32,3 +32,6 @@ set_target_properties(json_serializer PROPERTIES
 )
 target_sources(json_serializer PRIVATE main.c ${GENERATED_HEADER})
 target_include_directories(json_serializer PUBLIC ${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_definitions(json_serializer PRIVATE
+  "EXAMPLE_OUT_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\""
+)

@@ -1,0 +1,56 @@
+{
+    "username": "oonamo",
+    "email": "myemail@provider.com",
+    "name": "onam",
+    "str": "my\n \"cool\" str",
+    "account_id": 79154,
+    "permissions": "cu",
+    "state": "Active",
+    "settings": {
+        "language": "en",
+        "prefers_dark": true
+    },
+    "post_count": 10,
+    "posts": [
+        {
+            "title": "TEST",
+            "likes": 0
+        },
+        {
+            "title": "TEST",
+            "likes": 1
+        },
+        {
+            "title": "TEST",
+            "likes": 2
+        },
+        {
+            "title": "TEST",
+            "likes": 3
+        },
+        {
+            "title": "TEST",
+            "likes": 4
+        },
+        {
+            "title": "TEST",
+            "likes": 5
+        },
+        {
+            "title": "TEST",
+            "likes": 6
+        },
+        {
+            "title": "TEST",
+            "likes": 7
+        },
+        {
+            "title": "TEST",
+            "likes": 8
+        },
+        {
+            "title": "TEST",
+            "likes": 9
+        }
+    ]
+}
