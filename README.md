@@ -1,8 +1,10 @@
 # CMyReflection
 
-A simple, reflection framework for C99+
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/oonamo/CMyReflection/tests.yml?style=for-the-badge)
+![GitHub License](https://img.shields.io/github/license/oonamo/CMyReflection?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/Memory_Safety-ASAN_Tested-success?style=for-the-badge)
 
-[![Build Status](https://github.com/oonamo/CMyReflection/actions/workflows/tests.yml/badge.svg)](https://github.com/oonamo/CMyReflection/actions)
+A simple, reflection framework for C99+
 
 ## Features
 - **Registry** Look up nested structures through paths (gdb-like) `"my_struct_arr[2].x"`
