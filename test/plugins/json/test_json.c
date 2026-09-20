@@ -276,6 +276,8 @@ TEST(Json, Stream_Dynamic_Allocation)
     TEST_ASSERT_JSON_CONTAINS(
         Q("bio") ": " Q("This string is dynamically allocated. We will verify it's validity"),
         ctx.buf);
+
+    free(ctx.buf);
 }
 
 TEST_GROUP_RUNNER(Json)
