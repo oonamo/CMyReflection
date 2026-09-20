@@ -280,6 +280,19 @@ TEST(Json, Stream_Dynamic_Allocation)
     free(ctx.buf);
 }
 
+TEST(Json, Can_Use_Key_Name_Output)
+{
+    DumbStruct u = {0};
+    u.my_int     = 53;
+    u.c = 'A';
+
+    TEST_ASSERT_EQUAL(REFLECT_OK,
+                      to_json(&u, TYPE_STRUCT_DUMBSTRUCT, json_buffer, sizeof(json_buffer)));
+
+    TEST_ASSERT_JSON_CONTAINS(Q("int") ": 53", json_buffer);
+    TEST_ASSERT_JSON_CONTAINS(Q("character value") ": A", json_buffer);
+}
+
 TEST_GROUP_RUNNER(Json)
 {
     RUN_TEST_CASE(Json, Serializes_Strings);
@@ -288,4 +301,5 @@ TEST_GROUP_RUNNER(Json)
     RUN_TEST_CASE(Json, Handles_Long_Strings);
     RUN_TEST_CASE(Json, Escapes_Special_Characters);
     RUN_TEST_CASE(Json, Stream_Dynamic_Allocation);
+    RUN_TEST_CASE(Json, Can_Use_Key_Name_Output);
 }

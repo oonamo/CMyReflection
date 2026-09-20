@@ -20,6 +20,7 @@ typedef enum {
     TYPE_POST_PTR,
     TYPE_SIZE_T,
     TYPE_STRUCT_ACCOUNTSETTINGS,
+    TYPE_STRUCT_DUMBSTRUCT,
     TYPE_STRUCT_LONGSTRING,
     TYPE_STRUCT_POST,
     TYPE_STRUCT_USER,
@@ -69,6 +70,17 @@ typedef enum {
  *      +  // in a seperate file
  *      +  #include "reflection.h"
  *      +  void MyCoolEnum_Serializer(const void* instance, const StructFieldInfo* field, _cmy_json_state* state);
+ *    - Provides tag: @json_key_name(value) (Struct Fields) - Name of the json key
+ *      Example:
+ *      +  typedef struct
+ *      +  {
+ *      +      // cmy:json_key_name("new name")
+ *      +      char* old_name;
+ *      +  } MyType;
+ *      Result:
+ *      =  {
+ *      =      "new name": "TYPE_CHAR_PTR"
+ *      =  }
  *    - Provides macro: CMY_HAS_JSON_PLUGIN (Value: 1) - json plugin is available
  *    - Provides macro: CMY_PLUGIN_JSON_ENABLED (Default: 1) - Enables the json plugin
  *    - Provides macro: CMY_JSON_FMT_BUF_LEN (Default: 256) - Buffer length to use for custom format strings
@@ -195,6 +207,9 @@ typedef struct {
 #ifdef CMY_PLUGIN_PRINTER_ENABLED
      const char* format;
 #endif // CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_JSON_ENABLED
+     char* json_key_name;
+#endif // CMY_PLUGIN_JSON_ENABLED
 } StructFieldExtension;
 
 typedef struct {
@@ -211,6 +226,10 @@ extern const StructFieldInfo User_Metadata[];
 extern const size_t User_FieldCount;
 extern const StructFieldInfo LongString_Metadata[];
 extern const size_t LongString_FieldCount;
+extern const StructFieldInfo DumbStruct_Metadata[];
+extern const size_t DumbStruct_FieldCount;
+extern const StructFieldExtension ext_DumbStruct_my_int;
+extern const StructFieldExtension ext_DumbStruct_c;
 extern const EnumMemberInfo PostInteraction_Members[];
 extern const size_t PostInteraction_MemberCount;
 extern const EnumMemberInfo AccountState_Members[];
@@ -257,6 +276,9 @@ DEFINE_FIELD_GETTER(User, TYPE_STRUCT_USER, User)
 
 DEFINE_FIELD_SETTER(LongString, TYPE_STRUCT_LONGSTRING, LongString)
 DEFINE_FIELD_GETTER(LongString, TYPE_STRUCT_LONGSTRING, LongString)
+
+DEFINE_FIELD_SETTER(DumbStruct, TYPE_STRUCT_DUMBSTRUCT, DumbStruct)
+DEFINE_FIELD_GETTER(DumbStruct, TYPE_STRUCT_DUMBSTRUCT, DumbStruct)
 
 DEFINE_FIELD_SETTER(str, TYPE_CHAR_PTR, char           *)
 DEFINE_FIELD_GETTER(str, TYPE_CHAR_PTR, char           *)
@@ -636,7 +658,9 @@ static inline void _json_traversal_iterator(const void            *base_instance
     }
 
     // Print Key
-    CMY_JSON_WRITE(state, "%*s\"%s\": ", state->indent, "", field->name);
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
+    const char* key = (ext && ext->json_key_name) ? ext->json_key_name : field->name;
+    CMY_JSON_WRITE(state, "%*s\"%s\": ", state->indent, "", key);
 
     bool is_string = json_is_string_type(field->type);
     bool is_dynamic = field->length_field_name != NULL;
@@ -873,6 +897,23 @@ const StructFieldInfo LongString_Metadata[] = {
 };
 const size_t LongString_FieldCount = sizeof(LongString_Metadata) / sizeof(StructFieldInfo);
 
+const StructFieldExtension ext_DumbStruct_my_int = {
+#ifdef CMY_PLUGIN_JSON_ENABLED
+.json_key_name = "int",
+#endif // CMY_PLUGIN_JSON_ENABLED
+};
+const StructFieldExtension ext_DumbStruct_c = {
+#ifdef CMY_PLUGIN_JSON_ENABLED
+.json_key_name = "character value",
+#endif // CMY_PLUGIN_JSON_ENABLED
+};
+
+const StructFieldInfo DumbStruct_Metadata[] = {
+    { "my_int", TYPE_INT, offsetof(DumbStruct, my_int), sizeof(int), 1, FIELD_ACCESS_RW, NULL, (void*)&ext_DumbStruct_my_int },
+    { "c", TYPE_CHAR, offsetof(DumbStruct, c), sizeof(char), 1, FIELD_ACCESS_RW, NULL, (void*)&ext_DumbStruct_c },
+};
+const size_t DumbStruct_FieldCount = sizeof(DumbStruct_Metadata) / sizeof(StructFieldInfo);
+
 const EnumMemberInfo PostInteraction_Members[] = {
    { POST_SAVE, "POST_SAVE", NULL },
    { POST_FRIENDS_ONLY, "POST_FRIENDS_ONLY", NULL },
@@ -922,6 +963,10 @@ ReflectResult get_struct_metadata(FieldType type, StructMetaData* out_meta) {
           out_meta->fields = LongString_Metadata;
           out_meta->count = LongString_FieldCount;
           return REFLECT_OK;
+      case TYPE_STRUCT_DUMBSTRUCT:
+          out_meta->fields = DumbStruct_Metadata;
+          out_meta->count = DumbStruct_FieldCount;
+          return REFLECT_OK;
         default: return REFLECT_ERR_TYPE_INVALID;
     }
 }
@@ -953,6 +998,7 @@ ReflectResult safe_set_field(void* instance, const StructFieldInfo* field, const
       case TYPE_STRUCT_ACCOUNTSETTINGS: return set_field_AccountSettings(instance, field, *(AccountSettings*)value);
       case TYPE_STRUCT_USER: return set_field_User(instance, field, *(User*)value);
       case TYPE_STRUCT_LONGSTRING: return set_field_LongString(instance, field, *(LongString*)value);
+      case TYPE_STRUCT_DUMBSTRUCT: return set_field_DumbStruct(instance, field, *(DumbStruct*)value);
       case TYPE_CHAR_PTR: return set_field_str(instance, field, *(char           **)value);
       case TYPE_CHAR: return set_field_char(instance, field, *(char*)value);
       case TYPE_UINT32_T: return set_field_u32(instance, field, *(uint32_t*)value);
@@ -980,6 +1026,7 @@ const char* get_name_of_type(FieldType type) {
      case TYPE_POST_PTR: return "TYPE_POST_PTR";
      case TYPE_SIZE_T: return "TYPE_SIZE_T";
      case TYPE_STRUCT_ACCOUNTSETTINGS: return "TYPE_STRUCT_ACCOUNTSETTINGS";
+     case TYPE_STRUCT_DUMBSTRUCT: return "TYPE_STRUCT_DUMBSTRUCT";
      case TYPE_STRUCT_LONGSTRING: return "TYPE_STRUCT_LONGSTRING";
      case TYPE_STRUCT_POST: return "TYPE_STRUCT_POST";
      case TYPE_STRUCT_USER: return "TYPE_STRUCT_USER";
@@ -1007,6 +1054,7 @@ size_t get_type_size(FIELD_TYPE type) {
         case TYPE_STRUCT_ACCOUNTSETTINGS: return sizeof(AccountSettings);
         case TYPE_STRUCT_USER: return sizeof(User);
         case TYPE_STRUCT_LONGSTRING: return sizeof(LongString);
+        case TYPE_STRUCT_DUMBSTRUCT: return sizeof(DumbStruct);
         case TYPE_CHAR_PTR: return sizeof(char           *);
         case TYPE_CHAR: return sizeof(char);
         case TYPE_UINT32_T: return sizeof(uint32_t);

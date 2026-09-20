@@ -74,4 +74,14 @@ typedef struct
     char *longstring;
 } LongString;
 
+// cmy:reflect
+typedef struct
+{
+    // cmy:json_key_name("int")
+    int my_int;
+
+    // cmy:json_key_name("character value")
+    char c;
+} DumbStruct;
+
 #endif // _TEST_JSON_TYPES_H

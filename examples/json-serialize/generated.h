@@ -69,6 +69,17 @@ typedef enum {
  *      +  // in a seperate file
  *      +  #include "reflection.h"
  *      +  void MyCoolEnum_Serializer(const void* instance, const StructFieldInfo* field, _cmy_json_state* state);
+ *    - Provides tag: @json_key_name(value) (Struct Fields) - Name of the json key
+ *      Example:
+ *      +  typedef struct
+ *      +  {
+ *      +      // cmy:json_key_name("new name")
+ *      +      char* old_name;
+ *      +  } MyType;
+ *      Result:
+ *      =  {
+ *      =      "new name": "TYPE_CHAR_PTR"
+ *      =  }
  *    - Provides macro: CMY_HAS_JSON_PLUGIN (Value: 1) - json plugin is available
  *    - Provides macro: CMY_PLUGIN_JSON_ENABLED (Default: 1) - Enables the json plugin
  *    - Provides macro: CMY_JSON_FMT_BUF_LEN (Default: 256) - Buffer length to use for custom format strings
@@ -196,6 +207,9 @@ typedef struct {
 #ifdef CMY_PLUGIN_PRINTER_ENABLED
      const char* format;
 #endif // CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_JSON_ENABLED
+     char* json_key_name;
+#endif // CMY_PLUGIN_JSON_ENABLED
 } StructFieldExtension;
 
 typedef struct {
@@ -654,7 +668,9 @@ static inline void _json_traversal_iterator(const void            *base_instance
     }
 
     // Print Key
-    CMY_JSON_WRITE(state, "%*s\"%s\": ", state->indent, "", field->name);
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
+    const char* key = (ext && ext->json_key_name) ? ext->json_key_name : field->name;
+    CMY_JSON_WRITE(state, "%*s\"%s\": ", state->indent, "", key);
 
     bool is_string = json_is_string_type(field->type);
     bool is_dynamic = field->length_field_name != NULL;

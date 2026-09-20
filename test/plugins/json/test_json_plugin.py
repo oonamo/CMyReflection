@@ -54,3 +54,21 @@ def test_can_use_serialize_function():
 
         assert func_def in generated_content
         assert case_def in generated_content
+
+
+def test_can_use_json_key_name():
+    c_code = """
+    // cmy:reflect
+    typedef struct
+    {
+        // cmy:json_key_name("value")
+        int x;
+    } Struct;
+    """
+
+    reflector = Reflector()
+    generate_reflection(reflector, "test.h", c_code)
+    reflector.resolve()
+
+    # Should not throw
+    str(reflector)

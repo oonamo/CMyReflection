@@ -62,6 +62,9 @@ plugin = Plugin(
 @plugin.setup
 def setup(reflector: Reflector):
     """Registers custom field extensions that will be added to the C extension structs"""
+    reflector.define_field_extension(
+        "json_key_name", "char*", requires=PLUGIN_ENABLED_MACRO
+    )
     pass
 
 
@@ -100,6 +103,39 @@ Example:
 def handle_struct_serialize_func(reflector: Reflector, enum: CEnum, tag_value: str):
     """Injects the value into the custom struct metadata"""
     pass
+
+
+def validate_json_key_name(tag_name, tag_value) -> (bool, str):
+    clean_value = tag_value.strip('"')
+    return (
+        len(clean_value) > 0,
+        f"Tag '{tag_name}' requires a non-empty string: got '{tag_value}'",
+    )
+
+
+@plugin.struct_field_tag(
+    "json_key_name",
+    enforce_value=True,
+    validator=validate_json_key_name,
+    description="""Name of the json key
+Example:
++  typedef struct
++  {
++      // cmy:json_key_name("new name")
++      char* old_name;
++  } MyType;
+Result:
+=  {
+=      "new name": "TYPE_CHAR_PTR"
+=  }
+""",
+)
+def handle_json_key_name(reflector: Reflector, struct, field, tag_value):
+    clean_value = tag_value.strip('"')
+    clean_value = clean_value.replace('"', '\\"')
+    c_string_literal = f'"{clean_value}"'
+
+    reflector.set_field_extension(field, "json_key_name", c_string_literal)
 
 
 # ----------------------------------------
@@ -355,7 +391,9 @@ static inline void _json_traversal_iterator(const void            *base_instance
     }
 
     // Print Key
-    CMY_JSON_WRITE(state, "%*s\"%s\": ", state->indent, "", field->name);
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
+    const char* key = (ext && ext->json_key_name) ? ext->json_key_name : field->name;
+    CMY_JSON_WRITE(state, "%*s\"%s\": ", state->indent, "", key);
 
     bool is_string = json_is_string_type(field->type);
     bool is_dynamic = field->length_field_name != NULL;
