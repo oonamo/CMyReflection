@@ -116,6 +116,10 @@ if (set_field_str(&manager, location_field, location) != REFLECT_OK)
 
 ## CMake Integration
 ```cmake
+cmake_minimum_required(VERSION 3.17)
+project(my_app C)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 include(FetchContent)
 
 # Declare and download CMyReflection
@@ -126,34 +130,25 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(cmyreflection)
 
-# Set the Python Script Path
-set(CMY_GENERATOR_SCRIPT "${cmyreflection_SOURCE_DIR}/cmy_reflector.py")
+# Add Sources
+add_executable(${PROJECT_NAME})
+target_sources(${PROJECT_NAME} PRIVATE src/main.c)
 
-# Track reflection related files
-file(GLOB_RECURSE REFLECTION_SRC_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/include/*.h")
-file(GLOB_RECURSE MY_PLUGIN_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/plugins/*.py")
+set(REFL_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/refl.generated.h")
 
-# Set Reflection Output
-set(REFLECTION_OUTPUT "${PROJECT_SOURCE_DIR}/reflection.generated.h")
+# Link cmyreflection
+target_link_libraries(${PROJECT_NAME} PRIVATE cmyreflection)
 
-# Ignore reflection file (Prevents CMake from rebuilding if file is generated with no changes)
-list(REMOVE_ITEM REFLECTION_SRC_FILES "${REFLECTION_OUTPUT}")
-
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
-
-# Run cmyreflection script when needed
-add_custom_command(
-    OUTPUT  "${REFLECTION_OUTPUT}"
-    COMMAND Python3::Interpreter "${CMY_GENERATOR_SCRIPT}"
-            --input ${REFLECTION_SRC_FILES}
-            --output ${REFLECTION_OUTPUT}
-            --plugins "${cmyreflection_SOURCE_DIR}/plugins/print.py" ${MY_PLUGIN_FILES}
-    DEPENDS "${CMY_GENERATOR_SCRIPT}" ${REFLECTION_SRC_FILES} ${MY_PLUGIN_FILES}
-    COMMENT "Generating reflection metadata..."
+cmy_add_reflection(my_app
+    INPUTS      "${CMAKE_CURRENT_SOURCE_DIR}/src/types.h"
+    OUTPUT      "${REFL_OUTPUT}"
+    STD_PLUGINS json print
 )
 
-add_executable(example ${REFLECTION_SRC_FILES} ${REFLECTION_OUTPUT})
-target_link_libraries(example PRIVATE cmyreflection)
+target_include_directories(${PROJECT_NAME}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
 ```
 
 ## Annotations

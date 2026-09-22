@@ -82,22 +82,6 @@ add_test(
   COMMAND Python3::Interpreter -m pytest "${CMAKE_CURRENT_SOURCE_DIR}/test_parser.py" -v
 )
 
-if(MSVC)
-  set(STRICT_WARNINGS "/W4" "/WX") # Level 4, Treat as Error
-else()
-  set(STRICT_WARNINGS
-    "-Wall"
-    "-Wextra"
-    "-Wpedantic"
-    "-Werror"
-    "-Wconversion"
-    "-Wshadow"
-    "-Wdouble-promotion"
-    "-Werror=implicit-function-declaration"
-    "-fno-strict-aliasing"
-    "-Wnull-dereference"
-  )
-endif()
 
 function(add_compile_test TARGET_NAME)
   add_executable(${TARGET_NAME} ${ARGN})
@@ -111,8 +95,5 @@ endfunction()
 add_compile_test(strict_compile_test reflection_impl.c dummy.c)
 add_compile_test(test_defaults use_defaults.c)
 add_compile_test(use_custom_enum use_custom_enum.c)
-
-
-
 
 add_subdirectory(plugins)

@@ -35,6 +35,7 @@ ReflectResult serialize_interactions(const void            *exact_data_ptr,
                                      const StructFieldInfo *field_ctx,
                                      _cmy_json_state       *lstate)
 {
+    (void)field_ctx;
     if (actual_type != TYPE_ENUM_POSTINTERACTION)
     {
         TEST_FAIL_MESSAGE("wrong type was passed to serialize_interactions");
@@ -204,7 +205,7 @@ TEST(Json, Handles_Long_Strings)
 
     for (size_t i = 0; i < string_len; i++)
     {
-        l.longstring[i] = 'a' + (i % 26);
+        l.longstring[i] = 'a' + (char)(i % 26);
     }
     l.longstring[string_len] = '\0';
 

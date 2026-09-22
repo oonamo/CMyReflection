@@ -367,7 +367,7 @@ static inline void json_write_internal(_cmy_json_state* state, const char* fmt, 
 
     if (written < 0) { return; }
 
-    size_t len_to_write = (written < sizeof(scratch)) ? (size_t)written : sizeof(scratch) - 1;
+    size_t len_to_write = ((size_t)written < sizeof(scratch)) ? (size_t)written : sizeof(scratch) - 1;
 
     state->write_cb(scratch, len_to_write, state->cb_ctx);
 }

@@ -24,7 +24,7 @@ static inline int capture_output(const char *restrict format, ...)
 
     if (written > 0)
     {
-        g_offset += written;
+        g_offset += (size_t)written;
     }
 
     return written;
@@ -91,7 +91,7 @@ TEST(Print, Formats_Number_Types)
         .c  = 'X',
         .uc = 12,
 
-        .f = 3.142,
+        .f = 3.142f,
         .d = 2.141,
 
         .u8  = 8,

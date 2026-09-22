@@ -52,6 +52,7 @@ function(add_plugin_test_suite PLUGIN_NAME)
   target_compile_definitions(${EXE_NAME} PRIVATE
         "TEST_OUT_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\""
   )
+  target_compile_options(${EXE_NAME} PRIVATE ${STRICT_WARNINGS})
 
   add_test(NAME CTest_${PLUGIN_NAME} COMMAND ${EXE_NAME} -v)
 

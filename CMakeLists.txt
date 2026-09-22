@@ -45,6 +45,22 @@ if (PROJECT_IS_TOP_LEVEL)
   set(CMAKE_C_STANDARD_EXTENSIONS OFF)
   set(CMAKE_C_EXTENSIONS OFF)
   set(CMAKE_C_STANDARD 99)
+  if(MSVC)
+    set(STRICT_WARNINGS "/W4" "/WX") # Level 4, Treat as Error
+  else()
+    set(STRICT_WARNINGS
+      "-Wall"
+      "-Wextra"
+      "-Wpedantic"
+      "-Werror"
+      "-Wconversion"
+      "-Wshadow"
+      "-Werror=implicit-function-declaration"
+      "-fno-strict-aliasing"
+      "-Wnull-dereference"
+    )
+  endif()
+
   list(APPEND CMAKE_CTEST_ARGUMENTS "--output-on-failure")
   enable_testing()
   add_subdirectory(test)

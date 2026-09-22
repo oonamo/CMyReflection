@@ -17,6 +17,12 @@ ReflectResult serialize_permissions(const void            *exact_data_ptr,
                                     const StructFieldInfo *field_ctx,
                                     _cmy_json_state       *state)
 {
+    (void)field_ctx;
+    if (actual_type != TYPE_ENUM_PERMISSIONS)
+    {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
     if (!exact_data_ptr)
     {
         CMY_JSON_WRITE(state, "\"Permissions Bitmask\"");
@@ -66,7 +72,7 @@ static User default_acount(void)
     // Dynamic Array of Objects is rendered
     for (size_t i = 0; i < u.post_count; i++)
     {
-        u.posts[i].likes = i;
+        u.posts[i].likes = (uint32_t)i;
         strncpy(u.posts[i].title, "TEST", MAX_TITLE_LEN);
     }
 
@@ -86,7 +92,7 @@ void write_to_file(const char *chunk, size_t len, void *user_ctx)
     ctx->bytes_written += written;
 }
 
-int main()
+int main(void)
 {
     User user = default_acount();
 
