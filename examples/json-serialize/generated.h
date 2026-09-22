@@ -43,8 +43,10 @@ typedef enum {
  *    - Provides tag: @display(value) (Enum Members) - Specifies how an enum should be displayed.
  *      Defaults to name of the enum member if not provided
  *      Example:
- *      +  @display("enum a")
- *      +  ENUM_A
+ *      +  typedef enum {
+ *      +      // cmy:display("enum a")
+ *      +      ENUM_A,
+ *      +  } MyEnum;
  *    - Provides macro: CMY_HAS_FORMAT_PLUGIN (Value: 1) - format plugin is available
  *    - Provides macro: CMY_PLUGIN_FORMAT_ENABLED (Default: 1) - Enables the format plugin
  *    - Provides macro: CMY_FORMAT_MAX_BUF_LEN (Default: 256) - Default buffer len for printing (_MSC_VER)
