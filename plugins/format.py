@@ -87,8 +87,10 @@ def handle_field_format(reflector, struct, field, tag_value):
 Specifies how an enum should be displayed.
 Defaults to name of the enum member if not provided
 Example:
-+  @display("enum a")
-+  ENUM_A
++  typedef enum {
++      // cmy:display("enum a")
++      ENUM_A,
++  } MyEnum;
 """,
 )
 def handle_member_format(reflector, enum, member, tag_value):

@@ -484,6 +484,7 @@ static void _fixed_buf_write_cb(const char* chunk, size_t len, void* user_ctx)
 """
 
 
+# TODO: Chunk multiple character streams into a single call to prevent write_cb overhead
 @plugin.function(
     requires=PLUGIN_ENABLED_MACRO, description="Safely escapes and streams strings"
 )

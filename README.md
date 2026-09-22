@@ -233,8 +233,20 @@ typedef enum
 
 ## Standard Plugins
 
-- **Printer**: Generates functions to convert types to strings
-- **Json Serialization**: Generates JSON Serialization features
+- **Format (`plugins/format.py`)**: Generate printing functions for types.
+- **Json (`plugins/json.py`)**: Generates JSON serialization and schemas.
+
+## Enabling Plugins
+Enable plugins by passing `--plugin path/to/plugin1 path/to/plugin2` flag, or through the provided CMake integration:
+
+```cmake
+cmy_add_reflection(my_app
+    INPUTS "src/types.h"
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/refl.generated.h"
+    STD_PLUGINS json format
+    PLUGINS "${PROJECT_SOURCE_DIR}/plugins/my_custom_plugin.py"
+)
+```
 
 ## Testing
 Uses **Unity**
