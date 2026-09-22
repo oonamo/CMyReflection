@@ -7,7 +7,7 @@ target_sources(json_serializer PRIVATE main.c)
 cmy_add_reflection(json_serializer
   INPUTS "${REFLECTION_SOURCE_FILES}"
   OUTPUT "${GENERATED_HEADER}"
-  STD_PLUGINS json print
+  STD_PLUGINS json format
 )
 
 set_target_properties(json_serializer PROPERTIES

@@ -1,5 +1,5 @@
-set(PRINT_EXT
-  "${PROJECT_SOURCE_DIR}/plugins/print.py"
+set(FORMAT_EXT
+  "${PROJECT_SOURCE_DIR}/plugins/format.py"
 )
 set(JSON_EXT
   "${PROJECT_SOURCE_DIR}/plugins/json.py"

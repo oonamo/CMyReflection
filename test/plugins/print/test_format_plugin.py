@@ -7,8 +7,8 @@ import pytest
 project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 
-from cmy_reflector import _PLUGINS, generate_reflection, Reflector
-import plugins.print as printer
+import plugins.format as stdformat
+from cmy_reflector import _PLUGINS, Reflector, generate_reflection
 
 
 @pytest.fixture(autouse=True)
@@ -17,7 +17,7 @@ def reset_plugin_registries():
     original_plugins = _PLUGINS.copy()
 
     _PLUGINS = [
-            printer.printer,
+        stdformat.stdformat,
     ]
 
     yield
@@ -38,7 +38,7 @@ def test_validator():
         "%f %% percent",
     ]
 
-    assert all(printer.has_print_specifier(t) for t in TEST_CASES_VALID)
+    assert all(stdformat.has_print_specifier(t) for t in TEST_CASES_VALID)
 
     TEST_CASES_INVALID = [
         "%%",
@@ -47,7 +47,7 @@ def test_validator():
         "Ths one has nothing",
     ]
 
-    assert not any(printer.has_print_specifier(t) for t in TEST_CASES_INVALID)
+    assert not any(stdformat.has_print_specifier(t) for t in TEST_CASES_INVALID)
 
 
 def test_struct_field_catches_missing_specifier():

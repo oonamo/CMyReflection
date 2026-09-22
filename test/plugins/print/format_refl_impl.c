@@ -1,5 +1,5 @@
-#include "test_print_types.h"
+#include "test_format_types.h"
 
 #define CMYREFLECTION_IMPLEMENTATION
 #define REFLECTION_IMPLEMENTATION
-#include "print.generated.h"
+#include "format.generated.h"

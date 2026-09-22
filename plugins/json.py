@@ -25,7 +25,7 @@ plugin = Plugin(
     maintainers=PLUGIN_MAINTAINERS,
     description=PLUGIN_DESCRIPTION,
     includes=["<stdbool.h>", "<stdint.h>", "<stdarg.h>"],
-    depends_on=["Printer"],
+    depends_on=["format"],
     macros=[
         Macro.define(PLUGIN_DEFINE_MACRO, "1", f"{PLUGIN_NAME} plugin is available"),
         Macro.default(PLUGIN_ENABLED_MACRO, "1", f"Enables the {PLUGIN_NAME} plugin"),

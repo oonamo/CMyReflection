@@ -1,16 +1,16 @@
 import cmy_reflector
 from cmy_reflector import CBuilder, Macro, Reflector
 
-PLUGIN_NAME = "Printer"
+PLUGIN_NAME = "format"
 PLUGIN_VERSION = "0.0.0"
 PLUGIN_MAINTAINERS = ["oonamo"]
 PLUGIN_DESCRIPTION = "Provides run time printing for primitive types"
 PLUGIN_DEFINE_MACRO = f"CMY_HAS_{PLUGIN_NAME.upper()}_PLUGIN"
 PLUGIN_ENABLED_MACRO = f"CMY_PLUGIN_{PLUGIN_NAME.upper()}_ENABLED"
 
-PRINTER_MAX_BUF_LEN = "CMY_PRINTER_MAX_BUF_LEN"
+FORMAT_MAX_BUF_LEN = "CMY_FORMAT_MAX_BUF_LEN"
 
-printer = cmy_reflector.Plugin(
+stdformat = cmy_reflector.Plugin(
     name=PLUGIN_NAME,
     version=PLUGIN_VERSION,
     maintainers=PLUGIN_MAINTAINERS,
@@ -20,7 +20,7 @@ printer = cmy_reflector.Plugin(
         Macro.define(PLUGIN_DEFINE_MACRO, "1", f"{PLUGIN_NAME} plugin is available"),
         Macro.default(PLUGIN_ENABLED_MACRO, "1", f"Enables the {PLUGIN_NAME} plugin"),
         Macro.default(
-            PRINTER_MAX_BUF_LEN,
+            FORMAT_MAX_BUF_LEN,
             "256",
             "Default buffer len for printing (_MSC_VER)",
         ),
@@ -29,7 +29,7 @@ printer = cmy_reflector.Plugin(
 )
 
 
-@printer.setup
+@stdformat.setup
 def setup(reflector):
     reflector.define_field_extension(
         "format", "const char*", requires=PLUGIN_ENABLED_MACRO
@@ -59,7 +59,7 @@ def validate_has_no_print_specifier(tag_name, tag_value) -> (bool, str):
     )
 
 
-@printer.struct_field_tag(
+@stdformat.struct_field_tag(
     "format",
     enforce_value=True,
     validator=validate_has_print_specifier,
@@ -77,7 +77,7 @@ def handle_field_format(reflector, struct, field, tag_value):
     reflector.set_field_extension(field, "format", tag_value)
 
 
-@printer.enum_member_tag(
+@stdformat.enum_member_tag(
     "display",
     enforce_value=True,
     # TODO: Technically, it can have it?
@@ -95,7 +95,7 @@ def handle_member_format(reflector, enum, member, tag_value):
     reflector.set_member_extension(member, "display", tag_value)
 
 
-@printer.enum_tag(
+@stdformat.enum_tag(
     "no_print",
     description="Forces the plugin to not generate get_field_as_str for enum",
 )
@@ -204,8 +204,8 @@ def _generate_char_arr_str(
     return [
         cb.check("!instance || !field", "return REFLECT_ERR_NULL_PTR;"),
         "#ifdef _MSC_VER",
-        "    if (field->count > CMY_PRINTER_MAX_BUF_LEN) { return REFLECT_ERR_OUT_OF_BOUNDS; }",
-        "    " + cb.var("char", "var[CMY_PRINTER_MAX_BUF_LEN];"),
+        "    if (field->count > CMY_FORMAT_MAX_BUF_LEN) { return REFLECT_ERR_OUT_OF_BOUNDS; }",
+        "    " + cb.var("char", "var[CMY_FORMAT_MAX_BUF_LEN];"),
         "#else",
         "    " + cb.var("char", "var[field->count]"),
         "#endif",
@@ -278,7 +278,7 @@ def _generate_type_str(
     ]
 
 
-@printer.type_mapper(
+@stdformat.type_mapper(
     signature="ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen)",
     switch_var="field->type",
     default_case="return REFLECT_ERR_TYPE_MISMATCH;",
@@ -328,7 +328,7 @@ def handle_field_str(
     return (func_def, case_def)
 
 
-@printer.function(
+@stdformat.function(
     requires=PLUGIN_ENABLED_MACRO,
     description="Prints a field, if it implements get_field_as_str",
 )
@@ -339,8 +339,8 @@ static inline ReflectResult print_field(const void* instance, const StructFieldI
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
 #ifdef _MSC_VER
-    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
-    char buf[CMY_PRINTER_MAX_BUF_LEN];
+    size_t buflen = CMY_FORMAT_MAX_BUF_LEN;
+    char buf[CMY_FORMAT_MAX_BUF_LEN];
 #else // May have VLA support
     size_t buflen = field->count > 256 ? field->count : 256;
     char buf[buflen];
@@ -357,4 +357,4 @@ static inline ReflectResult print_field(const void* instance, const StructFieldI
 """
 
 
-cmy_reflector.add_plugin(printer)
+cmy_reflector.add_plugin(stdformat)

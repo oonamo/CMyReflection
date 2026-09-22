@@ -8,7 +8,7 @@ project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 
 import plugins.json as json
-import plugins.print as printer
+import plugins.format as stdformat
 from cmy_reflector import _PLUGINS, Reflector, generate_reflection
 
 
@@ -18,7 +18,7 @@ def reset_plugin_registries():
     original_plugins = _PLUGINS.copy()
 
     _PLUGINS = [
-        printer.printer,
+        stdformat.stdformat,
         json.plugin,
     ]
 

@@ -43,7 +43,7 @@ typedef enum {
 
 /*
  * CMyReflection Active Plugins
- *  -> Printer (v0.0.0) by oonamo - Provides run time printing for primitive types
+ *  -> format (v0.0.0) by oonamo - Provides run time printing for primitive types
  *    - Provides tag: @no_print (Enums) - Forces the plugin to not generate get_field_as_str for enum
  *    - Provides tag: @format(value) (Struct Fields) - Specify a C format specifier for a struct.
  *      Does not create a get_field_as_str function if not defined
@@ -57,9 +57,9 @@ typedef enum {
  *      Example:
  *      +  @display("enum a")
  *      +  ENUM_A
- *    - Provides macro: CMY_HAS_PRINTER_PLUGIN (Value: 1) - Printer plugin is available
- *    - Provides macro: CMY_PLUGIN_PRINTER_ENABLED (Default: 1) - Enables the Printer plugin
- *    - Provides macro: CMY_PRINTER_MAX_BUF_LEN (Default: 256) - Default buffer len for printing (_MSC_VER)
+ *    - Provides macro: CMY_HAS_FORMAT_PLUGIN (Value: 1) - format plugin is available
+ *    - Provides macro: CMY_PLUGIN_FORMAT_ENABLED (Default: 1) - Enables the format plugin
+ *    - Provides macro: CMY_FORMAT_MAX_BUF_LEN (Default: 256) - Default buffer len for printing (_MSC_VER)
  *    - Provides macro: CMY_PRINTF (Default: printf) - Defines the printf implementation
  *    - Provides router: ReflectResult get_field_as_str(..) - Creates a get_type_as_str for the type for primitives and enums
  *      By default, enums are enabled
@@ -71,22 +71,22 @@ typedef enum {
  */
 
 
-#define CMY_HAS_PRINTER_PLUGIN 1
-#ifndef CMY_PLUGIN_PRINTER_ENABLED
-#    define CMY_PLUGIN_PRINTER_ENABLED 1
-#endif //CMY_PLUGIN_PRINTER_ENABLED
-#ifndef CMY_PRINTER_MAX_BUF_LEN
-#    define CMY_PRINTER_MAX_BUF_LEN 256
-#endif //CMY_PRINTER_MAX_BUF_LEN
+#define CMY_HAS_FORMAT_PLUGIN 1
+#ifndef CMY_PLUGIN_FORMAT_ENABLED
+#    define CMY_PLUGIN_FORMAT_ENABLED 1
+#endif //CMY_PLUGIN_FORMAT_ENABLED
+#ifndef CMY_FORMAT_MAX_BUF_LEN
+#    define CMY_FORMAT_MAX_BUF_LEN 256
+#endif //CMY_FORMAT_MAX_BUF_LEN
 #ifndef CMY_PRINTF
 #    define CMY_PRINTF printf
 #endif //CMY_PRINTF
 
 
 // ########################################
-// Printer Declarations
+// format Declarations
 // ########################################
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
 static inline ReflectResult get_field_EnumType_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult get_field_char_arr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
@@ -111,22 +111,22 @@ static inline ReflectResult get_field_unsignedchar_as_str(const void* instance, 
 static inline ReflectResult get_field_unsignedlong_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult get_field_unsignedshort_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field);
-#endif // CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
 
 
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 typedef struct {
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
      const char* format;
-#endif // CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
 } StructFieldExtension;
 
 typedef struct {
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
      const char* display;
-#endif // CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
 } EnumMemberExtension;
 // --- Metadata Declarations
 extern const StructFieldInfo StringType_Metadata[];
@@ -248,16 +248,16 @@ DEFINE_FIELD_GETTER(int64_t, TYPE_INT64_T, int64_t)
 // --- Plugin-Generated-Extensions ---
 
 // ==========================================
-// Plugin: Printer
+// Plugin: format
 // ==========================================
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
 static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field)
 {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
 #ifdef _MSC_VER
-    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
-    char buf[CMY_PRINTER_MAX_BUF_LEN];
+    size_t buflen = CMY_FORMAT_MAX_BUF_LEN;
+    char buf[CMY_FORMAT_MAX_BUF_LEN];
 #else // May have VLA support
     size_t buflen = field->count > 256 ? field->count : 256;
     char buf[buflen];
@@ -272,8 +272,8 @@ static inline ReflectResult print_field(const void* instance, const StructFieldI
     return REFLECT_OK;
 }
 
-#endif // CMY_PLUGIN_PRINTER_ENABLED
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
 static inline ReflectResult get_field_EnumType_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
     if (!instance || !field) {
         return REFLECT_ERR_NULL_PTR;
@@ -333,8 +333,8 @@ static inline ReflectResult get_field_char_arr_as_str(const void* instance, cons
     }
 
     #ifdef _MSC_VER
-        if (field->count > CMY_PRINTER_MAX_BUF_LEN) { return REFLECT_ERR_OUT_OF_BOUNDS; }
-        char var[CMY_PRINTER_MAX_BUF_LEN];;
+        if (field->count > CMY_FORMAT_MAX_BUF_LEN) { return REFLECT_ERR_OUT_OF_BOUNDS; }
+        char var[CMY_FORMAT_MAX_BUF_LEN];;
     #else
         char var[field->count];
     #endif
@@ -669,13 +669,13 @@ static inline ReflectResult get_field_as_str(const void* instance, const StructF
     }
 }
 
-#endif // CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
 
 #endif // CMYREFLECTION_AUTOGEN_H
 // --- Metadata Definitions
 #ifdef REFLECTION_IMPLEMENTATION
 
-// --- Generated from test_print_types.h ---
+// --- Generated from test_format_types.h ---
 const StructFieldInfo StringType_Metadata[] = {
     { "char_ptr", TYPE_CHAR_PTR, offsetof(StringType, char_ptr), sizeof(char *), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "char_arr", TYPE_CHAR_ARR, offsetof(StringType, char_arr), sizeof(char[BUF_LEN]), BUF_LEN, FIELD_ACCESS_RW, NULL, NULL },
@@ -713,19 +713,19 @@ const StructFieldInfo MockStruct_Metadata[] = {
 const size_t MockStruct_FieldCount = sizeof(MockStruct_Metadata) / sizeof(StructFieldInfo);
 
 const StructFieldExtension ext_Specified_as_hex = {
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
 .format = "0x%x",
-#endif // CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
 };
 const StructFieldExtension ext_Specified_with_prefix = {
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
 .format = "my str: %s",
-#endif // CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
 };
 const StructFieldExtension ext_Specified_percent = {
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
 .format = "%.2f%%",
-#endif // CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
 };
 
 const StructFieldInfo Specified_Metadata[] = {
@@ -736,9 +736,9 @@ const StructFieldInfo Specified_Metadata[] = {
 const size_t Specified_FieldCount = sizeof(Specified_Metadata) / sizeof(StructFieldInfo);
 
 const EnumMemberExtension ext_EnumType_ENUM_ERR = {
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
 .display = "Error Enum",
-#endif // CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
 };
 const EnumMemberInfo EnumType_Members[] = {
    { ENUM_A, "ENUM_A", NULL },

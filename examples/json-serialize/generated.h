@@ -31,7 +31,7 @@ typedef enum {
 
 /*
  * CMyReflection Active Plugins
- *  -> Printer (v0.0.0) by oonamo - Provides run time printing for primitive types
+ *  -> format (v0.0.0) by oonamo - Provides run time printing for primitive types
  *    - Provides tag: @no_print (Enums) - Forces the plugin to not generate get_field_as_str for enum
  *    - Provides tag: @format(value) (Struct Fields) - Specify a C format specifier for a struct.
  *      Does not create a get_field_as_str function if not defined
@@ -45,9 +45,9 @@ typedef enum {
  *      Example:
  *      +  @display("enum a")
  *      +  ENUM_A
- *    - Provides macro: CMY_HAS_PRINTER_PLUGIN (Value: 1) - Printer plugin is available
- *    - Provides macro: CMY_PLUGIN_PRINTER_ENABLED (Default: 1) - Enables the Printer plugin
- *    - Provides macro: CMY_PRINTER_MAX_BUF_LEN (Default: 256) - Default buffer len for printing (_MSC_VER)
+ *    - Provides macro: CMY_HAS_FORMAT_PLUGIN (Value: 1) - format plugin is available
+ *    - Provides macro: CMY_PLUGIN_FORMAT_ENABLED (Default: 1) - Enables the format plugin
+ *    - Provides macro: CMY_FORMAT_MAX_BUF_LEN (Default: 256) - Default buffer len for printing (_MSC_VER)
  *    - Provides macro: CMY_PRINTF (Default: printf) - Defines the printf implementation
  *    - Provides router: ReflectResult get_field_as_str(..) - Creates a get_type_as_str for the type for primitives and enums
  *      By default, enums are enabled
@@ -130,13 +130,13 @@ typedef struct
 } _cmy_json_fixedbuf_ctx;
 
 
-#define CMY_HAS_PRINTER_PLUGIN 1
-#ifndef CMY_PLUGIN_PRINTER_ENABLED
-#    define CMY_PLUGIN_PRINTER_ENABLED 1
-#endif //CMY_PLUGIN_PRINTER_ENABLED
-#ifndef CMY_PRINTER_MAX_BUF_LEN
-#    define CMY_PRINTER_MAX_BUF_LEN 256
-#endif //CMY_PRINTER_MAX_BUF_LEN
+#define CMY_HAS_FORMAT_PLUGIN 1
+#ifndef CMY_PLUGIN_FORMAT_ENABLED
+#    define CMY_PLUGIN_FORMAT_ENABLED 1
+#endif //CMY_PLUGIN_FORMAT_ENABLED
+#ifndef CMY_FORMAT_MAX_BUF_LEN
+#    define CMY_FORMAT_MAX_BUF_LEN 256
+#endif //CMY_FORMAT_MAX_BUF_LEN
 #ifndef CMY_PRINTF
 #    define CMY_PRINTF printf
 #endif //CMY_PRINTF
@@ -159,9 +159,9 @@ typedef struct
 
 
 // ########################################
-// Printer Declarations
+// format Declarations
 // ########################################
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
 static inline ReflectResult get_field_AccountState_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult get_field_Permissions_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
@@ -174,7 +174,7 @@ static inline ReflectResult get_field_str_as_str(const void* instance, const Str
 static inline ReflectResult get_field_u32_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult get_field_u64_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field);
-#endif // CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
 
 // ########################################
 // json Declarations
@@ -204,18 +204,18 @@ static inline ReflectResult to_json_stream(const void* instance, FIELD_TYPE root
 #include <stdio.h>
 #include <stdlib.h>
 typedef struct {
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
      const char* format;
-#endif // CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
 #ifdef CMY_PLUGIN_JSON_ENABLED
      char* json_key_name;
 #endif // CMY_PLUGIN_JSON_ENABLED
 } StructFieldExtension;
 
 typedef struct {
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
      const char* display;
-#endif // CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
 } EnumMemberExtension;
 // --- Metadata Declarations
 extern const StructFieldInfo Post_Metadata[];
@@ -306,16 +306,16 @@ DEFINE_DYNAMIC_ARRAY_GETTER(User_posts, TYPE_POST_PTR, Post *, Post)
 // --- Plugin-Generated-Extensions ---
 
 // ==========================================
-// Plugin: Printer
+// Plugin: format
 // ==========================================
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
 static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field)
 {
     if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
 
 #ifdef _MSC_VER
-    size_t buflen = CMY_PRINTER_MAX_BUF_LEN;
-    char buf[CMY_PRINTER_MAX_BUF_LEN];
+    size_t buflen = CMY_FORMAT_MAX_BUF_LEN;
+    char buf[CMY_FORMAT_MAX_BUF_LEN];
 #else // May have VLA support
     size_t buflen = field->count > 256 ? field->count : 256;
     char buf[buflen];
@@ -330,8 +330,8 @@ static inline ReflectResult print_field(const void* instance, const StructFieldI
     return REFLECT_OK;
 }
 
-#endif // CMY_PLUGIN_PRINTER_ENABLED
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
 static inline ReflectResult get_field_Permissions_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
     if (!instance || !field) {
         return REFLECT_ERR_NULL_PTR;
@@ -380,8 +380,8 @@ static inline ReflectResult get_field_char_arr_as_str(const void* instance, cons
     }
 
     #ifdef _MSC_VER
-        if (field->count > CMY_PRINTER_MAX_BUF_LEN) { return REFLECT_ERR_OUT_OF_BOUNDS; }
-        char var[CMY_PRINTER_MAX_BUF_LEN];;
+        if (field->count > CMY_FORMAT_MAX_BUF_LEN) { return REFLECT_ERR_OUT_OF_BOUNDS; }
+        char var[CMY_FORMAT_MAX_BUF_LEN];;
     #else
         char var[field->count];
     #endif
@@ -530,7 +530,7 @@ static inline ReflectResult get_field_as_str(const void* instance, const StructF
     }
 }
 
-#endif // CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
 
 // ==========================================
 // Plugin: json
@@ -890,14 +890,14 @@ const StructFieldInfo UserPrefernces_Metadata[] = {
 const size_t UserPrefernces_FieldCount = sizeof(UserPrefernces_Metadata) / sizeof(StructFieldInfo);
 
 const StructFieldExtension ext_User_username = {
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
 .format = "%s",
-#endif // CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
 };
 const StructFieldExtension ext_User_email = {
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
 .format = "%s",
-#endif // CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
 };
 
 const StructFieldInfo User_Metadata[] = {
@@ -923,19 +923,19 @@ const EnumMemberInfo Permissions_Members[] = {
 const size_t Permissions_MemberCount = sizeof(Permissions_Members) / sizeof(EnumMemberInfo);
 
 const EnumMemberExtension ext_AccountState_ACCOUNT_ACTIVE = {
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
 .display = "Active",
-#endif // CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
 };
 const EnumMemberExtension ext_AccountState_ACCOUNT_INACTIVE = {
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
 .display = "Inactive",
-#endif // CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
 };
 const EnumMemberExtension ext_AccountState_ACCOUNT_STALE = {
-#ifdef CMY_PLUGIN_PRINTER_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
 .display = "Stale",
-#endif // CMY_PLUGIN_PRINTER_ENABLED
+#endif // CMY_PLUGIN_FORMAT_ENABLED
 };
 const EnumMemberInfo AccountState_Members[] = {
    { ACCOUNT_ACTIVE, "ACCOUNT_ACTIVE", (void*)&ext_AccountState_ACCOUNT_ACTIVE },

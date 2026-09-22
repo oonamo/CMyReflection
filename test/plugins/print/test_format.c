@@ -3,34 +3,13 @@
 #include <unity_fixture.h>
 #include <stdlib.h>
 
-#include "test_print_types.h"
+#include "test_format_types.h"
 #include <stdarg.h>
 
 char   g_buf[1024];
 size_t g_offset;
 
-// Capture printf output
-static inline int capture_output(const char *restrict format, ...)
-{
-    if (g_offset >= sizeof(g_buf))
-    {
-        return 0;
-    }
-
-    va_list args;
-    va_start(args, format);
-    int written = vsnprintf(g_buf + g_offset, sizeof(g_buf) - g_offset, format, args);
-    va_end(args);
-
-    if (written > 0)
-    {
-        g_offset += (size_t)written;
-    }
-
-    return written;
-}
-
-#include "print.generated.h"
+#include "format.generated.h"
 
 TEST_GROUP(Print);
 
