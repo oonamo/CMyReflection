@@ -108,6 +108,19 @@ class Macro:
         else:
             return self.value
 
+    def to_premacro_doc_string(self) -> str:
+        desc_str = f" - {self.description}" if self.description else ""
+
+        if self.macro_type == MacroType.DEFAULT:
+            return f" *    - Injects Pre-Macro: {self.name} (Default: {self.value}){desc_str}"
+        elif self.macro_type == MacroType.DEFINE:
+            return f" *    - Injects Pre-Macro: {self.name} (Value: {self.value}){desc_str}"
+        elif self.macro_type == MacroType.UNDEF:
+            return f" *    - Removes Pre-Macro: {self.name}{desc_str}"
+        elif self.macro_type == MacroType.RAW:
+            return f" *    - Injects Pre-Macro: {self.name} {desc_str}"
+        return ""
+
     def to_doc_string(self) -> str:
         """Converts a macro to it's header doc string"""
         desc_str = f" - {self.description}" if self.description else ""
@@ -174,6 +187,7 @@ class Plugin:
 
     maintainers: list[str] = dataclasses.field(default_factory=list)
     includes: list[str] = dataclasses.field(default_factory=list)
+    pre_macros: list[Macro] = dataclasses.field(default_factory=list)
     macros: list[Macro] = dataclasses.field(default_factory=list)
     depends_on: list[str] = dataclasses.field(default_factory=list)
 
@@ -274,6 +288,9 @@ class Plugin:
         gen_str_for_tag_dict(self._enum_tags, "Enums")
         gen_str_for_tag_dict(self._struct_field_tags, "Struct Fields")
         gen_str_for_tag_dict(self._enum_member_tags, "Enum Members")
+
+        for macro in self.pre_macros:
+            lines.append(macro.to_premacro_doc_string())
 
         for macro in self.macros:
             lines.append(macro.to_doc_string())
@@ -1401,6 +1418,7 @@ FieldType get_base_type(FieldType type) {{
         includes = set()
         declarations = []
         macros = []
+        pre_macros = []
 
         for p in _PLUGINS:
             public_prototypes = self.public_plugin_prototypes.get(p.name, set())
@@ -1455,7 +1473,15 @@ FieldType get_base_type(FieldType type) {{
             macro_defs = [m.to_c_string() for m in p.macros]
             macros.extend(macro_defs)
 
+            pre_macro_defs = [m.to_c_string() for m in p.pre_macros]
+            pre_macros.extend(pre_macro_defs)
+
         lines.append(" */\n")
+
+        if pre_macros:
+            lines.append("")
+            lines.extend(pre_macros)
+            lines.append("")
 
         for inc in sorted(includes):
             if not inc.startswith("<") and not inc.startswith('"'):

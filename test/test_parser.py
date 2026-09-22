@@ -9,6 +9,7 @@ from cmy_reflector import (
     SIG_REGEX,
     CBuilder,
     CVar,
+    Macro,
     Plugin,
     Reflector,
     generate_reflection,
@@ -871,3 +872,33 @@ def test_SIG_regex():
     f2 = "static inline ReflectResult to_json(const void* instance, FIELD_TYPE root_type, char* out_buf, size_t buflen)"
     match = SIG_REGEX.match(f2)
     assert match
+
+
+def test_can_add_pre_macros():
+    c_code = """
+    // cmy:reflect
+    typedef struct
+    {
+        int x;
+    } MyStruct;
+    """
+
+    p = Plugin(
+        "test",
+        pre_macros=[
+            Macro.define("_POSIX_C_SOURCE", "200809L", "Required for snprintf")
+        ],
+    )
+
+    cmy_reflector.add_plugin(p)
+    reflector = Reflector()
+    generate_reflection(reflector, "test.h", c_code)
+
+    generated_content = str(reflector)
+
+    assert "#define _POSIX_C_SOURCE 200809L" in generated_content
+
+    assert (
+        "Injects Pre-Macro: _POSIX_C_SOURCE (Value: 200809L) - Required for snprintf"
+        in generated_content
+    )
