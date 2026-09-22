@@ -162,7 +162,7 @@ def _generate_enum_str(
         cb.var(
             "char*",
             "enum_val",
-            "get_enum_member_name(meta.members, meta.count, var)",
+            "get_enum_member_name(meta.members, meta.count, (int)var)",
         ).as_const(),
         cb.var("EnumMemberInfo*", "info")
         .val_with_default("enum_val", "Find_Enum_Member(meta, enum_val)", "NULL")

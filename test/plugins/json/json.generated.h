@@ -7,8 +7,7 @@
 *   #include "your_types.h"
 *   #define CMYREFLECTION_IMPLEMENTATION
 *   #define REFLECTION_IMPLEMENTATION
-*   #define "this_generated_file.h"
-*
+*   #include "this_generated_file.h"
 */
 
 #ifdef _MSC_VER

@@ -1,3 +1,43 @@
+/*
+ * ================================================================================
+ * CMyReflection - A simple reflection framework for C99+
+ *
+ * Version: 0.0.0
+ * LICENSE: MIT
+ * ================================================================================
+ *
+ * HOW TO USE THIS LIBRARY
+ *
+ * 1. In EXACTLY ONE source C file, define CMYREFLECTION_IMPLEMENTATION before including
+ *    this header to create the implementation
+ *    #define CMYREFLECTION_IMPLEMENTATION
+ *    #include "cmyreflection.h"
+ * 2. If using the parser, define REFLECTION_IMPLEMENTATION before including the generated header
+ *
+ *    // 1. Include your files used for type generation
+ *    #include "my_types.h"
+ *
+ *    // 2. Define the implementation macros in exactly one file
+ *    #define CMYREFLECTION_IMPLEMENTATION
+ *    #define REFLECTION_IMPLEMENTATION
+ *
+ *    // 3. Include the generated header
+ *    #include "refl.generated.h"
+ * 3. In any other file, inaclude the headers
+ *    // If using the parser
+ *    #include "refl.generated.h"
+ *
+ *    // If using standalone (requires implementing metadata)
+ *    #include "cmyreflection.h"
+ * ================================================================================
+ * ARCHITECTURE & GENERATOR
+ *
+ * This library provides the runtime engine. The reflection data is generated
+ * by `cmy_reflector.py` by parsing source code.
+ * See the GitHub repository for documentation on the generator and plugins
+ * (https://github.com/oonamo/CMyReflection)
+ * ================================================================================
+ */
 #ifndef _CMYREFLECTION_H
 #define _CMYREFLECTION_H
 
@@ -8,6 +48,11 @@
 #define CMYREFLECTION_MAJOR 0
 #define CMYREFLECTION_MINOR 1
 #define CMYREFLECTION_PATCH 0
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -71,6 +116,11 @@ typedef struct
     size_t                 count;  /*!< Number of members in struct */
 } StructMetaData;
 
+/*
+ * @brief Constructs a StructMetaData object for a given reflected struct
+ *
+ * @note Requires that `StructName_Metadata` and `StructName_FieldCount` are available in scope
+ */
 #define StructMetaData_FromName(StructName)                                                        \
     (StructMetaData)                                                                               \
     {                                                                                              \
@@ -928,3 +978,7 @@ ReflectResult get_dynamic_array_data(const void            *instance,
 }
 
 #endif // CMYREFLECTION_IMPLEMENTATION
+
+#ifdef __cplusplus
+}
+#endif

@@ -319,7 +319,7 @@ static inline void json_serialize_value(const void* exact_data_ptr, FIELD_TYPE a
     bool force_quotes = false;
     bool is_explicit_null = false;
 
-    if (exact_data_ptr) {
+    if (exact_data_ptr && field_ctx) {
         StructFieldInfo element_field = *field_ctx;
         element_field.type = actual_type;
         element_field.offset = 0;
