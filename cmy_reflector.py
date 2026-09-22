@@ -1457,25 +1457,25 @@ FieldType get_base_type(FieldType type) {{
 
         lines.append(" */\n")
 
-        if header_code:
-            lines.append("")
-            lines.extend(header_code)
-            lines.append("")
+        for inc in sorted(includes):
+            if not inc.startswith("<") and not inc.startswith('"'):
+                inc = f"<{inc}>"
+            lines.append(f"#include {inc}")
 
         if macros:
             lines.append("")
             lines.extend(macros)
             lines.append("")
 
+        if header_code:
+            lines.append("")
+            lines.extend(header_code)
+            lines.append("")
+
         if declarations:
             lines.append("")
             lines.extend(declarations)
             lines.append("")
-
-        for inc in sorted(includes):
-            if not inc.startswith("<") and not inc.startswith('"'):
-                inc = f"<{inc}>"
-            lines.append(f"#include {inc}")
 
         return "\n".join(lines)
 

@@ -70,6 +70,9 @@ typedef enum {
  *    - Provides function: ReflectResult print_field(...) - Prints a field, if it implements get_field_as_str
  */
 
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define CMY_HAS_FORMAT_PLUGIN 1
 #ifndef CMY_PLUGIN_FORMAT_ENABLED
@@ -114,9 +117,6 @@ static inline ReflectResult print_field(const void* instance, const StructFieldI
 #endif // CMY_PLUGIN_FORMAT_ENABLED
 
 
-#include <inttypes.h>
-#include <stdio.h>
-#include <stdlib.h>
 typedef struct {
 #ifdef CMY_PLUGIN_FORMAT_ENABLED
      const char* format;
