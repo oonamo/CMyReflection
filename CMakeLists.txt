@@ -46,7 +46,7 @@ if (PROJECT_IS_TOP_LEVEL)
   set(CMAKE_C_EXTENSIONS OFF)
   set(CMAKE_C_STANDARD 99)
   if(MSVC)
-    set(STRICT_WARNINGS "/W4" "/WX") # Level 4, Treat as Error
+    set(STRICT_WARNINGS "/W4" "/WX" "/wd4210" "/wd4996")
   else()
     set(STRICT_WARNINGS
       "-Wall"
