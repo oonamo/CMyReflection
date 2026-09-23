@@ -11,7 +11,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Callable
 
-VERSION = "1.0.0" # x-release-please-version
+VERSION = "1.0.1" # x-release-please-version
 
 SIG_REGEX = re.compile(
     r"^\s*(?P<prefix>(?:\w+\s+)*)"
