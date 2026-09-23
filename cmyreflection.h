@@ -47,7 +47,7 @@
 
 #define CMYREFLECTION_MAJOR 1 // x-release-please-major
 #define CMYREFLECTION_MINOR 0 // x-release-please-minor
-#define CMYREFLECTION_PATCH 0 // x-release-please-patch
+#define CMYREFLECTION_PATCH 1 // x-release-please-patch
 
 #ifdef __cplusplus
 extern "C"

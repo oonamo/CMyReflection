@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.1](https://github.com/oonamo/CMyReflection/compare/v1.0.0...v1.0.1) (2026-09-23)
+
+
+### Bug Fixes
+
+* **format-plugin:** align changelog path ([683f03e](https://github.com/oonamo/CMyReflection/commit/683f03ea0eef9ead58fb51ea5c3c11c2075471c7))
+* **json-plugin:** align changelog path ([683f03e](https://github.com/oonamo/CMyReflection/commit/683f03ea0eef9ead58fb51ea5c3c11c2075471c7))
+* resolve nested folder generation in release zip ([683f03e](https://github.com/oonamo/CMyReflection/commit/683f03ea0eef9ead58fb51ea5c3c11c2075471c7))
+
 ## [1.0.0](https://github.com/oonamo/CMyReflection/compare/v1.0.0...v1.0.0) (2026-09-23)
 
 
