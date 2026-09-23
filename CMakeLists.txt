@@ -42,6 +42,15 @@ function(cmy_add_reflection TARGET_NAME)
 endfunction()
 
 if (PROJECT_IS_TOP_LEVEL)
+  find_package(Git QUIET)
+  if(GIT_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+      execute_process(
+          COMMAND ${GIT_EXECUTABLE} config core.hooksPath .githooks
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      )
+      message(STATUS "Configured local Git hooks path")
+  endif()
+
   set(CMAKE_C_STANDARD_EXTENSIONS OFF)
   set(CMAKE_C_EXTENSIONS OFF)
   set(CMAKE_C_STANDARD 99)

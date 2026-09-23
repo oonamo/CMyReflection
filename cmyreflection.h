@@ -45,9 +45,9 @@
     #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#define CMYREFLECTION_MAJOR 0
-#define CMYREFLECTION_MINOR 1
-#define CMYREFLECTION_PATCH 0
+#define CMYREFLECTION_MAJOR 1 // x-release-please-major
+#define CMYREFLECTION_MINOR 0 // x-release-please-minor
+#define CMYREFLECTION_PATCH 0 // x-release-please-patch
 
 #ifdef __cplusplus
 extern "C"

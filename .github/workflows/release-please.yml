@@ -1,0 +1,39 @@
+name: Release Please
+
+on:
+  workflow_run:
+    workflows: ["Run Tests"]
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: .github/release-please-config.json
+          manifest-file: .github/.release-please-manifest.json
+
+      - name: Checkout Code
+        if: ${{ steps.release.outputs.releases_created }}
+        uses: actions/checkout@v4
+
+      - name: Package Release Zip
+        if: ${{ steps.release.outputs.releases_created }}
+        run: |
+          mkdir cmyreflection
+          cp cmyreflection.h cmy_reflector.py README.md LICENSE cmyreflection/
+          cp -r plugins cmyreflection/
+          zip -r cmyreflection.zip cmyreflection/
+          gh release upload ${{ steps.release.outputs.tag_name }} cmyreflection.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

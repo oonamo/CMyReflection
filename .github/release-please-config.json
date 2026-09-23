@@ -1,0 +1,25 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "extra-files": [
+        "cmyreflection.h",
+        "cmy_reflector.py"
+      ]
+    },
+    "plugins/json": {
+      "release-type": "simple",
+      "component": "json-plugin",
+      "extra-files": [
+        "plugins/json.py"
+      ]
+    },
+    "plugins/format": {
+      "release-type": "simple",
+      "component": "format-plugin",
+      "extra-files": [
+        "plugins/format.py"
+      ]
+    }
+  }
+}
