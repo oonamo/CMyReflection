@@ -20,6 +20,8 @@ A simple reflection framework for C99+
 - C99+ compiler
 - (Optional) python3 (Required for plugins and automatic code generation support)
 
+*Ready to see examples? Ready to build [CMake](examples/cmake_example) and [Makefile](examples/make_example) are available.*
+
 ## Usage
 ### 1. Annotate Structs & Enums
 ```c
@@ -81,8 +83,14 @@ python cmy_reflector.py -i ./src/ -o reflection.generated.h
 
 ### 3. Use in C Code
 ```c
-#define CMYREFLECTION_IMPLEMENTATION // Defines the CMyReflection implementation
-#define REFLECTION_IMPLEMENTATION // Defines the implementation for the generated header
+// 1. Include your type definitions first
+#include "iot_device_types.h"
+
+// 2. Define implementations in EXACTLY ONE source file
+#define CMYREFLECTION_IMPLEMENTATION
+#define REFLECTION_IMPLEMENTATION
+
+// 3. Include the generated file last
 #include "reflection.generated.h"
 
 // ...
@@ -114,12 +122,18 @@ if (set_field_str(&manager, location_field, location) != REFLECT_OK)
 }
 ```
 
+## Examples
+Ready to build, localized examples
+
+- [CMake Integration Example](examples/cmake_example/)
+- [Makefile Integration Example](examples/make_example)
+
 ## Standard Tags
 
 > [!NOTE]
 > Currently, *unions* and *nested structs* are not supported.
 
-### @reflect
+### reflect
 Placed before the typedef struct|enum definition
 Instructs the parser to reflect the struct|enum definition
 
@@ -138,8 +152,8 @@ typedef struct
 // TYPE_STRUCT_MYSTRUCT
 ```
 
-### @enum(NAME)
-Placed before the typedef struct definition, after `@reflect`
+### enum(NAME)
+Placed before the typedef struct definition, after `reflect`
 Renames the type enum to be NAME
 
 ```c
@@ -156,7 +170,7 @@ typedef struct
 // TYPE_U8_DYN_ARR
 ```
 
-### @private
+### private
 Placed before the field, or after
 
 ```c
@@ -173,7 +187,7 @@ typedef struct
 // No field information is generated for data or uuid32
 ```
 
-### @readonly
+### readonly
 ```c
 // cmy:reflect
 typedef struct
@@ -187,7 +201,7 @@ typedef struct
 // set_field_size_t for field attempts is denied
 ```
 
-### @writeonly
+### writeonly
 ```c
 // cmy:reflect
 typedef struct
@@ -199,7 +213,7 @@ typedef struct
 // get_field_str for hash_str is denied
 ```
 
-### @length
+### length
 ```c
 // cmy:reflect
 typedef struct
@@ -215,7 +229,7 @@ typedef struct
 // get_dynamic_mem_pool_buffer
 ```
 
-### @unchecked
+### unchecked
 ```c
 // cmy:reflect
 // cmy:unchecked
@@ -232,6 +246,8 @@ typedef enum
 ```
 
 ## Standard Plugins
+
+For detailed API usage, configuration macros, and tag documentation, see the [Plugin Documentation](plugins/README.md)
 
 - **Format (`plugins/format.py`)**: Generate printing functions for types.
 - **Json (`plugins/json.py`)**: Generates JSON serialization and schemas.

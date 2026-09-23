@@ -18,9 +18,9 @@ Requires the *Format* plugin
     ReflectResult MyCoolStruct_Serializer(const void            *exact_data_ptr,
                                           FIELD_TYPE             actual_type,
                                           const StructFieldInfo *field_ctx,
-                                          _cmy_json_state       *state)
+                                          _cmy_json_state       *state);
     ```
-*   **`json_key_name("name")`** (Structs Fields)
+*   **`json_key_name("name")`** (Structs Field)
     Overrides the JSON key name for a specific field
     ```c
     // cmy:reflect
@@ -57,18 +57,19 @@ ReflectResult to_json_stream(const void* instance, FIELD_TYPE root_type, cmy_jso
 void json_serialize_value(const void* exact_data_ptr, FIELD_TYPE actual_type, const StructFieldInfo* field_ctx, _cmy_json_state* state);
 ```
 
-## Format Plugin
+## Format Plugin (`format.py`)
 Provides run time printing for primitive types and enums
 
 ### Available Tags
 *    **`no_print`** (Enums)
-    prevents `get_field_as_str` being generated for the enum.
+    Prevents `get_field_as_str` from being generated for the enum.
     ```c
     // cmy:reflect
     // cmy:no_print
     typedef enum { ... } MyEnum;
     // get_field_MyEnum_as_str(...) is unimplemented
     ```
+
 *   **`format(FormatString)`** (Struct Fields)
     Overrides the format string for the field
     ```c
@@ -90,7 +91,7 @@ Provides run time printing for primitive types and enums
     ```
 ### Configuration Macros
 
-* `CMY_FORMAT_PLUGIN_ENABLED` - Set to `0` to disable the plugin (Default: `1`)
+* `CMY_PLUGIN_FORMAT_ENABLED` - Set to `0` to disable the plugin (Default: `1`)
 * `CMY_FORMAT_MAX_BUF_LEN` - Buffer size to use for formatting (Default: `256`)
 * `CMY_PRINTF` - `printf` implementation to use (Default: `printf`)
 
@@ -99,7 +100,7 @@ Provides run time printing for primitive types and enums
 ### Public API
 All get_field_* are considered as Public, but removed for brevity
 ```c
-// Convert's a field to a string, if implemented.
+// Converts a field to a string, if implemented.
 // Returns REFLECT_ERR_TYPE_MISMATCH if not implemented for the type
 // Returns REFLECT_ERR_ACCESS_DENIED if the type does not provide read access
 ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
