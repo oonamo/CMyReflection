@@ -6,6 +6,8 @@ Plugins hook into the reflection engine to automatically generate functions base
 Provides functions for converting types into JSON
 Requires the *Format* plugin
 
+**[Json Example](../examples/json-serialize/)**
+
 ### Available Tags
 *   **`json_serialize_function(FunctionName)`** (Structs & Enums)
     Overrides the default serializer with a custom one, for a type
