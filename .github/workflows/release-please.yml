@@ -42,13 +42,13 @@ jobs:
         run: gh release upload ${{ steps.release.outputs['.--tag_name'] }} cmyreflection.zip
 
       - name: Upload JSON Plugin Asset
-        if: ${{ steps.release.outputs['plugins/json--release_created'] }}
+        if: ${{ steps.release.outputs['plugins/json-plugin--release_created'] }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ steps.release.outputs['plugins/json--tag_name'] }} cmyreflection.zip
+        run: gh release upload ${{ steps.release.outputs['json-plugin--tag_name'] }} cmyreflection.zip
 
       - name: Upload Format Plugin Asset
-        if: ${{ steps.release.outputs['plugins/format--release_created'] }}
+        if: ${{ steps.release.outputs['plugins/format-plugin--release_created'] }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ steps.release.outputs['plugins/format--tag_name'] }} cmyreflection.zip
+        run: gh release upload ${{ steps.release.outputs['format-plugin--tag_name'] }} cmyreflection.zip

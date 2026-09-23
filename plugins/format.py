@@ -2,7 +2,7 @@ import cmy_reflector
 from cmy_reflector import CBuilder, Macro, Reflector
 
 PLUGIN_NAME = "format"
-PLUGIN_VERSION = "0.0.0" # x-release-please-version
+PLUGIN_VERSION = "1.0.0" # x-release-please-version
 PLUGIN_MAINTAINERS = ["oonamo"]
 PLUGIN_DESCRIPTION = "Provides run time printing for primitive types"
 PLUGIN_DEFINE_MACRO = f"CMY_HAS_{PLUGIN_NAME.upper()}_PLUGIN"

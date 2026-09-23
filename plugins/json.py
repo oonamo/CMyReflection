@@ -10,7 +10,7 @@ from cmy_reflector import (
 # Plugin Configuration
 # ----------------------------------------
 PLUGIN_NAME = "json"
-PLUGIN_VERSION = "0.0.0"  # x-release-please-version
+PLUGIN_VERSION = "1.0.0"  # x-release-please-version
 PLUGIN_MAINTAINERS = ["oonamo"]
 PLUGIN_DESCRIPTION = "A json serializer plugin"
 

@@ -7,18 +7,20 @@
         "cmy_reflector.py"
       ]
     },
-    "plugins/json": {
+    "json-plugin": {
+      "path": "plugins",
       "release-type": "simple",
-      "component": "json-plugin",
+      "changelog-path": "CHANGELOG-json.md",
       "extra-files": [
-        "plugins/json.py"
+        "json.py"
       ]
     },
-    "plugins/format": {
+    "format-plugin": {
+      "path": "plugins",
       "release-type": "simple",
-      "component": "format-plugin",
+      "changelog-path": "CHANGELOG-format.md",
       "extra-files": [
-        "plugins/format.py"
+        "format.py"
       ]
     }
   }
