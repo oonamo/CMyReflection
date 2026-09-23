@@ -116,7 +116,7 @@ typedef struct
     size_t                 count;  /*!< Number of members in struct */
 } StructMetaData;
 
-/*
+/**
  * @brief Constructs a StructMetaData object for a given reflected struct
  *
  * @note Requires that `StructName_Metadata` and `StructName_FieldCount` are available in scope
@@ -140,15 +140,44 @@ typedef struct
     size_t                count;   /*!< Numbers of members in enum */
 } EnumMetaData;
 
+/**
+ * @brief Constructs an EnumMetaData object for a given reflected enum
+ *
+ * @note Requires that `EnumName_Metadata` and `EnumName_FieldCount` are available in scope
+ */
 #define EnumMetaData_FromName(EnumName)                                                            \
     (EnumMetaData)                                                                                 \
     {                                                                                              \
         EnumName##_Members, EnumName##_MemberCount                                                 \
     }
 
+/**
+ * @brief Finds a struct field, given a field and metadat
+ *
+ * ```c
+ * typedef struct {
+ *   // ...
+ *   int x;
+ * } MyStruct;
+ *
+ * const StructFieldInfo* field = Find_Struct_Field(StructMetaData_FromName(MyStruct), "x");
+ * ```
+ */
 #define Find_Struct_Field(MetaStruct, FieldName)                                                   \
     find_field((MetaStruct).fields, (MetaStruct).count, FieldName)
 
+/**
+ * @brief Finds a struct field, given a field and metadat
+ *
+ * ```c
+ * typedef enum {
+ *   // ...
+ *   VALUE_A,
+ * } MyEnum;
+ *
+ * const StructFieldInfo* field = Find_Enum_Member(EnumMetaData_FromName(MyEnum), "VALUE_A");
+ * ```
+ */
 #define Find_Enum_Member(MetaEnum, MemberName)                                                     \
     find_member((MetaEnum).members, (MetaEnum).count, MemberName)
 
@@ -156,6 +185,14 @@ typedef struct
  * @brief Get's the struct's metadata
  *
  * @note Implemented in python generation script
+ *
+ * ```c
+ * StructMetaData meta = {};
+ * get_struct_metadata(TYPE_STRUCT_MYSTRUCT, &meta);
+ * if (get_struct_metadata(TYPE_STRUCT_MYSTRUCT, &meta) == REFLECT_OK) {
+ *     // do stuff
+ * }
+ * ```
  *
  * @param type     [in] Type of struct
  * @param out_meta [out] The returned struct metadata
@@ -167,17 +204,30 @@ ReflectResult get_struct_metadata(FIELD_TYPE type, StructMetaData *out_meta);
 /**
  * @brief Resolves the base type of a pointer or array enum.
  *
+ * @note Implemented by the python script
+ *
+ * ```c
+ * // Assumes TYPE_INT and TYPE_INT_PTR are defined
+ * assert(TYPE_INT == get_base_type(TYPE_INT_PTR));
+ * assert(TYPE_INT == get_base_type(TYPE_INT_ARR));
+ * ```
  * @param type [in] The pointer type (e.g., TYPE_POST_PTR)
  * @return The underlying value type (e.g., TYPE_STRUCT_POST), or the original type if not a
  * pointer.
  */
-FIELD_TYPE get_base_type(FIELD_TYPE tyoe);
+FIELD_TYPE get_base_type(FIELD_TYPE type);
 
 /**
- * @brief Get's the enum's metadata
+ * @brief Gets the enum's metadata
  *
  * @note Implemented in python generation script
  *
+ * ```c
+ * EnumMetaData meta = {0};
+ * if (get_enum_metadata(TYPE_ENUM_MYENUM, &meta) == REFLECT_OK) {
+ *     // do stuff
+ * }
+ * ```
  * @param type     [in] Type of enum
  * @param out_meta [out] The returned enum metadata
  *
@@ -188,7 +238,7 @@ ReflectResult get_enum_metadata(FIELD_TYPE type, EnumMetaData *out_meta);
 /**
  * @brief Safely sets a field given metadata
  *
- * @note Implemented in python generation script
+ * @note Implemented in python generation script.
  *
  * @param instance      [out] Instance to write
  * @param field         [in]  Metadata of instance
@@ -207,6 +257,10 @@ ReflectResult safe_set_field(void                  *instance,
  *
  * @note Implemented in python generation script
  *
+ * ```c
+ * assert(strcmp("TYPE_INT", get_name_of_type(TYPE_INT)) == 0);
+ * ```
+ *
  * @param type [in] Type of enum to convert
  *
  * @return name of the enum, NULL if not implemented
@@ -215,6 +269,24 @@ const char *get_name_of_type(FIELD_TYPE type);
 
 /**
  * @brief Finds the struct containing the path
+ *
+ * Evaluates a gdb-like path string against the provided metadata.
+ * If the path is valid and accessible, the memory address of the parent
+ * struct is returned, along with the out_leaf_field pointer to the field.
+ *
+ * ```c
+ * DeviceManager manager = {0};
+ * const StructFieldInfo* leaf = NULL;
+ *
+ * void *target = resolve_field_target(&manager,
+ *                                     DeviceManager_Metadata,
+ *                                     DeviceManager_FieldCount,
+ *                                     "devices[2].data.voltage",
+ *                                     &leaf)
+ * if (target && leaf) {
+ *    set_field_float(target, leaf, 240.5f);
+ * }
+ * ```
  *
  * @param base_instance  [in] Struct to begin traversal
  * @param base_meta      [in] FieldInfo of root struct
@@ -232,6 +304,21 @@ void *resolve_field_path(void                   *base_instance,
 
 /**
  * @brief Resolves metadata for a specific field path without an instance.
+ *
+ * ```c
+ * typedef struct {
+ *   int x;
+ * } StructA;
+ *
+ * typedef struct {
+ *    StructA other_struct;
+ * } StructB;
+ *
+ * // ...
+ * const StructFieldInfo* field = resolve_field_metadata(StructB_Metadata, Struct2_Count,
+ * "other_struct.x")
+ * assert(field != NULL);
+ * ```
  *
  * @param base_meta  [in] Array of FieldInfo representing the root struct
  * @param base_count [in] Number of elements in base_meta
@@ -260,6 +347,17 @@ void *reflect_query(void                   *instance,
 /**
  * @brief Find's a field in a struct
  *
+ * ```c
+ * typedef struct {
+ *     int x;
+ *     float y;
+ * } StructA;
+ *
+ * // ...
+ * const StructFieldInfo* field = find_field(StructA_Metadata, StructA_FieldCount, "y");
+ * assert(field->type == TYPE_FLOAT);
+ * ```
+ *
  * @param meta  [in] Array of FieldInfo
  * @param count [in] Number of elements in meta
  * @param name  [in] Name of field
@@ -271,6 +369,16 @@ const StructFieldInfo *find_field(const StructFieldInfo *meta, size_t count, con
 /**
  * @brief Find's a member in a struct
  *
+ * ```c
+ * typedef enum {
+ *     VALUE_A,
+ *     VALUE_B,
+ * } EnumA;
+ *
+ * // ...
+ * const EnumMemberInfo* member = find_member(EnumA_Members, EnumA_MemberCount, "VALUE_A");
+ * assert(field->type == TYPE_FLOAT);
+ * ```
  * @param meta  [in] Array of FieldInfo
  * @param count [in] Number of elements in meta
  * @param name  [in] Name of field
@@ -283,6 +391,9 @@ find_member(const EnumMemberInfo *meta, size_t member_count, const char *name);
 /**
  * @brief Gets the string name of an enum member given its integer value
  *
+ * ```c
+ * assert(strcmp("VALUE_A", get_enum_member_name(EnumA_Members, EnumA_MemberCount, VALUE_A)) == 0);
+ * ```
  * @param meta         [in] Array of EnumMemberInfo
  * @param member_count [in] Number of elements in meta
  * @param value        [in] Integer value to find
@@ -294,6 +405,10 @@ const char *get_enum_member_name(const EnumMemberInfo *meta, size_t member_count
 /**
  * @brief Get's the size of the type
  *
+ * @note Implemented in python script
+ * ```c
+ * assert(sizeof(int) == get_type_size(TYPE_INT));
+ * ```
  * @param type [in] Type to check size
  *
  * @return The size of the type, or 0 if not found
@@ -448,6 +563,21 @@ typedef void (*StructFieldVisitor)(const void            *base_instance,
 /**
  * @brief Iterates over all fields of a struct and invokes a callback for each.
  *
+ * ```c
+ * void traverse_all(const void* base_instance, const StructFieldInfo* field, void* user_data)
+ * {
+ *     StructMetaData meta;
+ *
+ *     // If type is struct
+ *     if (get_struct_metadata(field->type, &meta) == REFLECT_OK)
+ *     {
+ *         const void* next_base_instance = (const char*)(base_instance) + field->offset;
+ *         visit_struct_fields(next_base_instance, field->type, traverse_all, NULL);
+ *         return;
+ *     }
+ *     // Do some action on the primitive types
+ * }
+ * ```
  * @param instance  [in] Pointer to the struct instance
  * @param type      [in] Type enum of the struct to visit
  * @param visitor   [in] Callback function to execute per field

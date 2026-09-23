@@ -285,7 +285,7 @@ TEST(Json, Can_Use_Key_Name_Output)
 {
     DumbStruct u = {0};
     u.my_int     = 53;
-    u.c = 'A';
+    u.c          = 'A';
 
     TEST_ASSERT_EQUAL(REFLECT_OK,
                       to_json(&u, TYPE_STRUCT_DUMBSTRUCT, json_buffer, sizeof(json_buffer)));

@@ -1,3 +1,5 @@
+Documentation:
+  CommentFormat: Markdown
 CompileFlags:
   Add: [-DCMYREFLECTION_IMPLEMENTATION]
 Diagnostics:
