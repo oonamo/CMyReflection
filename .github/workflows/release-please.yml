@@ -34,6 +34,21 @@ jobs:
           cp cmyreflection.h cmy_reflector.py README.md LICENSE cmyreflection/
           cp -r plugins cmyreflection/
           zip -r cmyreflection.zip cmyreflection/
-          gh release upload ${{ steps.release.outputs.tag_name }} cmyreflection.zip
+
+      - name: Upload Core Asset
+        if: ${{ steps.release.outputs['.--release_created'] }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ steps.release.outputs['.--tag_name'] }} cmyreflection.zip
+
+      - name: Upload JSON Plugin Asset
+        if: ${{ steps.release.outputs['plugins/json--release_created'] }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ steps.release.outputs['plugins/json--tag_name'] }} cmyreflection.zip
+
+      - name: Upload Format Plugin Asset
+        if: ${{ steps.release.outputs['plugins/format--release_created'] }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ steps.release.outputs['plugins/format--tag_name'] }} cmyreflection.zip
