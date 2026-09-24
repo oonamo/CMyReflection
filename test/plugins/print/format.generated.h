@@ -53,7 +53,7 @@ typedef enum {
 
 /*
  * CMyReflection Active Plugins
- *  -> format (v0.0.0) by oonamo - Provides run time printing for primitive types
+ *  -> format (v1.0.0) by oonamo - Provides run time printing for primitive types
  *    - Provides tag: @no_print (Enums) - Forces the plugin to not generate get_field_as_str for enum
  *    - Provides tag: @format(value) (Struct Fields) - Specify a C format specifier for a struct.
  *      Does not create a get_field_as_str function if not defined

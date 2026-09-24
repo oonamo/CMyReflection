@@ -6,7 +6,7 @@
 ![Static Badge](https://img.shields.io/badge/C_Standard-99%2B-blue?style=flat-square&logo=C)
 ![Generator](https://img.shields.io/badge/Generator-Python_3.9+-blue?logo=python)
 
-A simple reflection framework for C99+
+A zero-overhead reflection and code-generation framework for C99+
 
 ## Features
 - **Registry** Look up nested structures through paths (gdb-like) `"my_struct_arr[2].x"`
@@ -16,11 +16,68 @@ A simple reflection framework for C99+
 - **Type Safety** Compile time definitions are created for runtime safety
 - **Zero Allocation** Strictly uses stack or in-place objects
 
+> [!NOTE]
+> **Current Limitations**: *unions* and *nested structs* are not supported.
+
 ## Dependencies
 - C99+ compiler
 - (Optional) python3 (Required for plugins and automatic code generation support)
 
 *Ready to see examples? Ready to build [CMake](examples/cmake_example) and [Makefile](examples/make_example) are available.*
+
+## Quick Start
+Annotate your existing c code
+
+### Your Code
+```c
+// player.h
+// cmy:reflect
+typedef struct
+{
+    int health;
+    float speed;
+} Player;
+
+// main.c
+#include <stdio.h>
+#include "player.h"
+
+// Define implementations in one file
+#define CMYREFLECTION_IMPLEMENTATION
+#define REFLECTION_IMPLEMENTATION
+#include "refl.generated.h" // Your auto-generated metadata
+
+int main(void) {
+    Player p1 = {100, 10.0f};
+
+    // Safely look up and modify a field using a string at runtime
+    const StructFieldInfo* field = find_field(Player_Metadata, Player_FieldCount, "health");
+
+    if (field) {
+        set_field_int(&p1, field, 150);
+        printf("Player health updated to %d\n", p1.health);
+    }
+
+    return 0;
+}
+```
+
+### Build Step
+```sh
+python3 cmy_reflector.py --input player.h --output refl.generated.h
+```
+
+## Table of Contents
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+  - [1. Annotate Structs & Enums](#1-annotate-structs--enums)
+  - [2. Generate Reflection Data](#2-generate-reflection-data)
+  - [3. Use in C Code](#3-use-in-c-code)
+- [Examples](#examples)
+- [Standard Tags](#standard-tags)
+- [Standard Plugins](#standard-plugins)
+- [Enabling Plugins](#enabling-plugins)
+- [Testing](#testin
 
 ## Usage
 ### 1. Annotate Structs & Enums
@@ -130,8 +187,6 @@ Ready to build, localized examples
 
 ## Standard Tags
 
-> [!NOTE]
-> Currently, *unions* and *nested structs* are not supported.
 
 ### reflect
 Placed before the typedef struct|enum definition
