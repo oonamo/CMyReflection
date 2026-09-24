@@ -973,3 +973,36 @@ def test_plugin_can_inject_ast_data_correctly():
         '{ "vel", TYPE_STRUCT_V2, offsetof(Player, vel), sizeof(v2), 1, FIELD_ACCESS_RW, NULL, NULL }'
         in generated_content
     )
+
+
+def test_sizeof_void_is_never_created():
+    c_code = """\
+    // cmy:reflect
+    typedef struct
+    {
+        int a;
+        void* data_ptr;
+    } Struct;
+    """
+
+    reflector = Reflector()
+    generate_reflection(reflector, "test.h", c_code)
+    reflector.resolve()
+
+    generated_content = str(reflector)
+
+    all_type_enums = [t for _, t in reflector.type_map.items()]
+
+    # Check if void even exists
+    assert "TYPE_VOID_PTR" in all_type_enums
+    assert "TYPE_VOID" in all_type_enums
+
+    # Sanity check
+    assert "TYPE_INT" in all_type_enums
+
+    # Check if size function is present for int
+    assert "sizeof(int)" in generated_content
+
+    assert "sizeof(void*)" in generated_content
+
+    assert "sizeof(void)" not in generated_content

@@ -1382,6 +1382,8 @@ ReflectResult safe_set_field(void* instance, const StructFieldInfo* field, const
             if type_name == "unknown":
                 continue
             ctype = self.ctypes.get(type_name, type_name)
+            if ctype == "void":
+                continue
             lines.append(f"        case {type_enum}: return sizeof({ctype});")
 
         lines.append("        default: return 0;")
