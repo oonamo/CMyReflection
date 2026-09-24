@@ -1079,7 +1079,7 @@ class Reflector:
                     else:
                         break
 
-                    if parent_norm and parent_norm not in self.type_map:
+                    if parent_ctype != "void" and parent_norm and parent_norm not in self.type_map:
                         safe_base_name = parent_norm.upper().replace("*", "_PTR")
                         self.type_map[parent_norm] = f"TYPE_{safe_base_name}"
                         self.ctypes[parent_norm] = parent_ctype

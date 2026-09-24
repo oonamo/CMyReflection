@@ -975,7 +975,7 @@ def test_plugin_can_inject_ast_data_correctly():
     )
 
 
-def test_sizeof_void_is_never_created():
+def test_void_is_never_created():
     c_code = """\
     // cmy:reflect
     typedef struct
@@ -995,14 +995,13 @@ def test_sizeof_void_is_never_created():
 
     # Check if void even exists
     assert "TYPE_VOID_PTR" in all_type_enums
-    assert "TYPE_VOID" in all_type_enums
+    assert "TYPE_VOID" not in all_type_enums
 
     # Sanity check
     assert "TYPE_INT" in all_type_enums
 
     # Check if size function is present for int
     assert "sizeof(int)" in generated_content
-
     assert "sizeof(void*)" in generated_content
 
     assert "sizeof(void)" not in generated_content
