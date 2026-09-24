@@ -5,6 +5,7 @@
 ![Memory Safety](https://img.shields.io/badge/Memory_Safety-ASAN_Tested-success?style=flat-square)
 ![Static Badge](https://img.shields.io/badge/C_Standard-99%2B-blue?style=flat-square&logo=C)
 ![Generator](https://img.shields.io/badge/Generator-Python_3.9+-blue?logo=python)
+![Version](https://img.shields.io/github/v/tag/oonamo/CMyReflection?filter=v*&label=version)
 
 A zero-overhead reflection and code-generation framework for C99+
 
