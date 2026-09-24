@@ -220,6 +220,68 @@ def map_is_string_array(
     return None
 
 
+@plugin.type_mapper(
+    signature="ReflectResult type_to_json(const void* instance, FIELD_TYPE type, char* out_buf, size_t buflen)",
+    switch_var="type",
+    default_case="return REFLECT_ERR_TYPE_MISMATCH;",
+    requires=PLUGIN_ENABLED_MACRO,
+    description="Creates convenient Struct_to_json functions for structs",
+    force_mapper_declartion=False,
+)
+def map_type_to_json(
+    reflector: Reflector, type_name: str, type_enum: str, ctype: str, suffix: str
+) -> (str | None, str | None):
+    struct = reflector.get_struct(type_name)
+    if not struct:
+        return None
+
+    if reflector.is_ptr(type_name):
+        return None
+
+    prefix = ""
+    if not ctype.startswith("const"):
+        prefix = "const "
+
+    func_def = f"""\
+static inline ReflectResult {suffix}_to_json({prefix}{ctype}* instance, char* out_buf, size_t buflen)
+{{
+        return to_json((const void*)instance, {type_enum}, out_buf, buflen);
+}}
+"""
+    return (func_def, None)
+
+
+@plugin.type_mapper(
+    signature="ReflectResult type_to_json_stream(const void* instance, FIELD_TYPE type, cmy_json_write_cb write_cb, void* user_ctx)",
+    switch_var="type",
+    default_case="return REFLECT_ERR_TYPE_MISMATCH;",
+    requires=PLUGIN_ENABLED_MACRO,
+    description="Creates convenient Struct_to_json_stream functions for structs",
+    force_mapper_declartion=False,
+)
+def map_type_to_json_stream(
+    reflector: Reflector, type_name: str, type_enum: str, ctype: str, suffix: str
+) -> (str | None, str | None):
+    struct = reflector.get_struct(type_name)
+    if not struct:
+        return None
+
+    if reflector.is_ptr(type_name):
+        return None
+
+    prefix = ""
+    if not ctype.startswith("const"):
+        prefix = "const "
+
+    func_def = f"""\
+static inline ReflectResult {suffix}_to_json_stream({prefix}{ctype}* instance, cmy_json_write_cb write_cb, void* user_ctx)
+{{
+        return to_json_stream((const void*)instance, {type_enum}, write_cb, user_ctx);
+}}
+"""
+    return (func_def, None)
+
+
 @plugin.emit_header
 def create_struct(reflector: Reflector):
     return r"""

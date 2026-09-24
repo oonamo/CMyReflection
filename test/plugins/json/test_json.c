@@ -294,6 +294,15 @@ TEST(Json, Can_Use_Key_Name_Output)
     TEST_ASSERT_JSON_CONTAINS(Q("character value") ": A", json_buffer);
 }
 
+TEST(Json, Can_Use_Struct_Generated_Output)
+{
+    AccountSettings settings = {true, 5};
+    AccountSettings_to_json(&settings, json_buffer, sizeof(json_buffer));
+
+    TEST_ASSERT_JSON_CONTAINS(Q("prefers_dark_mode") ": true", json_buffer);
+    TEST_ASSERT_JSON_CONTAINS(Q("login_attempts") ": 5", json_buffer);
+}
+
 TEST_GROUP_RUNNER(Json)
 {
     RUN_TEST_CASE(Json, Serializes_Strings);
@@ -303,4 +312,5 @@ TEST_GROUP_RUNNER(Json)
     RUN_TEST_CASE(Json, Escapes_Special_Characters);
     RUN_TEST_CASE(Json, Stream_Dynamic_Allocation);
     RUN_TEST_CASE(Json, Can_Use_Key_Name_Output);
+    RUN_TEST_CASE(Json, Can_Use_Struct_Generated_Output);
 }

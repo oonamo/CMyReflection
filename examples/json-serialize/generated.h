@@ -105,6 +105,10 @@ typedef enum {
  *      + Types: Permissions, AccountState, char_arr, constchar*, char*
  *    - Provides router: bool json_is_string_array(..) - Determines if a type is an inline array
  *      + Types: char_arr
+ *    - Provides router: ReflectResult type_to_json(..) - Creates convenient Struct_to_json functions for structs
+ *      + Types: Post, UserPrefernces, User
+ *    - Provides router: ReflectResult type_to_json_stream(..) - Creates convenient Struct_to_json_stream functions for structs
+ *      + Types: Post, UserPrefernces, User
  *    - Provides function: void _fixed_buf_write_cb(...) - Internal fixed buffer callback wrapper
  *    - Provides function: void _json_traversal_iterator(...) - Json Traversal serializer
  *    - Provides function: void json_serialize_value(...) - Serialize a value into valid json
@@ -198,6 +202,12 @@ static inline ReflectResult print_field(const void* instance, const StructFieldI
 // json Declarations
 // ########################################
 #ifdef CMY_PLUGIN_JSON_ENABLED
+static inline ReflectResult Post_to_json(const Post* instance, char* out_buf, size_t buflen);
+static inline ReflectResult Post_to_json_stream(const Post* instance, cmy_json_write_cb write_cb, void* user_ctx);
+static inline ReflectResult UserPrefernces_to_json(const UserPrefernces* instance, char* out_buf, size_t buflen);
+static inline ReflectResult UserPrefernces_to_json_stream(const UserPrefernces* instance, cmy_json_write_cb write_cb, void* user_ctx);
+static inline ReflectResult User_to_json(const User* instance, char* out_buf, size_t buflen);
+static inline ReflectResult User_to_json_stream(const User* instance, cmy_json_write_cb write_cb, void* user_ctx);
 static void _fixed_buf_write_cb(const char* chunk, size_t len, void* user_ctx);
 static inline void _json_traversal_iterator(const void            *base_instance,
                              const StructFieldInfo  *field,
@@ -880,6 +890,40 @@ static inline bool json_is_string_array(FIELD_TYPE type) {
         case TYPE_CHAR_ARR: return true;
         default: return false;
     }
+}
+
+#endif // CMY_PLUGIN_JSON_ENABLED
+#ifdef CMY_PLUGIN_JSON_ENABLED
+static inline ReflectResult Post_to_json(const Post* instance, char* out_buf, size_t buflen)
+{
+        return to_json((const void*)instance, TYPE_STRUCT_POST, out_buf, buflen);
+}
+
+static inline ReflectResult UserPrefernces_to_json(const UserPrefernces* instance, char* out_buf, size_t buflen)
+{
+        return to_json((const void*)instance, TYPE_STRUCT_USERPREFERNCES, out_buf, buflen);
+}
+
+static inline ReflectResult User_to_json(const User* instance, char* out_buf, size_t buflen)
+{
+        return to_json((const void*)instance, TYPE_STRUCT_USER, out_buf, buflen);
+}
+
+#endif // CMY_PLUGIN_JSON_ENABLED
+#ifdef CMY_PLUGIN_JSON_ENABLED
+static inline ReflectResult Post_to_json_stream(const Post* instance, cmy_json_write_cb write_cb, void* user_ctx)
+{
+        return to_json_stream((const void*)instance, TYPE_STRUCT_POST, write_cb, user_ctx);
+}
+
+static inline ReflectResult UserPrefernces_to_json_stream(const UserPrefernces* instance, cmy_json_write_cb write_cb, void* user_ctx)
+{
+        return to_json_stream((const void*)instance, TYPE_STRUCT_USERPREFERNCES, write_cb, user_ctx);
+}
+
+static inline ReflectResult User_to_json_stream(const User* instance, cmy_json_write_cb write_cb, void* user_ctx)
+{
+        return to_json_stream((const void*)instance, TYPE_STRUCT_USER, write_cb, user_ctx);
 }
 
 #endif // CMY_PLUGIN_JSON_ENABLED

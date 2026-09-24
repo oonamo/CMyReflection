@@ -56,7 +56,7 @@ static User default_acount(void)
         .name               = "onam",                    // Default serialization
         .str                = "my\n \"cool\" str",       // \n Escaped, \" Escaped
         .email              = "myemail@provider.com",    // Regular string
-        .account_id         = 0x13532,                   // Readoly, present in json
+        .account_id         = 0x13532,                   // Readonly, present in json
         .password_hash      = "hash123",                 // Writeonly, not present in json
         .permissions        = PERM_CREATE | PERM_UPDATE, // Serialized by serialize_permissions
         .state              = ACCOUNT_ACTIVE,            // Converted to string
@@ -100,7 +100,7 @@ int main(void)
     char schema[2056];
 
     // Converts the User into JSON
-    to_json(&user, TYPE_STRUCT_USER, buf, sizeof(buf));
+    User_to_json(&user, buf, sizeof(buf));
     printf("%s\n", buf);
 
     // Converts the User into a Schema
@@ -127,7 +127,7 @@ int main(void)
     };
 
     // Uses the stream function to write to disk
-    to_json_stream(&user, TYPE_STRUCT_USER, write_to_file, &fs);
+    User_to_json_stream(&user, write_to_file, &fs);
     fclose(fp);
 
     printf("Succesfully streamed %zu bytes to file '%s'.\n", fs.bytes_written, filepath);
