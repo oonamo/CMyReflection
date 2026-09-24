@@ -60,6 +60,8 @@ def test_struct_field_catches_missing_specifier():
     """
 
     reflector = Reflector()
+    reflector.load_plugins()
+
     generate_reflection(reflector, "test.h", c_code)
     reflector.resolve()
 

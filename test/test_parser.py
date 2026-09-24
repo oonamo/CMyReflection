@@ -434,6 +434,8 @@ static inline const char* get_field_description(const FieldInfo* field)
     """
 
     reflector = cmy_reflector.Reflector()
+    reflector.load_plugins()
+
     cmy_reflector.generate_reflection(reflector, "test_enum.h", c_code)
     reflector.resolve()
 
@@ -485,6 +487,8 @@ static inline void foo_{suffix}(const void* a)
     cmy_reflector.add_plugin(test_plugin)
 
     reflector = cmy_reflector.Reflector()
+    reflector.load_plugins()
+
     cmy_reflector.generate_reflection(reflector, "test_enum.h", c_code)
     reflector.resolve()
 
@@ -613,9 +617,12 @@ def test_errors_on_tag_collision():
     """
 
     reflector = Reflector()
-    generate_reflection(reflector, "test.h", c_code)
 
+    # NOTE: load_plugins throws the error
     with pytest.raises(ValueError) as exc_info:
+        reflector.load_plugins()
+        generate_reflection(reflector, "test.h", c_code)
+
         reflector.resolve()
 
     error_msg = str(exc_info.value)
@@ -817,6 +824,8 @@ def test_enforces_tag_value():
     """
 
     reflector = Reflector()
+    reflector.load_plugins()
+
     generate_reflection(reflector, "test.h", c_code)
     reflector.resolve()
 
@@ -851,6 +860,8 @@ def test_validates_tag_value():
     """
 
     reflector = Reflector()
+    reflector.load_plugins()
+
     generate_reflection(reflector, "test.h", c_code)
     reflector.resolve()
 
@@ -892,6 +903,8 @@ def test_can_add_pre_macros():
 
     cmy_reflector.add_plugin(p)
     reflector = Reflector()
+    reflector.load_plugins()
+
     generate_reflection(reflector, "test.h", c_code)
 
     generated_content = str(reflector)
@@ -900,5 +913,63 @@ def test_can_add_pre_macros():
 
     assert (
         "Injects Pre-Macro: _POSIX_C_SOURCE (Value: 200809L) - Required for snprintf"
+        in generated_content
+    )
+
+
+def test_plugin_can_inject_ast_data_correctly():
+    c_code = """\
+    // cmy:reflect
+    typedef struct
+    {
+        v2 pos;
+        v2 vel;
+    } Player;
+    """
+    p = Plugin("test")
+
+    @p.setup
+    def setup(reflector: Reflector):
+        c_code = """\
+        // cmy:reflect
+        typedef struct
+        {
+            // cmy:readonly
+            float x;
+
+            float y;
+        } v2;
+        """
+        generate_reflection(reflector, "v2_virtual.h", c_code)
+
+    cmy_reflector.add_plugin(p)
+
+    reflector = Reflector()
+    reflector.load_plugins()
+
+    generate_reflection(reflector, "test.h", c_code)
+    reflector.resolve()
+
+    generated_content = str(reflector)
+    print(generated_content)
+
+    assert "const StructFieldInfo v2_Metadata[]" in generated_content
+    assert "const size_t v2_FieldCount" in generated_content
+
+    assert (
+        '{ "x", TYPE_FLOAT, offsetof(v2, x), sizeof(float), 1, FIELD_ACCESS_READ, NULL, NULL }'
+        in generated_content
+    )
+    assert (
+        '{ "y", TYPE_FLOAT, offsetof(v2, y), sizeof(float), 1, FIELD_ACCESS_RW, NULL, NULL }'
+        in generated_content
+    )
+
+    assert (
+        '{ "pos", TYPE_STRUCT_V2, offsetof(Player, pos), sizeof(v2), 1, FIELD_ACCESS_RW, NULL, NULL }'
+        in generated_content
+    )
+    assert (
+        '{ "vel", TYPE_STRUCT_V2, offsetof(Player, vel), sizeof(v2), 1, FIELD_ACCESS_RW, NULL, NULL }'
         in generated_content
     )

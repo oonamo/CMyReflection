@@ -1094,7 +1094,6 @@ class Reflector:
                         f"does not exist in the struct."
                     )
 
-        self.load_plugins()
         self.validate_tags()
 
     def generate_file_header(self) -> str:
@@ -2124,6 +2123,8 @@ def main():
             if plugin_dir.is_dir():
                 for plugin_file in plugin_dir.glob("*.py"):
                     load_plugin(plugin_file)
+
+    reflector.load_plugins()
 
     for file in target_files:
         try:

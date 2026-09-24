@@ -43,6 +43,8 @@ def test_can_use_serialize_function():
     """
 
     reflector = Reflector()
+    reflector.load_plugins()
+
     generate_reflection(reflector, "test.h", c_code)
     reflector.resolve()
 
@@ -67,7 +69,10 @@ def test_can_use_json_key_name():
     """
 
     reflector = Reflector()
+    reflector.load_plugins()
+
     generate_reflection(reflector, "test.h", c_code)
+
     reflector.resolve()
 
     # Should not throw
