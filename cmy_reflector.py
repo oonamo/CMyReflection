@@ -11,7 +11,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Callable
 
-VERSION = "1.0.1" # x-release-please-version
+VERSION = "1.0.1"  # x-release-please-version
 
 SIG_REGEX = re.compile(
     r"^\s*(?P<prefix>(?:\w+\s+)*)"
@@ -39,6 +39,7 @@ class TypeMapper:
     requires: str | None = None
     guard_clause: str | None = ""
     description: str = None
+    force_mapper_declartion: bool = True
 
 
 class MacroType(Enum):
@@ -461,6 +462,7 @@ class Plugin:
         guard_clause: str = "",
         requires=None,
         description: str = "",
+        force_mapper_declartion: bool = True,
     ):
         """Decorator for creating a function for all types"""
 
@@ -473,6 +475,7 @@ class Plugin:
                 guard_clause=guard_clause,
                 requires=requires,
                 description=description,
+                force_mapper_declartion=force_mapper_declartion,
             )
             self._type_mappers.append(mapper)
 
@@ -1618,7 +1621,7 @@ static inline {mapper.signature} {{
     }}
 }}
 """
-                else:
+                elif mapper.force_mapper_declartion:
                     router = f"""\
 static inline {mapper.signature} {{
     {mapper.guard_clause}
@@ -1629,10 +1632,15 @@ static inline {mapper.signature} {{
                 if mapper.requires:
                     plugin_code.append(f"#ifdef {mapper.requires}")
                 plugin_code.extend(standalone_funcs)
-                plugin_code.append(router)
-                self._add_proto(p, router, False, mapper.requires, mapper.description)
+                if router:
+                    plugin_code.append(router)
+                    self._add_proto(
+                        p, router, False, mapper.requires, mapper.description
+                    )
                 if mapper.requires:
                     plugin_code.append(f"#endif // {mapper.requires}")
+
+                router = None
 
             for struct in self.structs.values():
                 for tag_name, tag_value in struct.tags.items():
