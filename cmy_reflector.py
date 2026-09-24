@@ -866,6 +866,10 @@ class Reflector:
         """Checks if the identifier is of an array"""
         return self.normalze_type_identifier(identifier).endswith("_arr")
 
+    def is_ptr(self, identifier: str) -> bool:
+        """Checks if the identifier is of an array"""
+        return "*" in self.normalze_type_identifier(identifier)
+
     def is_struct(self, identifier: str) -> bool:
         """Checks if the identifier is a struct"""
         return self.get_base_type_name(identifier) in self.structs
