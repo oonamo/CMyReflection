@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unity.h>
 #include <unity_fixture.h>
+#include "utils.h"
 #include <stdlib.h>
 
 #include "mocks/game_type.h"
@@ -983,6 +984,45 @@ TEST(Unit, Type_Size_Function_Is_Accurate)
     EQ(sizeof(Vector2 *), get_type_size(TYPE_VECTOR2_PTR));
 }
 
+TEST(Unit, Can_Get_Indice_Of_Struct)
+{
+#define TARGET_IDX 5
+
+    Game g                        = {0};
+    g.enemy_positions[TARGET_IDX] = (Vector2){1.0f, 2.0f};
+
+    const StructFieldInfo *leaf = NULL;
+
+    int   array_index = -1;
+    void *ret         = resolve_field_path_ext(&g,
+                                       Game_Metadata,
+                                       Game_FieldCount,
+                                       "enemy_positions[" TOSTRING(TARGET_IDX) "]",
+                                       &leaf,
+                                       &array_index);
+
+    TEST_ASSERT_NOT_NULL(ret);
+    TEST_ASSERT_NOT_NULL(leaf);
+    TEST_ASSERT_EQUAL(TARGET_IDX, array_index);
+
+    TEST_ASSERT_EQUAL(TYPE_VECTOR2_ARR, leaf->type);
+
+    TEST_ASSERT_POINTERS_EQUAL(&g, ret);
+
+    const StructFieldInfo *expected_field =
+        Find_Struct_Field(StructMetaData_FromName(Game), "enemy_positions");
+
+    TEST_ASSERT_POINTERS_EQUAL(expected_field, leaf);
+
+    Vector2 ith = {0.0f, 0.0f};
+
+    TEST_ASSERT_EQUAL(REFLECT_OK, get_field_Vector2_arr_elem(ret, leaf, &ith, array_index));
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, ith.x);
+    TEST_ASSERT_EQUAL_FLOAT(2.0f, ith.y);
+
+#undef TARGET_IDX
+}
+
 TEST_GROUP_RUNNER(Unit)
 {
     RUN_TEST_CASE(Unit, Can_Find_Field);
@@ -1062,4 +1102,5 @@ TEST_GROUP_RUNNER(Unit)
     RUN_TEST_CASE(Unit, DynamicArray_Rejects_Type_Mismatch)
     RUN_TEST_CASE(Unit, DynamicArray_Handles_Zero_Length)
     RUN_TEST_CASE(Unit, Type_Size_Function_Is_Accurate)
+    RUN_TEST_CASE(Unit, Can_Get_Indice_Of_Struct)
 }

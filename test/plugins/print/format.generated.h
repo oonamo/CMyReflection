@@ -199,6 +199,7 @@ DEFINE_FIELD_GETTER(char, TYPE_CHAR, char)
 
 DEFINE_ARRAY_SETTER(char_arr, TYPE_CHAR_ARR, char *, char)
 DEFINE_ARRAY_GETTER(char_arr, TYPE_CHAR_ARR, char *, char)
+DEFINE_ARRAY_ELEM_GETTER(char_arr, TYPE_CHAR_ARR, char *, char)
 
 DEFINE_FIELD_SETTER(conststr, TYPE_CONSTCHAR_PTR, const char *)
 DEFINE_FIELD_GETTER(conststr, TYPE_CONSTCHAR_PTR, const char *)

@@ -1079,7 +1079,11 @@ class Reflector:
                     else:
                         break
 
-                    if parent_ctype != "void" and parent_norm and parent_norm not in self.type_map:
+                    if (
+                        parent_ctype != "void"
+                        and parent_norm
+                        and parent_norm not in self.type_map
+                    ):
                         safe_base_name = parent_norm.upper().replace("*", "_PTR")
                         self.type_map[parent_norm] = f"TYPE_{safe_base_name}"
                         self.ctypes[parent_norm] = parent_ctype
@@ -1123,6 +1127,7 @@ class Reflector:
             return (
                 f"DEFINE_ARRAY_SETTER({type_suffix}, {type_enum}, {ctype}, {base_type})\n"
                 f"DEFINE_ARRAY_GETTER({type_suffix}, {type_enum}, {ctype}, {base_type})\n"
+                f"DEFINE_ARRAY_ELEM_GETTER({type_suffix}, {type_enum}, {ctype}, {base_type})\n"
             )
         elif enum_obj and "unchecked" not in enum_obj.tags:
             return (

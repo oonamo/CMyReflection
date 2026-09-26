@@ -161,12 +161,15 @@ DEFINE_FIELD_GETTER(ll, TYPE_LONGLONG, long long)
 
 DEFINE_ARRAY_SETTER(u8_arr, TYPE_UINT8_T_ARR, uint8_t *, uint8_t)
 DEFINE_ARRAY_GETTER(u8_arr, TYPE_UINT8_T_ARR, uint8_t *, uint8_t)
+DEFINE_ARRAY_ELEM_GETTER(u8_arr, TYPE_UINT8_T_ARR, uint8_t *, uint8_t)
 
 DEFINE_ARRAY_SETTER(unsignedchar_arr, TYPE_UNSIGNEDCHAR_ARR, unsigned char *, unsigned char)
 DEFINE_ARRAY_GETTER(unsignedchar_arr, TYPE_UNSIGNEDCHAR_ARR, unsigned char *, unsigned char)
+DEFINE_ARRAY_ELEM_GETTER(unsignedchar_arr, TYPE_UNSIGNEDCHAR_ARR, unsigned char *, unsigned char)
 
 DEFINE_ARRAY_SETTER(float_arr, TYPE_FLOAT_ARR, float *, float)
 DEFINE_ARRAY_GETTER(float_arr, TYPE_FLOAT_ARR, float *, float)
+DEFINE_ARRAY_ELEM_GETTER(float_arr, TYPE_FLOAT_ARR, float *, float)
 
 DEFINE_FIELD_SETTER(size_t, TYPE_SIZE_T, size_t)
 DEFINE_FIELD_GETTER(size_t, TYPE_SIZE_T, size_t)
@@ -176,6 +179,7 @@ DEFINE_FIELD_GETTER(Vector2_ptr, TYPE_VECTOR2_PTR, Vector2 *)
 
 DEFINE_ARRAY_SETTER(Vector2_arr, TYPE_VECTOR2_ARR, Vector2 *, Vector2)
 DEFINE_ARRAY_GETTER(Vector2_arr, TYPE_VECTOR2_ARR, Vector2 *, Vector2)
+DEFINE_ARRAY_ELEM_GETTER(Vector2_arr, TYPE_VECTOR2_ARR, Vector2 *, Vector2)
 
 DEFINE_FIELD_SETTER(conststr, TYPE_CONSTCHAR_PTR, const char *)
 DEFINE_FIELD_GETTER(conststr, TYPE_CONSTCHAR_PTR, const char *)
@@ -185,12 +189,14 @@ DEFINE_FIELD_GETTER(constchar, TYPE_CONSTCHAR, const char)
 
 DEFINE_ARRAY_SETTER(char_arr, TYPE_CHAR_ARR, char *, char)
 DEFINE_ARRAY_GETTER(char_arr, TYPE_CHAR_ARR, char *, char)
+DEFINE_ARRAY_ELEM_GETTER(char_arr, TYPE_CHAR_ARR, char *, char)
 
 DEFINE_FIELD_SETTER(u64, TYPE_UINT64_T, uint64_t)
 DEFINE_FIELD_GETTER(u64, TYPE_UINT64_T, uint64_t)
 
 DEFINE_ARRAY_SETTER(IoTDevice_arr, TYPE_IOTDEVICE_ARR, IoTDevice *, IoTDevice)
 DEFINE_ARRAY_GETTER(IoTDevice_arr, TYPE_IOTDEVICE_ARR, IoTDevice *, IoTDevice)
+DEFINE_ARRAY_ELEM_GETTER(IoTDevice_arr, TYPE_IOTDEVICE_ARR, IoTDevice *, IoTDevice)
 
 DEFINE_DYNAMIC_ARRAY_SETTER(Game_waypoints, TYPE_VECTOR2_PTR, Vector2 *, Vector2, TYPE_STRUCT_GAME)
 DEFINE_DYNAMIC_ARRAY_GETTER(Game_waypoints, TYPE_VECTOR2_PTR, Vector2 *, Vector2)

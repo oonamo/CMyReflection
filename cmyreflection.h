@@ -268,6 +268,49 @@ ReflectResult safe_set_field(void                  *instance,
 const char *get_name_of_type(FIELD_TYPE type);
 
 /**
+ * @brief Finds the struct containing the path, with extra context
+ *
+ * Evaluates a gdb-like path string against the provided metadata.
+ * If the path is valid and accessible, the memory address of the parent
+ * struct is returned, along with the out_leaf_field pointer to the field.
+ * The associated array index is also returned.
+ *
+ * ```c
+ * DeviceManager manager = {0};
+ * manager.devices[0] = (IoTDevice){ .name="local_device" };
+ * const StructFieldInfo* leaf = NULL;
+ *
+ * int array_index = -1;
+ * void *target = resolve_field_target(&manager,
+ *                                     DeviceManager_Metadata,
+ *                                     DeviceManager_FieldCount,
+ *                                     "devices[0]",
+ *                                     &leaf,
+ *                                     &array_index)
+ *
+ * IotDevice ith = {0};
+ * if (get_array_element(target, leaf, &ith, array_index) == REFLECT_OK)
+ * {
+ *   printf("%dth device name: %s\n", i, ith.name);
+ * }
+ * ```
+ *
+ * @param base_instance  [in] Struct to begin traversal
+ * @param base_meta      [in] FieldInfo of root struct
+ * @param base_count     [in] Number of fields in root struct
+ * @param path           [in] string path to look for
+ * @param out_leaf_field [out] FieldInfo returned if found
+ *
+ * @return Pointer to the resolved struct, or NULL if not found
+ */
+void *resolve_field_path_ext(void                   *base_instance,
+                             const StructFieldInfo  *base_meta,
+                             size_t                  base_count,
+                             const char             *path,
+                             const StructFieldInfo **out_field_path,
+                             int                    *out_array_index);
+
+/**
  * @brief Finds the struct containing the path
  *
  * Evaluates a gdb-like path string against the provided metadata.
@@ -677,6 +720,20 @@ ReflectResult visit_struct_fields(const void        *instance,
         return get_field_value(                                                                    \
             instance, field, (void *)out_value, element_count * sizeof(DownCastType));             \
     }
+
+#define DEFINE_ARRAY_ELEM_GETTER(Suffix, EnumVal, CType, DownCastType)                             \
+    static inline ReflectResult get_field_##Suffix##_elem(                                         \
+        const void *instance, const StructFieldInfo *field, DownCastType *out_value, size_t index) \
+    {                                                                                              \
+        if (!instance || !field)                                                                   \
+        {                                                                                          \
+            return REFLECT_ERR_NULL_PTR;                                                           \
+        }                                                                                          \
+        if (field->type != EnumVal)                                                                \
+        {                                                                                          \
+            return REFLECT_ERR_TYPE_MISMATCH;                                                      \
+        }                                                                                          \
+        return get_array_element(instance, field, index, (void *)out_value, sizeof(DownCastType)); \
     }
 
 #if defined(CMYREFLECTION_USE_DEFAULT_TYPES)
@@ -706,7 +763,8 @@ static ReflectResult resolve_path_internal(void                   *base_instance
                                            size_t                  base_count,
                                            const char             *path,
                                            void                  **out_instance,
-                                           const StructFieldInfo **out_leaf_field)
+                                           const StructFieldInfo **out_leaf_field,
+                                           int                    *out_index)
 {
     if (!base_meta || !path || !out_leaf_field)
     {
@@ -725,6 +783,8 @@ static ReflectResult resolve_path_internal(void                   *base_instance
     size_t                 current_count    = base_count;
     const StructFieldInfo *current_field    = NULL;
 
+    int index = -1;
+
     while (token)
     {
         if (next)
@@ -733,7 +793,7 @@ static ReflectResult resolve_path_internal(void                   *base_instance
         }
 
         char *bracket = strchr(token, '[');
-        int   index   = -1;
+        index         = -1;
         if (bracket)
         {
             *bracket = '\0';
@@ -785,7 +845,38 @@ static ReflectResult resolve_path_internal(void                   *base_instance
     {
         *out_instance = current_instance;
     }
+    if (out_index)
+    {
+        *out_index = index;
+    }
     return REFLECT_OK;
+}
+
+void *resolve_field_path_ext(void                   *base_instance,
+                             const StructFieldInfo  *base_meta,
+                             size_t                  base_count,
+                             const char             *path,
+                             const StructFieldInfo **out_leaf_field,
+                             int                    *out_array_index)
+{
+    if (!base_instance)
+    {
+        return NULL;
+    }
+
+    void *resolved_instance = NULL;
+    if (resolve_path_internal(base_instance,
+                              base_meta,
+                              base_count,
+                              path,
+                              &resolved_instance,
+                              out_leaf_field,
+                              out_array_index) == REFLECT_OK)
+    {
+        return resolved_instance;
+    }
+
+    return NULL;
 }
 
 void *resolve_field_path(void                   *base_instance,
@@ -794,28 +885,19 @@ void *resolve_field_path(void                   *base_instance,
                          const char             *path,
                          const StructFieldInfo **out_leaf_field)
 {
-    if (!base_instance)
-    {
-        return NULL;
-    }
-
-    void *resolved_instance = NULL;
-    if (resolve_path_internal(
-            base_instance, base_meta, base_count, path, &resolved_instance, out_leaf_field) ==
-        REFLECT_OK)
-    {
-        return resolved_instance;
-    }
-
-    return NULL;
+    int array_index = -1;
+    return resolve_field_path_ext(
+        base_instance, base_meta, base_count, path, out_leaf_field, &array_index);
 }
 
 const StructFieldInfo *
 resolve_field_metadata(const StructFieldInfo *base_meta, size_t base_count, const char *path)
 {
-    const StructFieldInfo *leaf = NULL;
+    const StructFieldInfo *leaf        = NULL;
+    int                    array_index = -1;
 
-    if (resolve_path_internal(NULL, base_meta, base_count, path, NULL, &leaf) == REFLECT_OK)
+    if (resolve_path_internal(NULL, base_meta, base_count, path, NULL, &leaf, &array_index) ==
+        REFLECT_OK)
     {
         return leaf;
     }
