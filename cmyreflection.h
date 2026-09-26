@@ -1028,6 +1028,11 @@ ReflectResult get_array_element(const void            *instance,
         return REFLECT_ERR_NULL_PTR;
     }
 
+    if (!(field->flags & FIELD_ACCESS_READ))
+    {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
     if (index >= field->count)
     {
         return REFLECT_ERR_OUT_OF_BOUNDS;
