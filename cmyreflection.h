@@ -592,7 +592,7 @@ ReflectResult visit_struct_fields(const void        *instance,
 
 #define DEFINE_FIELD_SETTER(Suffix, EnumVal, CType)                                                \
     static inline ReflectResult set_field_##Suffix(                                                \
-        void *instance, const StructFieldInfo *field, CType value)                                 \
+        void *instance, const StructFieldInfo *field, CType out_value)                             \
     {                                                                                              \
         if (!instance || !field)                                                                   \
         {                                                                                          \
@@ -602,7 +602,7 @@ ReflectResult visit_struct_fields(const void        *instance,
         {                                                                                          \
             return REFLECT_ERR_TYPE_MISMATCH;                                                      \
         }                                                                                          \
-        return set_field_value(instance, field, &value, sizeof(CType));                            \
+        return set_field_value(instance, field, &out_value, sizeof(CType));                        \
     }
 
 #define DEFINE_FIELD_GETTER(Suffix, EnumVal, CType)                                                \
@@ -622,7 +622,7 @@ ReflectResult visit_struct_fields(const void        *instance,
 
 #define DEFINE_ENUM_SETTER(Suffix, EnumVal, CType, validator)                                      \
     static inline ReflectResult set_field_##Suffix(                                                \
-        void *instance, const StructFieldInfo *field, CType value)                                 \
+        void *instance, const StructFieldInfo *field, CType out_value)                             \
     {                                                                                              \
         if (!instance || !field)                                                                   \
         {                                                                                          \
@@ -632,16 +632,16 @@ ReflectResult visit_struct_fields(const void        *instance,
         {                                                                                          \
             return REFLECT_ERR_TYPE_MISMATCH;                                                      \
         }                                                                                          \
-        if (!validator(value))                                                                     \
+        if (!validator(out_value))                                                                 \
         {                                                                                          \
             return REFLECT_ERR_ENUM_INVALID;                                                       \
         }                                                                                          \
-        return set_field_value(instance, field, &value, sizeof(CType));                            \
+        return set_field_value(instance, field, &out_value, sizeof(CType));                        \
     }
 
 #define DEFINE_ARRAY_SETTER(Suffix, EnumVal, CType, DownCastType)                                  \
     static inline ReflectResult set_field_##Suffix(                                                \
-        void *instance, const StructFieldInfo *field, CType value, size_t element_count)           \
+        void *instance, const StructFieldInfo *field, CType out_value, size_t element_count)       \
     {                                                                                              \
         if (!instance || !field)                                                                   \
         {                                                                                          \
@@ -655,12 +655,12 @@ ReflectResult visit_struct_fields(const void        *instance,
         {                                                                                          \
             return REFLECT_ERR_OUT_OF_BOUNDS;                                                      \
         }                                                                                          \
-        return set_field_value(instance, field, value, element_count * sizeof(DownCastType));      \
+        return set_field_value(instance, field, out_value, element_count * sizeof(DownCastType));  \
     }
 
 #define DEFINE_ARRAY_GETTER(Suffix, EnumVal, CType, DownCastType)                                  \
     static inline ReflectResult get_field_##Suffix(                                                \
-        const void *instance, const StructFieldInfo *field, CType value, size_t element_count)     \
+        const void *instance, const StructFieldInfo *field, CType out_value, size_t element_count) \
     {                                                                                              \
         if (!instance || !field)                                                                   \
         {                                                                                          \
@@ -675,7 +675,8 @@ ReflectResult visit_struct_fields(const void        *instance,
             return REFLECT_ERR_OUT_OF_BOUNDS;                                                      \
         }                                                                                          \
         return get_field_value(                                                                    \
-            instance, field, (void *)value, element_count * sizeof(DownCastType));                 \
+            instance, field, (void *)out_value, element_count * sizeof(DownCastType));             \
+    }
     }
 
 #if defined(CMYREFLECTION_USE_DEFAULT_TYPES)
