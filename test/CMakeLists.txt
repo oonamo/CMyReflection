@@ -58,7 +58,16 @@ set(TEST_SOURCES
   ${GENERATED_HEADER}
 )
 
+
 add_executable(test_runner)
+
+add_custom_command(
+  TARGET test_runner
+  COMMAND Python3::Interpreter "${PROJECT_SOURCE_DIR}/scripts/check_test_cases.py" "${CMAKE_CURRENT_SOURCE_DIR}"
+  DEPENDS "${PROJECT_SOURCE_DIR}/scripts/check_test_cases.py" ${TEST_SOURCES}
+  COMMENT "Checking all test cases are properly defined..."
+)
+
 set_target_properties(test_runner PROPERTIES
   C_STANDARD 99
   C_STANDARD_REQUIRED ON
