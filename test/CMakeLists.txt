@@ -46,7 +46,13 @@ add_custom_command(
 
 set(TEST_SOURCES
   test_main.c
-  test_unit.c
+  test_core.c
+  test_setters.c
+  test_getters.c
+  test_arrays.c
+  test_enums.c
+  test_paths.c
+  test_visitors.c
   test_readme.c
   reflection_impl.c
   ${GENERATED_HEADER}

@@ -6,21 +6,23 @@
 
 #include "mocks/generated.inc"
 
-TEST_GROUP(IoT);
+#define LOCAL_TGROUP README
+TEST_GROUP(README);
+#include "test_utils.h"
 
-TEST_SETUP(IoT)
+SETUP()
 {
 }
-TEST_TEAR_DOWN(IoT)
+TEAR_DOWN()
 {
 }
 
-TEST(IoT, Can_Do_Readme_Things)
+T(Can_Do_Readme_Things)
 {
     DeviceManager manager = {0};
 
     const StructFieldInfo *leaf   = NULL;
-    void            *target = resolve_field_path(&manager,
+    void                  *target = resolve_field_path(&manager,
                                       DeviceManager_Metadata,
                                       DeviceManager_FieldCount,
                                       "devices[2].data.voltage",
@@ -45,7 +47,7 @@ TEST(IoT, Can_Do_Readme_Things)
     TEST_ASSERT_EQUAL_STRING("bedroom1", manager.device_location);
 }
 
-TEST_GROUP_RUNNER(IoT)
+GROUP_RUNNER()
 {
-    RUN_TEST_CASE(IoT, Can_Do_Readme_Things);
+    RUN(Can_Do_Readme_Things);
 }

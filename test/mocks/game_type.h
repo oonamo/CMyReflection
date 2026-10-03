@@ -8,19 +8,6 @@ typedef struct
     char *desc;
 } AdditionalData;
 
-// cmy:deftag description(desc)
-// cmy:sets (AdditionalData*)user_data->desc = {desc}
-
-// cmy:deftag format(format_str)
-// cmy:sets (AdditionalData*)user_data->format_str = {format_str}
-
-// cmy:ifhastag format
-// cmy:creates print_field_{{type}}
-// cmy:requires GET
-// cmy:calls
-///     printf((AdditionalData*)user_data->format_str, value);
-// cmy:endcall
-
 // cmy:reflect
 typedef enum
 {
