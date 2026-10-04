@@ -1,6 +1,7 @@
 #ifndef _TEST_PRINTER_TYPES_H
 #define _TEST_PRINTER_TYPES_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -44,6 +45,7 @@ typedef struct
     int32_t i32;
     int64_t i64;
 
+    // cmy:private
     uint32_t private;
 } NumTypes;
 
@@ -59,9 +61,20 @@ typedef enum
 } EnumType;
 
 // cmy:reflect
+// cmy:unchecked
+typedef enum
+{
+    C1,
+    C2,
+} EnumUnchecked;
+
+// cmy:reflect
 typedef struct
 {
-    EnumType enum_type;
+    EnumType      enum_type;
+    EnumUnchecked unchecked;
+
+    bool works;
 } MockStruct;
 
 // cmy:reflect

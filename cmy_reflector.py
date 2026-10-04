@@ -1923,6 +1923,25 @@ class CBuilder:
             )
         return f"get_field_{suffix}({instance_name}, {field_name}, {val_ptr});"
 
+    def struct_field_setter(
+        self,
+        identifier: str,
+        val_ptr: str,
+        instance_name: str = "instance",
+        field_name: str = "field",
+        array_len: str = None,
+    ) -> str:
+        suffix = self.get_suffix_from_ident(identifier)
+        if self.reflector.is_arr(identifier):
+            if not array_len:
+                array_len = f"{field_name}->count"
+            return f"set_field_{suffix}({instance_name}, {field_name}, {val_ptr}, {array_len});"
+        elif array_len:
+            raise ValueError(
+                f"'{identifier}' is not an array, but array_len is provided."
+            )
+        return f"set_field_{suffix}({instance_name}, {field_name}, {val_ptr});"
+
     def struct_field_extension(self, field_name: str = "field"):
         """Wrapper for GET_FIELD_EXT"""
         return f"GET_FIELD_EXT({field_name})"

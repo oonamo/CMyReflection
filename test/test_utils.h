@@ -22,4 +22,11 @@
 #define RUN(name) _TRUN(LOCAL_TGROUP, name)
 #define GROUP_RUNNER() _TGROUP(LOCAL_TGROUP)
 
+// ----------------------------------------
+// CMyReflection Specific Helpers
+// ----------------------------------------
+
+#define OK(x) TEST_ASSERT_EQUAL_MESSAGE(REFLECT_OK, (x), #x " was not ok")
+#define ERR(x) TEST_ASSERT_NOT_EQAUL(REFLECT_OK, (x))
+
 #endif // TUTILS_H

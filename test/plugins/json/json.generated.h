@@ -66,6 +66,10 @@ typedef enum {
  *      By default, enums are enabled
  *      + Types: PostInteraction, AccountState, char*, char, uint32_t, bool,
  *        int, char_arr, size_t
+ *    - Provides router: ReflectResult set_field_from_str(..) - Creates a get_type_as_str for the type for primitives and enums
+ *      By default, enums are enabled
+ *      + Types: PostInteraction, AccountState, char, uint32_t, bool, int,
+ *        char_arr, size_t
  *    - Provides function: ReflectResult print_field(...) - Prints a field, if it implements get_field_as_str
  *  -> json (v1.0.0) by oonamo - A json serializer plugin
  *    - Provides tag: @json_serialize_function(value) (Structs) - Function to call to serialize this type
@@ -196,6 +200,15 @@ static inline ReflectResult get_field_size_t_as_str(const void* instance, const 
 static inline ReflectResult get_field_str_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult get_field_u32_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult print_field(const void *instance, const StructFieldInfo *field);
+static inline ReflectResult set_field_AccountState_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_PostInteraction_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_bool_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_char_arr_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_char_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_int_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_size_t_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_u32_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
 #endif // CMY_PLUGIN_FORMAT_ENABLED
 
 // ########################################
@@ -561,6 +574,244 @@ static inline ReflectResult get_field_as_str(const void* instance, const StructF
         case TYPE_INT: return get_field_int_as_str(instance, field, out_buf, buflen);
         case TYPE_CHAR_ARR: return get_field_char_arr_as_str(instance, field, out_buf, buflen);
         case TYPE_SIZE_T: return get_field_size_t_as_str(instance, field, out_buf, buflen);
+        default: return REFLECT_ERR_TYPE_MISMATCH;
+    }
+}
+
+#endif // CMY_PLUGIN_FORMAT_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
+static inline ReflectResult set_field_PostInteraction_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    const EnumMetaData meta = EnumMetaData_FromName(PostInteraction);
+    int enum_val = 0;
+    bool found = false;
+    for (size_t i = 0; i < meta.count; i++) {
+        if (strcmp(meta.members[i].name, str_val) == 0) {
+            enum_val = meta.members[i].value;
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        if (enum_is_checked(TYPE_ENUM_POSTINTERACTION)) return REFLECT_ERR_TYPE_MISMATCH;
+        char* endptr;
+        enum_val = (int)strtol(str_val, &endptr, 10);
+        if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+    PostInteraction var = (PostInteraction)enum_val;
+    ReflectResult res = set_field_PostInteraction(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_AccountState_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    const EnumMetaData meta = EnumMetaData_FromName(AccountState);
+    int enum_val = 0;
+    bool found = false;
+    for (size_t i = 0; i < meta.count; i++) {
+        if (strcmp(meta.members[i].name, str_val) == 0) {
+            enum_val = meta.members[i].value;
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        if (enum_is_checked(TYPE_ENUM_ACCOUNTSTATE)) return REFLECT_ERR_TYPE_MISMATCH;
+        char* endptr;
+        enum_val = (int)strtol(str_val, &endptr, 10);
+        if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+    AccountState var = (AccountState)enum_val;
+    ReflectResult res = set_field_AccountState(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_char_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    long parsed_val = strtol(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    char var = (char)parsed_val;
+    ReflectResult res = set_field_char(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_u32_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    unsigned long parsed_val = strtoul(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    uint32_t var = (uint32_t)parsed_val;
+    ReflectResult res = set_field_u32(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_bool_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    bool var = (strcmp(str_val, "true") == 0 || strcmp(str_val, "1") == 0);
+    ReflectResult res = set_field_bool(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_int_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    long parsed_val = strtol(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    int var = (int)parsed_val;
+    ReflectResult res = set_field_int(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_char_arr_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    size_t len = strlen(str_val);
+    if (len >= field->count) {
+        return REFLECT_ERR_OUT_OF_BOUNDS;
+    }
+
+
+    ReflectResult res = set_field_char_arr(instance, field, (void*)str_val, len + 1);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_size_t_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    unsigned long long parsed_val = strtoull(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    size_t var = (size_t)parsed_val;
+    ReflectResult res = set_field_size_t(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!field) { return REFLECT_ERR_NULL_PTR; }
+    switch(field->type) {
+        case TYPE_ENUM_POSTINTERACTION: return set_field_PostInteraction_from_str(instance, field, str_val);
+        case TYPE_ENUM_ACCOUNTSTATE: return set_field_AccountState_from_str(instance, field, str_val);
+        case TYPE_CHAR: return set_field_char_from_str(instance, field, str_val);
+        case TYPE_UINT32_T: return set_field_u32_from_str(instance, field, str_val);
+        case TYPE_BOOL: return set_field_bool_from_str(instance, field, str_val);
+        case TYPE_INT: return set_field_int_from_str(instance, field, str_val);
+        case TYPE_CHAR_ARR: return set_field_char_arr_from_str(instance, field, str_val);
+        case TYPE_SIZE_T: return set_field_size_t_from_str(instance, field, str_val);
         default: return REFLECT_ERR_TYPE_MISMATCH;
     }
 }

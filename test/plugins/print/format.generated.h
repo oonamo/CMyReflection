@@ -19,6 +19,7 @@
 #define CMYREFLECTION_AUTOGEN_H
 #define CMYREFLECTION_REGISTRY
 typedef enum {
+    TYPE_BOOL,
     TYPE_CHAR,
     TYPE_CHAR_ARR,
     TYPE_CHAR_PTR,
@@ -26,6 +27,7 @@ typedef enum {
     TYPE_CONSTCHAR_PTR,
     TYPE_DOUBLE,
     TYPE_ENUM_ENUMTYPE,
+    TYPE_ENUM_ENUMUNCHECKED,
     TYPE_FLOAT,
     TYPE_INT,
     TYPE_INT16_T,
@@ -75,10 +77,16 @@ typedef enum {
  *    - Provides macro: CMY_PRINTF (Default: printf) - Defines the printf implementation
  *    - Provides router: ReflectResult get_field_as_str(..) - Creates a get_type_as_str for the type for primitives and enums
  *      By default, enums are enabled
- *      + Types: EnumType, char*, char, char_arr, constchar*, int, unsignedint,
+ *      + Types: EnumType, EnumUnchecked, char*, char, char_arr, constchar*,
+ *        int, unsignedint, short, unsignedshort, long, unsignedlong,
+ *        unsignedchar, float, double, uint8_t, uint16_t, uint32_t, uint64_t,
+ *        int8_t, int16_t, int32_t, int64_t, bool
+ *    - Provides router: ReflectResult set_field_from_str(..) - Creates a get_type_as_str for the type for primitives and enums
+ *      By default, enums are enabled
+ *      + Types: EnumType, EnumUnchecked, char, char_arr, int, unsignedint,
  *        short, unsignedshort, long, unsignedlong, unsignedchar, float, double,
  *        uint8_t, uint16_t, uint32_t, uint64_t, int8_t, int16_t, int32_t,
- *        int64_t
+ *        int64_t, bool
  *    - Provides function: ReflectResult print_field(...) - Prints a field, if it implements get_field_as_str
  */
 
@@ -103,7 +111,9 @@ typedef enum {
 // ########################################
 #ifdef CMY_PLUGIN_FORMAT_ENABLED
 static inline ReflectResult get_field_EnumType_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_EnumUnchecked_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
+static inline ReflectResult get_field_bool_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult get_field_char_arr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult get_field_char_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult get_field_conststr_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
@@ -126,6 +136,29 @@ static inline ReflectResult get_field_unsignedchar_as_str(const void* instance, 
 static inline ReflectResult get_field_unsignedlong_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult get_field_unsignedshort_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult print_field(const void *instance, const StructFieldInfo *field);
+static inline ReflectResult set_field_EnumType_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_EnumUnchecked_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_bool_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_char_arr_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_char_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_double_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_float_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_int16_t_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_int32_t_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_int64_t_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_int8_t_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_int_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_long_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_short_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_u16_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_u32_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_u64_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_u8_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_uint_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_unsignedchar_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_unsignedlong_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
+static inline ReflectResult set_field_unsignedshort_from_str(void* instance, const StructFieldInfo* field, const char* str_val);
 #endif // CMY_PLUGIN_FORMAT_ENABLED
 
 
@@ -155,6 +188,8 @@ extern const StructFieldExtension ext_Specified_percent;
 extern const EnumMemberInfo EnumType_Members[];
 extern const size_t EnumType_MemberCount;
 extern const EnumMemberExtension ext_EnumType_ENUM_ERR;
+extern const EnumMemberInfo EnumUnchecked_Members[];
+extern const size_t EnumUnchecked_MemberCount;
 
 #define GET_FIELD_EXT(field_ptr) \
     ((field_ptr) && (field_ptr)->user_data ? (const StructFieldExtension*)((field_ptr)->user_data) : NULL)
@@ -177,6 +212,8 @@ static inline bool is_valid_EnumType(EnumType value) {
 }
 
 
+// EnumUnchecked is unchecked
+
 static inline bool enum_is_checked(FIELD_TYPE type) {
     switch (type) {
     case TYPE_ENUM_ENUMTYPE: return true;
@@ -193,6 +230,9 @@ DEFINE_FIELD_GETTER(NumTypes, TYPE_STRUCT_NUMTYPES, NumTypes)
 
 DEFINE_ENUM_SETTER(EnumType, TYPE_ENUM_ENUMTYPE, EnumType, is_valid_EnumType)
 DEFINE_FIELD_GETTER(EnumType, TYPE_ENUM_ENUMTYPE, EnumType)
+
+DEFINE_FIELD_SETTER(EnumUnchecked, TYPE_ENUM_ENUMUNCHECKED, EnumUnchecked)
+DEFINE_FIELD_GETTER(EnumUnchecked, TYPE_ENUM_ENUMUNCHECKED, EnumUnchecked)
 
 DEFINE_FIELD_SETTER(MockStruct, TYPE_STRUCT_MOCKSTRUCT, MockStruct)
 DEFINE_FIELD_GETTER(MockStruct, TYPE_STRUCT_MOCKSTRUCT, MockStruct)
@@ -267,6 +307,9 @@ DEFINE_FIELD_GETTER(int32_t, TYPE_INT32_T, int32_t)
 DEFINE_FIELD_SETTER(int64_t, TYPE_INT64_T, int64_t)
 DEFINE_FIELD_GETTER(int64_t, TYPE_INT64_T, int64_t)
 
+DEFINE_FIELD_SETTER(bool, TYPE_BOOL, bool)
+DEFINE_FIELD_GETTER(bool, TYPE_BOOL, bool)
+
 // --- Plugin-Generated-Extensions ---
 
 // ==========================================
@@ -312,6 +355,27 @@ static inline ReflectResult get_field_EnumType_as_str(const void* instance, cons
     }
 
     const EnumMetaData meta = EnumMetaData_FromName(EnumType);
+    const char* enum_val = get_enum_member_name(meta.members, meta.count, (int)var);
+    const EnumMemberInfo* info = (enum_val) ? Find_Enum_Member(meta, enum_val) : NULL;
+    const EnumMemberExtension* ext = GET_MEMBER_EXT(info);
+
+    const char* fmt = (ext && ext->display) ? ext->display : (enum_val ? enum_val : "<unknown>");
+    snprintf(out_buf, buflen, "%s", fmt);
+    return REFLECT_OK;
+}
+
+static inline ReflectResult get_field_EnumUnchecked_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!instance || !field) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    EnumUnchecked var;
+    ReflectResult res = get_field_EnumUnchecked(instance, field, &var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    const EnumMetaData meta = EnumMetaData_FromName(EnumUnchecked);
     const char* enum_val = get_enum_member_name(meta.members, meta.count, (int)var);
     const EnumMemberInfo* info = (enum_val) ? Find_Enum_Member(meta, enum_val) : NULL;
     const EnumMemberExtension* ext = GET_MEMBER_EXT(info);
@@ -666,10 +730,29 @@ static inline ReflectResult get_field_int64_t_as_str(const void* instance, const
     return REFLECT_OK;
 }
 
+static inline ReflectResult get_field_bool_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
+    if (!instance || !field) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    bool var;
+    ReflectResult res = get_field_bool(instance, field, &var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    const StructFieldExtension* ext = GET_FIELD_EXT(field);
+    (void)ext;
+
+    snprintf(out_buf, buflen, "%s", var ? "true" : "false");
+    return REFLECT_OK;
+}
+
 static inline ReflectResult get_field_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen) {
     if (!field) { return REFLECT_ERR_NULL_PTR; }
     switch(field->type) {
         case TYPE_ENUM_ENUMTYPE: return get_field_EnumType_as_str(instance, field, out_buf, buflen);
+        case TYPE_ENUM_ENUMUNCHECKED: return get_field_EnumUnchecked_as_str(instance, field, out_buf, buflen);
         case TYPE_CHAR_PTR: return get_field_str_as_str(instance, field, out_buf, buflen);
         case TYPE_CHAR: return get_field_char_as_str(instance, field, out_buf, buflen);
         case TYPE_CHAR_ARR: return get_field_char_arr_as_str(instance, field, out_buf, buflen);
@@ -691,6 +774,623 @@ static inline ReflectResult get_field_as_str(const void* instance, const StructF
         case TYPE_INT16_T: return get_field_int16_t_as_str(instance, field, out_buf, buflen);
         case TYPE_INT32_T: return get_field_int32_t_as_str(instance, field, out_buf, buflen);
         case TYPE_INT64_T: return get_field_int64_t_as_str(instance, field, out_buf, buflen);
+        case TYPE_BOOL: return get_field_bool_as_str(instance, field, out_buf, buflen);
+        default: return REFLECT_ERR_TYPE_MISMATCH;
+    }
+}
+
+#endif // CMY_PLUGIN_FORMAT_ENABLED
+#ifdef CMY_PLUGIN_FORMAT_ENABLED
+static inline ReflectResult set_field_EnumType_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    const EnumMetaData meta = EnumMetaData_FromName(EnumType);
+    int enum_val = 0;
+    bool found = false;
+    for (size_t i = 0; i < meta.count; i++) {
+        if (strcmp(meta.members[i].name, str_val) == 0) {
+            enum_val = meta.members[i].value;
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        if (enum_is_checked(TYPE_ENUM_ENUMTYPE)) return REFLECT_ERR_TYPE_MISMATCH;
+        char* endptr;
+        enum_val = (int)strtol(str_val, &endptr, 10);
+        if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+    EnumType var = (EnumType)enum_val;
+    ReflectResult res = set_field_EnumType(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_EnumUnchecked_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    const EnumMetaData meta = EnumMetaData_FromName(EnumUnchecked);
+    int enum_val = 0;
+    bool found = false;
+    for (size_t i = 0; i < meta.count; i++) {
+        if (strcmp(meta.members[i].name, str_val) == 0) {
+            enum_val = meta.members[i].value;
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        if (enum_is_checked(TYPE_ENUM_ENUMUNCHECKED)) return REFLECT_ERR_TYPE_MISMATCH;
+        char* endptr;
+        enum_val = (int)strtol(str_val, &endptr, 10);
+        if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+    EnumUnchecked var = (EnumUnchecked)enum_val;
+    ReflectResult res = set_field_EnumUnchecked(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_char_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    long parsed_val = strtol(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    char var = (char)parsed_val;
+    ReflectResult res = set_field_char(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_char_arr_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    size_t len = strlen(str_val);
+    if (len >= field->count) {
+        return REFLECT_ERR_OUT_OF_BOUNDS;
+    }
+
+
+    ReflectResult res = set_field_char_arr(instance, field, (void*)str_val, len + 1);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_int_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    long parsed_val = strtol(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    int var = (int)parsed_val;
+    ReflectResult res = set_field_int(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_uint_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    unsigned long parsed_val = strtoul(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    unsigned int var = (unsigned int)parsed_val;
+    ReflectResult res = set_field_uint(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_short_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    long parsed_val = strtol(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    short var = (short)parsed_val;
+    ReflectResult res = set_field_short(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_unsignedshort_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    unsigned long parsed_val = strtoul(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    unsigned short var = (unsigned short)parsed_val;
+    ReflectResult res = set_field_unsignedshort(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_long_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    long parsed_val = strtol(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    long var = (long)parsed_val;
+    ReflectResult res = set_field_long(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_unsignedlong_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    unsigned long parsed_val = strtoul(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    unsigned long var = (unsigned long)parsed_val;
+    ReflectResult res = set_field_unsignedlong(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_unsignedchar_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    unsigned long parsed_val = strtoul(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    unsigned char var = (unsigned char)parsed_val;
+    ReflectResult res = set_field_unsignedchar(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_float_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    float parsed_val = strtof(str_val, &endptr);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    float var = (float)parsed_val;
+    ReflectResult res = set_field_float(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_double_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    double parsed_val = strtod(str_val, &endptr);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    double var = (double)parsed_val;
+    ReflectResult res = set_field_double(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_u8_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    unsigned long parsed_val = strtoul(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    uint8_t var = (uint8_t)parsed_val;
+    ReflectResult res = set_field_u8(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_u16_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    unsigned long parsed_val = strtoul(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    uint16_t var = (uint16_t)parsed_val;
+    ReflectResult res = set_field_u16(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_u32_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    unsigned long parsed_val = strtoul(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    uint32_t var = (uint32_t)parsed_val;
+    ReflectResult res = set_field_u32(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_u64_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    unsigned long long parsed_val = strtoull(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    uint64_t var = (uint64_t)parsed_val;
+    ReflectResult res = set_field_u64(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_int8_t_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    long parsed_val = strtol(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    int8_t var = (int8_t)parsed_val;
+    ReflectResult res = set_field_int8_t(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_int16_t_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    long parsed_val = strtol(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    int16_t var = (int16_t)parsed_val;
+    ReflectResult res = set_field_int16_t(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_int32_t_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    long parsed_val = strtol(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    int32_t var = (int32_t)parsed_val;
+    ReflectResult res = set_field_int32_t(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_int64_t_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    char *endptr;
+    long long parsed_val = strtoll(str_val, &endptr, 10);
+    if (*endptr != '\0' && *endptr != '\n' && *endptr != '\r') {
+        return REFLECT_ERR_TYPE_MISMATCH;
+    }
+
+
+    int64_t var = (int64_t)parsed_val;
+    ReflectResult res = set_field_int64_t(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_bool_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!instance || !field || !str_val) {
+        return REFLECT_ERR_NULL_PTR;
+    }
+
+    if (!(field->flags & FIELD_ACCESS_WRITE)) {
+        return REFLECT_ERR_ACCESS_DENIED;
+    }
+
+
+    bool var = (strcmp(str_val, "true") == 0 || strcmp(str_val, "1") == 0);
+    ReflectResult res = set_field_bool(instance, field, var);;
+    if (res != REFLECT_OK) {
+        return res;
+    }
+
+    return REFLECT_OK;
+}
+
+static inline ReflectResult set_field_from_str(void* instance, const StructFieldInfo* field, const char* str_val) {
+    if (!field) { return REFLECT_ERR_NULL_PTR; }
+    switch(field->type) {
+        case TYPE_ENUM_ENUMTYPE: return set_field_EnumType_from_str(instance, field, str_val);
+        case TYPE_ENUM_ENUMUNCHECKED: return set_field_EnumUnchecked_from_str(instance, field, str_val);
+        case TYPE_CHAR: return set_field_char_from_str(instance, field, str_val);
+        case TYPE_CHAR_ARR: return set_field_char_arr_from_str(instance, field, str_val);
+        case TYPE_INT: return set_field_int_from_str(instance, field, str_val);
+        case TYPE_UNSIGNEDINT: return set_field_uint_from_str(instance, field, str_val);
+        case TYPE_SHORT: return set_field_short_from_str(instance, field, str_val);
+        case TYPE_UNSIGNEDSHORT: return set_field_unsignedshort_from_str(instance, field, str_val);
+        case TYPE_LONG: return set_field_long_from_str(instance, field, str_val);
+        case TYPE_UNSIGNEDLONG: return set_field_unsignedlong_from_str(instance, field, str_val);
+        case TYPE_UNSIGNEDCHAR: return set_field_unsignedchar_from_str(instance, field, str_val);
+        case TYPE_FLOAT: return set_field_float_from_str(instance, field, str_val);
+        case TYPE_DOUBLE: return set_field_double_from_str(instance, field, str_val);
+        case TYPE_UINT8_T: return set_field_u8_from_str(instance, field, str_val);
+        case TYPE_UINT16_T: return set_field_u16_from_str(instance, field, str_val);
+        case TYPE_UINT32_T: return set_field_u32_from_str(instance, field, str_val);
+        case TYPE_UINT64_T: return set_field_u64_from_str(instance, field, str_val);
+        case TYPE_INT8_T: return set_field_int8_t_from_str(instance, field, str_val);
+        case TYPE_INT16_T: return set_field_int16_t_from_str(instance, field, str_val);
+        case TYPE_INT32_T: return set_field_int32_t_from_str(instance, field, str_val);
+        case TYPE_INT64_T: return set_field_int64_t_from_str(instance, field, str_val);
+        case TYPE_BOOL: return set_field_bool_from_str(instance, field, str_val);
         default: return REFLECT_ERR_TYPE_MISMATCH;
     }
 }
@@ -729,12 +1429,13 @@ const StructFieldInfo NumTypes_Metadata[] = {
     { "i16", TYPE_INT16_T, offsetof(NumTypes, i16), sizeof(int16_t), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "i32", TYPE_INT32_T, offsetof(NumTypes, i32), sizeof(int32_t), 1, FIELD_ACCESS_RW, NULL, NULL },
     { "i64", TYPE_INT64_T, offsetof(NumTypes, i64), sizeof(int64_t), 1, FIELD_ACCESS_RW, NULL, NULL },
-    { "private", TYPE_UINT32_T, offsetof(NumTypes, private), sizeof(uint32_t), 1, FIELD_ACCESS_RW, NULL, NULL },
 };
 const size_t NumTypes_FieldCount = sizeof(NumTypes_Metadata) / sizeof(StructFieldInfo);
 
 const StructFieldInfo MockStruct_Metadata[] = {
     { "enum_type", TYPE_ENUM_ENUMTYPE, offsetof(MockStruct, enum_type), sizeof(EnumType), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "unchecked", TYPE_ENUM_ENUMUNCHECKED, offsetof(MockStruct, unchecked), sizeof(EnumUnchecked), 1, FIELD_ACCESS_RW, NULL, NULL },
+    { "works", TYPE_BOOL, offsetof(MockStruct, works), sizeof(bool), 1, FIELD_ACCESS_RW, NULL, NULL },
 };
 const size_t MockStruct_FieldCount = sizeof(MockStruct_Metadata) / sizeof(StructFieldInfo);
 
@@ -774,6 +1475,12 @@ const EnumMemberInfo EnumType_Members[] = {
 };
 const size_t EnumType_MemberCount = sizeof(EnumType_Members) / sizeof(EnumMemberInfo);
 
+const EnumMemberInfo EnumUnchecked_Members[] = {
+   { C1, "C1", NULL },
+   { C2, "C2", NULL },
+};
+const size_t EnumUnchecked_MemberCount = sizeof(EnumUnchecked_Members) / sizeof(EnumMemberInfo);
+
 // --- Auto-Generated Type Registry
 ReflectResult get_struct_metadata(FieldType type, StructMetaData* out_meta) {
     if (!out_meta) return REFLECT_ERR_NULL_PTR;
@@ -806,6 +1513,10 @@ ReflectResult get_enum_metadata(FieldType type, EnumMetaData* out_meta) {
           out_meta->members = EnumType_Members;
           out_meta->count = EnumType_MemberCount;
           return REFLECT_OK;
+      case TYPE_ENUM_ENUMUNCHECKED:
+          out_meta->members = EnumUnchecked_Members;
+          out_meta->count = EnumUnchecked_MemberCount;
+          return REFLECT_OK;
         default: return REFLECT_ERR_ENUM_INVALID;
     }
 }
@@ -818,6 +1529,7 @@ ReflectResult safe_set_field(void* instance, const StructFieldInfo* field, const
       case TYPE_STRUCT_STRINGTYPE: return set_field_StringType(instance, field, *(StringType*)value);
       case TYPE_STRUCT_NUMTYPES: return set_field_NumTypes(instance, field, *(NumTypes*)value);
       case TYPE_ENUM_ENUMTYPE: return set_field_EnumType(instance, field, *(EnumType*)value);
+      case TYPE_ENUM_ENUMUNCHECKED: return set_field_EnumUnchecked(instance, field, *(EnumUnchecked*)value);
       case TYPE_STRUCT_MOCKSTRUCT: return set_field_MockStruct(instance, field, *(MockStruct*)value);
       case TYPE_STRUCT_SPECIFIED: return set_field_Specified(instance, field, *(Specified*)value);
       case TYPE_CHAR_PTR: return set_field_str(instance, field, *(char **)value);
@@ -842,6 +1554,7 @@ ReflectResult safe_set_field(void* instance, const StructFieldInfo* field, const
       case TYPE_INT16_T: return set_field_int16_t(instance, field, *(int16_t*)value);
       case TYPE_INT32_T: return set_field_int32_t(instance, field, *(int32_t*)value);
       case TYPE_INT64_T: return set_field_int64_t(instance, field, *(int64_t*)value);
+      case TYPE_BOOL: return set_field_bool(instance, field, *(bool*)value);
         default: return REFLECT_ERR_TYPE_INVALID;
     }
 }
@@ -849,6 +1562,7 @@ ReflectResult safe_set_field(void* instance, const StructFieldInfo* field, const
 // --- Auto-Generated enum->name converter
 const char* get_name_of_type(FieldType type) {
     switch(type) {
+     case TYPE_BOOL: return "TYPE_BOOL";
      case TYPE_CHAR: return "TYPE_CHAR";
      case TYPE_CHAR_ARR: return "TYPE_CHAR_ARR";
      case TYPE_CHAR_PTR: return "TYPE_CHAR_PTR";
@@ -856,6 +1570,7 @@ const char* get_name_of_type(FieldType type) {
      case TYPE_CONSTCHAR_PTR: return "TYPE_CONSTCHAR_PTR";
      case TYPE_DOUBLE: return "TYPE_DOUBLE";
      case TYPE_ENUM_ENUMTYPE: return "TYPE_ENUM_ENUMTYPE";
+     case TYPE_ENUM_ENUMUNCHECKED: return "TYPE_ENUM_ENUMUNCHECKED";
      case TYPE_FLOAT: return "TYPE_FLOAT";
      case TYPE_INT: return "TYPE_INT";
      case TYPE_INT16_T: return "TYPE_INT16_T";
@@ -895,6 +1610,7 @@ size_t get_type_size(FIELD_TYPE type) {
         case TYPE_STRUCT_STRINGTYPE: return sizeof(StringType);
         case TYPE_STRUCT_NUMTYPES: return sizeof(NumTypes);
         case TYPE_ENUM_ENUMTYPE: return sizeof(EnumType);
+        case TYPE_ENUM_ENUMUNCHECKED: return sizeof(EnumUnchecked);
         case TYPE_STRUCT_MOCKSTRUCT: return sizeof(MockStruct);
         case TYPE_STRUCT_SPECIFIED: return sizeof(Specified);
         case TYPE_CHAR_PTR: return sizeof(char *);
@@ -919,6 +1635,7 @@ size_t get_type_size(FIELD_TYPE type) {
         case TYPE_INT16_T: return sizeof(int16_t);
         case TYPE_INT32_T: return sizeof(int32_t);
         case TYPE_INT64_T: return sizeof(int64_t);
+        case TYPE_BOOL: return sizeof(bool);
         default: return 0;
     }
 }

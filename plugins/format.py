@@ -2,7 +2,7 @@ import cmy_reflector
 from cmy_reflector import CBuilder, Macro, Reflector
 
 PLUGIN_NAME = "format"
-PLUGIN_VERSION = "1.0.0" # x-release-please-version
+PLUGIN_VERSION = "1.0.0"  # x-release-please-version
 PLUGIN_MAINTAINERS = ["oonamo"]
 PLUGIN_DESCRIPTION = "Provides run time printing for primitive types"
 PLUGIN_DEFINE_MACRO = f"CMY_HAS_{PLUGIN_NAME.upper()}_PLUGIN"
@@ -44,6 +44,7 @@ def has_print_specifier(fmt_string: str) -> bool:
     """Checks if a format specifier has a non escaped %. Does not check validity"""
     stripped_fmt = fmt_string.replace("%%", "")
     return "%" in stripped_fmt
+
 
 def validate_has_print_specifier(tag_name, tag_value) -> (bool, str):
     return (
@@ -330,26 +331,205 @@ def handle_field_str(
     return (func_def, case_def)
 
 
+_PRIMITIVE_PARSERS = {
+    "int": ("strtol(str_val, &endptr, 10)", "long"),
+    "unsignedint": ("strtoul(str_val, &endptr, 10)", "unsigned long"),
+    "short": ("strtol(str_val, &endptr, 10)", "long"),
+    "unsignedshort": ("strtoul(str_val, &endptr, 10)", "unsigned long"),
+    "long": ("strtol(str_val, &endptr, 10)", "long"),
+    "unsignedlong": ("strtoul(str_val, &endptr, 10)", "unsigned long"),
+    "char": ("strtol(str_val, &endptr, 10)", "long"),
+    "unsignedchar": ("strtoul(str_val, &endptr, 10)", "unsigned long"),
+    "float": ("strtof(str_val, &endptr)", "float"),
+    "double": ("strtod(str_val, &endptr)", "double"),
+    "size_t": ("strtoull(str_val, &endptr, 10)", "unsigned long long"),
+    "uint8_t": ("strtoul(str_val, &endptr, 10)", "unsigned long"),
+    "uint16_t": ("strtoul(str_val, &endptr, 10)", "unsigned long"),
+    "uint32_t": ("strtoul(str_val, &endptr, 10)", "unsigned long"),
+    "uint64_t": ("strtoull(str_val, &endptr, 10)", "unsigned long long"),
+    "int8_t": ("strtol(str_val, &endptr, 10)", "long"),
+    "int16_t": ("strtol(str_val, &endptr, 10)", "long"),
+    "int32_t": ("strtol(str_val, &endptr, 10)", "long"),
+    "int64_t": ("strtoll(str_val, &endptr, 10)", "long long"),
+}
+
+
+def _generate_type_from_str(
+    reflector: Reflector, cb: CBuilder, type_name, type_enum, ctype, suffix
+) -> list[str]:
+    parse_expr, parse_type = _PRIMITIVE_PARSERS[type_name]
+    return [
+        cb.check("!instance || !field || !str_val", "return REFLECT_ERR_NULL_PTR;"),
+        cb.check(
+            "!(field->flags & FIELD_ACCESS_WRITE)", "return REFLECT_ERR_ACCESS_DENIED;"
+        ),
+        "",
+        "char *endptr;",
+        cb.var(parse_type, "parsed_val", parse_expr),
+        cb.check(
+            "*endptr != '\\0' && *endptr != '\\n' && *endptr != '\\r'",
+            "return REFLECT_ERR_TYPE_MISMATCH;",
+        ),
+        "",
+        cb.var(ctype, "var", f"({ctype})parsed_val"),
+        cb.var("ReflectResult", "res", cb.struct_field_setter(suffix, "var")).checked(
+            "res != REFLECT_OK", "return res;"
+        ),
+        "return REFLECT_OK;",
+    ]
+
+
+def _generate_enum_from_str(
+    reflector: Reflector, cb: CBuilder, type_name, type_enum, ctype, suffix
+) -> list[str]:
+    return [
+        cb.check("!instance || !field || !str_val", "return REFLECT_ERR_NULL_PTR;"),
+        cb.check(
+            "!(field->flags & FIELD_ACCESS_WRITE)", "return REFLECT_ERR_ACCESS_DENIED;"
+        ),
+        "",
+        cb.var("EnumMetaData", "meta", cb.enum_metadata(type_name)).as_const(),
+        cb.var("int", "enum_val", "0"),
+        cb.var("bool", "found", "false"),
+        "for (size_t i = 0; i < meta.count; i++) {",
+        "    if (strcmp(meta.members[i].name, str_val) == 0) {",
+        "        enum_val = meta.members[i].value;",
+        "        found = true;",
+        "        break;",
+        "    }",
+        "}",
+        "",
+        "if (!found) {",
+        f"    if (enum_is_checked({type_enum})) return REFLECT_ERR_TYPE_MISMATCH;",
+        "    char* endptr;",
+        "    enum_val = (int)strtol(str_val, &endptr, 10);",
+        "    if (*endptr != '\\0' && *endptr != '\\n' && *endptr != '\\r') return REFLECT_ERR_TYPE_MISMATCH;",
+        "}",
+        "",
+        cb.var(ctype, "var", f"({ctype})enum_val"),
+        cb.var("ReflectResult", "res", cb.struct_field_setter(suffix, "var")).checked(
+            "res != REFLECT_OK", "return res;"
+        ),
+        "return REFLECT_OK;",
+    ]
+
+
+def _generate_bool_from_str(
+    reflector: Reflector, cb: CBuilder, type_name, type_enum, ctype, suffix
+) -> list[str]:
+    return [
+        cb.check("!instance || !field || !str_val", "return REFLECT_ERR_NULL_PTR;"),
+        cb.check(
+            "!(field->flags & FIELD_ACCESS_WRITE)", "return REFLECT_ERR_ACCESS_DENIED;"
+        ),
+        "",
+        cb.var(
+            "bool", "var", '(strcmp(str_val, "true") == 0 || strcmp(str_val, "1") == 0)'
+        ),
+        cb.var("ReflectResult", "res", cb.struct_field_setter(suffix, "var")).checked(
+            "res != REFLECT_OK", "return res;"
+        ),
+        "return REFLECT_OK;",
+    ]
+
+
+def _generate_char_arr_from_str(
+    reflector: Reflector, cb: CBuilder, type_name, type_enum, ctype, suffix
+) -> list[str]:
+    return [
+        cb.check("!instance || !field || !str_val", "return REFLECT_ERR_NULL_PTR;"),
+        cb.check(
+            "!(field->flags & FIELD_ACCESS_WRITE)", "return REFLECT_ERR_ACCESS_DENIED;"
+        ),
+        "",
+        cb.var("size_t", "len", "strlen(str_val)"),
+        cb.check("len >= field->count", "return REFLECT_ERR_OUT_OF_BOUNDS;"),
+        "",
+        cb.var(
+            "ReflectResult",
+            "res",
+            cb.struct_field_setter(suffix, "(void*)str_val", array_len="len + 1"),
+        ).checked("res != REFLECT_OK", "return res;"),
+        "return REFLECT_OK;",
+    ]
+
+
+@stdformat.type_mapper(
+    signature="ReflectResult set_field_from_str(void* instance, const StructFieldInfo* field, const char* str_val)",
+    switch_var="field->type",
+    default_case="return REFLECT_ERR_TYPE_MISMATCH;",
+    guard_clause="if (!field) { return REFLECT_ERR_NULL_PTR; }",
+    requires=PLUGIN_ENABLED_MACRO,
+    description="""\
+Creates a get_type_as_str for the type for primitives and enums
+By default, enums are enabled
+""",
+)
+def set_field_as_str(
+    reflector: cmy_reflector.Reflector, type_name, type_enum, ctype, suffix
+):
+    if not has_field_str_attribute(reflector, type_name):
+        return None
+
+    builder = CBuilder(reflector)
+
+    if type_name in ["char*", "constchar*"]:
+        return None
+
+    if reflector.is_enum(type_name):
+        c_lines = _generate_enum_from_str(
+            reflector, builder, type_name, type_enum, ctype, suffix
+        )
+    elif type_name == "bool":
+        c_lines = _generate_bool_from_str(
+            reflector, builder, type_name, type_enum, ctype, suffix
+        )
+    elif type_name == "char_arr":
+        c_lines = _generate_char_arr_from_str(
+            reflector, builder, type_name, type_enum, ctype, suffix
+        )
+    elif type_name in _PRIMITIVE_PARSERS:
+        c_lines = _generate_type_from_str(
+            reflector, builder, type_name, type_enum, ctype, suffix
+        )
+    else:
+        return None
+
+    func_name = f"set_field_{suffix}_from_str"
+    case_def = f"return {func_name}(instance, field, str_val);"
+    func_def = builder.build_func(
+        signature=f"{func_name}(void* instance, const StructFieldInfo* field, const char* str_val)",
+        retval="ReflectResult",
+        body_lines=c_lines,
+    )
+
+    return (func_def, case_def)
+
+
 @stdformat.function(
     requires=PLUGIN_ENABLED_MACRO,
     description="Prints a field, if it implements get_field_as_str",
 )
 def print_field(reflector):
     return """\
-static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field)
+static inline ReflectResult print_field(const void *instance, const StructFieldInfo *field)
 {
-    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+    if (!instance || !field)
+    {
+        return REFLECT_ERR_NULL_PTR;
+    }
 
 #ifdef _MSC_VER
     size_t buflen = CMY_FORMAT_MAX_BUF_LEN;
-    char buf[CMY_FORMAT_MAX_BUF_LEN];
+    char   buf[CMY_FORMAT_MAX_BUF_LEN];
 #else // May have VLA support
     size_t buflen = field->count > 256 ? field->count : 256;
-    char buf[buflen];
+    char   buf[buflen];
 #endif
 
     ReflectResult res = get_field_as_str(instance, field, buf, buflen);
-    if (res != REFLECT_OK) {
+    if (res != REFLECT_OK)
+    {
         return res;
     }
 
