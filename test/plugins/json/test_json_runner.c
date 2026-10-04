@@ -3,7 +3,7 @@
 
 static void RunAllTests(void)
 {
-    RUN_TEST_GROUP(Json);
+    RUN_TEST_GROUP(JSON);
 }
 
 int main(int argc, const char *argv[])

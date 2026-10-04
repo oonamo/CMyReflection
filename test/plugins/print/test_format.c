@@ -11,19 +11,21 @@ size_t g_offset;
 
 #include "format.generated.h"
 
-TEST_GROUP(Print);
+#define LOCAL_TGROUP FORMAT
+TEST_GROUP(FORMAT);
+#include "../../test_utils.h"
 
 #define CLEAR_BUF(s) memset(s, 0, sizeof(s))
 
-TEST_SETUP(Print)
+SETUP()
 {
 }
 
-TEST_TEAR_DOWN(Print)
+TEAR_DOWN()
 {
 }
 
-TEST(Print, Formats_String_Types)
+T(Formats_String_Types)
 {
     StringType s    = {0};
     s.char_ptr      = "Pointer";
@@ -55,7 +57,7 @@ TEST(Print, Formats_String_Types)
     CLEAR_BUF(buf);
 }
 
-TEST(Print, Formats_Number_Types)
+T(Formats_Number_Types)
 {
     NumTypes a = {
         .i  = -255,
@@ -179,7 +181,7 @@ TEST(Print, Formats_Number_Types)
     CLEAR_BUF(buf);
 }
 
-TEST(Print, Formats_Enums)
+T(Formats_Enums)
 {
     MockStruct             s = {ENUM_A};
     const StructFieldInfo *f = Find_Struct_Field(StructMetaData_FromName(MockStruct), "enum_type");
@@ -206,7 +208,7 @@ TEST(Print, Formats_Enums)
     CLEAR_BUF(buf);
 }
 
-TEST(Print, Struct_Fields_Can_Have_Custom_Specifiers)
+T(Struct_Fields_Can_Have_Custom_Specifiers)
 {
     Specified s = {
         .as_hex      = 0xab12ff,
@@ -232,10 +234,10 @@ TEST(Print, Struct_Fields_Can_Have_Custom_Specifiers)
     CLEAR_BUF(buf);
 }
 
-TEST_GROUP_RUNNER(Print)
+GROUP_RUNNER()
 {
-    RUN_TEST_CASE(Print, Formats_String_Types);
-    RUN_TEST_CASE(Print, Formats_Number_Types);
-    RUN_TEST_CASE(Print, Formats_Enums);
-    RUN_TEST_CASE(Print, Struct_Fields_Can_Have_Custom_Specifiers);
+    RUN(Formats_String_Types);
+    RUN(Formats_Number_Types);
+    RUN(Formats_Enums);
+    RUN(Struct_Fields_Can_Have_Custom_Specifiers);
 }

@@ -6,12 +6,14 @@
 #include "test_json_types.h"
 #include "json.generated.h"
 
+#define LOCAL_TGROUP JSON
+TEST_GROUP(JSON);
+#include "../../test_utils.h"
+
 static char            json_buffer[4096];
 static _cmy_json_state state;
 
-TEST_GROUP(Json);
-
-TEST_SETUP(Json)
+SETUP()
 {
     memset(json_buffer, 0, sizeof(json_buffer));
     state._buf                = json_buffer;
@@ -22,7 +24,7 @@ TEST_SETUP(Json)
     state.current_parent_type = TYPE_UNKNOWN;
 }
 
-TEST_TEAR_DOWN(Json)
+TEAR_DOWN()
 {
     if (Unity.CurrentTestFailed)
     {
@@ -81,7 +83,7 @@ ReflectResult serialize_interactions(const void            *exact_data_ptr,
     TEST_ASSERT_NOT_NULL_MESSAGE(strstr((json_str), (expected_substr)),                            \
                                  "Expected substring not found in JSON output: " expected_substr)
 
-TEST(Json, Serializes_Strings)
+T(Serializes_Strings)
 {
     Post my_posts[2] = {
         {.likes = 100, .title = "Hello World", .interactions = (POST_SAVE | POST_FRIENDS_ONLY)},
@@ -166,7 +168,7 @@ TEST(Json, Serializes_Strings)
                                  "Post 1 failed");
 }
 
-TEST(Json, Handles_Empty_And_Null_Pointers)
+T(Handles_Empty_And_Null_Pointers)
 {
     User u = {0};
 
@@ -176,7 +178,7 @@ TEST(Json, Handles_Empty_And_Null_Pointers)
                                  "NULL char* did not result in null");
 }
 
-TEST(Json, Generates_Valid_Schema)
+T(Generates_Valid_Schema)
 {
     to_json(NULL, TYPE_STRUCT_USER, json_buffer, sizeof(json_buffer));
 
@@ -195,7 +197,7 @@ TEST(Json, Generates_Valid_Schema)
         "Schema static array missing");
 }
 
-TEST(Json, Handles_Long_Strings)
+T(Handles_Long_Strings)
 {
     LongString   l          = {0};
     const size_t string_len = 400;
@@ -221,7 +223,7 @@ TEST(Json, Handles_Long_Strings)
     free(l.longstring);
 }
 
-TEST(Json, Escapes_Special_Characters)
+T(Escapes_Special_Characters)
 {
     User u = {0};
     u.bio  = "L1\nL2\n\t\"Hello World\"";
@@ -264,7 +266,7 @@ static void dynamic_write_cb(const char *chunk, size_t len, void *user_ctx)
     ctx->buf[ctx->offset] = '\0';
 }
 
-TEST(Json, Stream_Dynamic_Allocation)
+T(Stream_Dynamic_Allocation)
 {
     User u = {0};
     u.bio  = "This string is dynamically allocated. We will verify it's validity";
@@ -281,7 +283,7 @@ TEST(Json, Stream_Dynamic_Allocation)
     free(ctx.buf);
 }
 
-TEST(Json, Can_Use_Key_Name_Output)
+T(Can_Use_Key_Name_Output)
 {
     DumbStruct u = {0};
     u.my_int     = 53;
@@ -294,7 +296,7 @@ TEST(Json, Can_Use_Key_Name_Output)
     TEST_ASSERT_JSON_CONTAINS(Q("character value") ": A", json_buffer);
 }
 
-TEST(Json, Can_Use_Struct_Generated_Output)
+T(Can_Use_Struct_Generated_Output)
 {
     AccountSettings settings = {true, 5};
     AccountSettings_to_json(&settings, json_buffer, sizeof(json_buffer));
@@ -303,14 +305,14 @@ TEST(Json, Can_Use_Struct_Generated_Output)
     TEST_ASSERT_JSON_CONTAINS(Q("login_attempts") ": 5", json_buffer);
 }
 
-TEST_GROUP_RUNNER(Json)
+GROUP_RUNNER()
 {
-    RUN_TEST_CASE(Json, Serializes_Strings);
-    RUN_TEST_CASE(Json, Handles_Empty_And_Null_Pointers);
-    RUN_TEST_CASE(Json, Generates_Valid_Schema);
-    RUN_TEST_CASE(Json, Handles_Long_Strings);
-    RUN_TEST_CASE(Json, Escapes_Special_Characters);
-    RUN_TEST_CASE(Json, Stream_Dynamic_Allocation);
-    RUN_TEST_CASE(Json, Can_Use_Key_Name_Output);
-    RUN_TEST_CASE(Json, Can_Use_Struct_Generated_Output);
+    RUN(Serializes_Strings);
+    RUN(Handles_Empty_And_Null_Pointers);
+    RUN(Generates_Valid_Schema);
+    RUN(Handles_Long_Strings);
+    RUN(Escapes_Special_Characters);
+    RUN(Stream_Dynamic_Allocation);
+    RUN(Can_Use_Key_Name_Output);
+    RUN(Can_Use_Struct_Generated_Output);
 }

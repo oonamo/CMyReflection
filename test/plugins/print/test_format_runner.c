@@ -3,7 +3,7 @@
 
 static void RunAllTests(void)
 {
-    RUN_TEST_GROUP(Print);
+    RUN_TEST_GROUP(FORMAT);
 }
 
 int main(int argc, const char *argv[])

@@ -31,6 +31,14 @@ target_compile_definitions(unity
 
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+add_custom_target(
+  check_test_cases_target ALL
+  COMMAND Python3::Interpreter "${PROJECT_SOURCE_DIR}/scripts/check_test_cases.py" "${CMAKE_CURRENT_SOURCE_DIR}"
+  COMMENT "Checking that test cases are well defined..."
+  VERBATIM
+)
+
 set(GENERATED_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/mocks/generated.inc")
 
 file(GLOB_RECURSE REFLECTION_SOURCE_FILES CONFIGURE_DEPENDS "mocks/*.h" "mocks/*.c")
@@ -58,15 +66,7 @@ set(TEST_SOURCES
   ${GENERATED_HEADER}
 )
 
-
 add_executable(test_runner)
-
-add_custom_command(
-  TARGET test_runner
-  COMMAND Python3::Interpreter "${PROJECT_SOURCE_DIR}/scripts/check_test_cases.py" "${CMAKE_CURRENT_SOURCE_DIR}"
-  DEPENDS "${PROJECT_SOURCE_DIR}/scripts/check_test_cases.py" ${TEST_SOURCES}
-  COMMENT "Checking all test cases are properly defined..."
-)
 
 set_target_properties(test_runner PROPERTIES
   C_STANDARD 99
