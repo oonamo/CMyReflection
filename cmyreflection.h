@@ -156,11 +156,12 @@ typedef struct
  *
  * ```c
  * typedef struct {
- *   // ...
- *   int x;
+ *     // ...
+ *     int x;
  * } MyStruct;
  *
- * const StructFieldInfo* field = Find_Struct_Field(StructMetaData_FromName(MyStruct), "x");
+ * const StructFieldInfo *field =
+ *     Find_Struct_Field(StructMetaData_FromName(MyStruct), "x");
  * ```
  */
 #define Find_Struct_Field(MetaStruct, FieldName)                                                   \
@@ -171,11 +172,12 @@ typedef struct
  *
  * ```c
  * typedef enum {
- *   // ...
- *   VALUE_A,
+ *     // ...
+ *     VALUE_A,
  * } MyEnum;
  *
- * const StructFieldInfo* field = Find_Enum_Member(EnumMetaData_FromName(MyEnum), "VALUE_A");
+ * const StructFieldInfo *field =
+ *     Find_Enum_Member(EnumMetaData_FromName(MyEnum), "VALUE_A");
  * ```
  */
 #define Find_Enum_Member(MetaEnum, MemberName)                                                     \
@@ -276,22 +278,18 @@ const char *get_name_of_type(FIELD_TYPE type);
  * The associated array index is also returned.
  *
  * ```c
- * DeviceManager manager = {0};
- * manager.devices[0] = (IoTDevice){ .name="local_device" };
- * const StructFieldInfo* leaf = NULL;
+ * DeviceManager manager       = {0};
+ * manager.devices[0]          = (IoTDevice){.name = "local_device"};
+ * const StructFieldInfo *leaf = NULL;
  *
- * int array_index = -1;
- * void *target = resolve_field_target(&manager,
- *                                     DeviceManager_Metadata,
- *                                     DeviceManager_FieldCount,
- *                                     "devices[0]",
- *                                     &leaf,
- *                                     &array_index)
+ * int   array_index = -1;
+ * void *target      = resolve_field_target(&manager, DeviceManager_Metadata,
+ *                                          DeviceManager_FieldCount, "devices[0]",
+ *                                          &leaf, &array_index);
  *
  * IotDevice ith = {0};
- * if (get_array_element(target, leaf, &ith, array_index) == REFLECT_OK)
- * {
- *   printf("%dth device name: %s\n", i, ith.name);
+ * if (get_array_element(target, leaf, &ith, array_index) == REFLECT_OK) {
+ *     printf("%dth device name: %s\n", i, ith.name);
  * }
  * ```
  *
@@ -318,16 +316,14 @@ void *resolve_field_path_ext(void                   *base_instance,
  * struct is returned, along with the out_leaf_field pointer to the field.
  *
  * ```c
- * DeviceManager manager = {0};
- * const StructFieldInfo* leaf = NULL;
+ * DeviceManager          manager = {0};
+ * const StructFieldInfo *leaf    = NULL;
  *
- * void *target = resolve_field_target(&manager,
- *                                     DeviceManager_Metadata,
+ * void *target = resolve_field_target(&manager, DeviceManager_Metadata,
  *                                     DeviceManager_FieldCount,
- *                                     "devices[2].data.voltage",
- *                                     &leaf)
+ *                                     "devices[2].data.voltage", &leaf);
  * if (target && leaf) {
- *    set_field_float(target, leaf, 240.5f);
+ *     set_field_float(target, leaf, 240.5f);
  * }
  * ```
  *
@@ -350,16 +346,16 @@ void *resolve_field_path(void                   *base_instance,
  *
  * ```c
  * typedef struct {
- *   int x;
+ *     int x;
  * } StructA;
  *
  * typedef struct {
- *    StructA other_struct;
+ *     StructA other_struct;
  * } StructB;
  *
  * // ...
- * const StructFieldInfo* field = resolve_field_metadata(StructB_Metadata, Struct2_Count,
- * "other_struct.x")
+ * const StructFieldInfo *field =
+ *     resolve_field_metadata(StructB_Metadata, Struct2_Count, "other_struct.x");
  * assert(field != NULL);
  * ```
  *
@@ -392,12 +388,13 @@ void *reflect_query(void                   *instance,
  *
  * ```c
  * typedef struct {
- *     int x;
+ *     int   x;
  *     float y;
  * } StructA;
  *
  * // ...
- * const StructFieldInfo* field = find_field(StructA_Metadata, StructA_FieldCount, "y");
+ * const StructFieldInfo *field =
+ *     find_field(StructA_Metadata, StructA_FieldCount, "y");
  * assert(field->type == TYPE_FLOAT);
  * ```
  *
@@ -419,7 +416,8 @@ const StructFieldInfo *find_field(const StructFieldInfo *meta, size_t count, con
  * } EnumA;
  *
  * // ...
- * const EnumMemberInfo* member = find_member(EnumA_Members, EnumA_MemberCount, "VALUE_A");
+ * const EnumMemberInfo *member =
+ *     find_member(EnumA_Members, EnumA_MemberCount, "VALUE_A");
  * assert(field->type == TYPE_FLOAT);
  * ```
  * @param meta  [in] Array of FieldInfo
@@ -435,7 +433,8 @@ find_member(const EnumMemberInfo *meta, size_t member_count, const char *name);
  * @brief Gets the string name of an enum member given its integer value
  *
  * ```c
- * assert(strcmp("VALUE_A", get_enum_member_name(EnumA_Members, EnumA_MemberCount, VALUE_A)) == 0);
+ * assert(strcmp("VALUE_A", get_enum_member_name(EnumA_Members, EnumA_MemberCount,
+ *                                               VALUE_A)) == 0);
  * ```
  * @param meta         [in] Array of EnumMemberInfo
  * @param member_count [in] Number of elements in meta
@@ -607,15 +606,17 @@ typedef void (*StructFieldVisitor)(const void            *base_instance,
  * @brief Iterates over all fields of a struct and invokes a callback for each.
  *
  * ```c
- * void traverse_all(const void* base_instance, const StructFieldInfo* field, void* user_data)
+ * void traverse_all(const void *base_instance, const StructFieldInfo *field,
+ *                   void *user_data)
  * {
  *     StructMetaData meta;
  *
  *     // If type is struct
- *     if (get_struct_metadata(field->type, &meta) == REFLECT_OK)
- *     {
- *         const void* next_base_instance = (const char*)(base_instance) + field->offset;
- *         visit_struct_fields(next_base_instance, field->type, traverse_all, NULL);
+ *     if (get_struct_metadata(field->type, &meta) == REFLECT_OK) {
+ *         const void *next_base_instance =
+ *             (const char *)(base_instance) + field->offset;
+ *         visit_struct_fields(next_base_instance, field->type, traverse_all,
+ *                             NULL);
  *         return;
  *     }
  *     // Do some action on the primitive types
