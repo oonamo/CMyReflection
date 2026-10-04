@@ -183,7 +183,8 @@ T(Formats_Number_Types)
 
 T(Formats_Enums)
 {
-    MockStruct             s = {ENUM_A};
+    MockStruct s             = {0};
+    s.enum_type              = ENUM_A;
     const StructFieldInfo *f = Find_Struct_Field(StructMetaData_FromName(MockStruct), "enum_type");
 
     char buf[64];
