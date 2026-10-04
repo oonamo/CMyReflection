@@ -105,6 +105,16 @@ static inline bool is_valid_DeviceState(DeviceState value) {
 
 
 // ManagerPermissions is unchecked
+
+static inline bool enum_is_checked(FIELD_TYPE type) {
+    switch (type) {
+    case TYPE_ENUM_BALLSIZE: return true;
+    case TYPE_ENUM_DEVICESTATE: return true;
+    default: return false;
+    }
+    return false;
+}
+
 DEFINE_ENUM_SETTER(BallSize, TYPE_ENUM_BALLSIZE, BallSize, is_valid_BallSize)
 DEFINE_FIELD_GETTER(BallSize, TYPE_ENUM_BALLSIZE, BallSize)
 

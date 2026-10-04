@@ -125,7 +125,7 @@ static inline ReflectResult get_field_uint_as_str(const void* instance, const St
 static inline ReflectResult get_field_unsignedchar_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult get_field_unsignedlong_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
 static inline ReflectResult get_field_unsignedshort_as_str(const void* instance, const StructFieldInfo* field, char* out_buf, size_t buflen);
-static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field);
+static inline ReflectResult print_field(const void *instance, const StructFieldInfo *field);
 #endif // CMY_PLUGIN_FORMAT_ENABLED
 
 
@@ -174,6 +174,15 @@ static inline bool is_valid_EnumType(EnumType value) {
     default:
         return false;
     }
+}
+
+
+static inline bool enum_is_checked(FIELD_TYPE type) {
+    switch (type) {
+    case TYPE_ENUM_ENUMTYPE: return true;
+    default: return false;
+    }
+    return false;
 }
 
 DEFINE_FIELD_SETTER(StringType, TYPE_STRUCT_STRINGTYPE, StringType)
@@ -264,20 +273,24 @@ DEFINE_FIELD_GETTER(int64_t, TYPE_INT64_T, int64_t)
 // Plugin: format
 // ==========================================
 #ifdef CMY_PLUGIN_FORMAT_ENABLED
-static inline ReflectResult print_field(const void* instance, const StructFieldInfo* field)
+static inline ReflectResult print_field(const void *instance, const StructFieldInfo *field)
 {
-    if (!instance || !field) { return REFLECT_ERR_NULL_PTR; }
+    if (!instance || !field)
+    {
+        return REFLECT_ERR_NULL_PTR;
+    }
 
 #ifdef _MSC_VER
     size_t buflen = CMY_FORMAT_MAX_BUF_LEN;
-    char buf[CMY_FORMAT_MAX_BUF_LEN];
+    char   buf[CMY_FORMAT_MAX_BUF_LEN];
 #else // May have VLA support
     size_t buflen = field->count > 256 ? field->count : 256;
-    char buf[buflen];
+    char   buf[buflen];
 #endif
 
     ReflectResult res = get_field_as_str(instance, field, buf, buflen);
-    if (res != REFLECT_OK) {
+    if (res != REFLECT_OK)
+    {
         return res;
     }
 

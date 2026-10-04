@@ -164,6 +164,11 @@ T(Can_Use_Find_Enum_Macro)
     TEST_ASSERT_EQUAL(BALL_TYPE_SMALL, f->value);
 }
 
+T(Can_Check_If_Enum_Is_Checked)
+{
+    TEST_ASSERT_TRUE(enum_is_checked(TYPE_ENUM_BALLSIZE));
+}
+
 GROUP_RUNNER()
 {
     RUN(Can_Find_Enum_Member);
@@ -181,4 +186,5 @@ GROUP_RUNNER()
     RUN(Can_Use_Find_Enum_Macro);
     RUN(CheckedEnum_Accepts_Valid_Member);
     RUN(CheckedEnum_InValidates_InValid_Member);
+    RUN(Can_Check_If_Enum_Is_Checked);
 }

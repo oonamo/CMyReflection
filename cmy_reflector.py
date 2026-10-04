@@ -1155,9 +1155,25 @@ class Reflector:
     def generate_enum_validators(self) -> str:
         """Generates the validator function for enums"""
         funcs = ["// --- Auto-Generated Enum Validators ---"]
+        cases = []
         for enum in self.enums.values():
             funcs.append(enum.generate_validator())
+            if "unchecked" not in enum.tags:
+                type_name = self.type_map[enum.name]
+                cases.append(f"    case {type_name}: return true;")
 
+        cases_str = "\n".join(cases)
+        fdef = f"""\
+static inline bool enum_is_checked(FIELD_TYPE type) {{
+    switch (type) {{
+{cases_str}
+    default: return false;
+    }}
+    return false;
+}}
+"""
+
+        funcs.append(fdef)
         return "\n\n".join(funcs)
 
     def generate_definitions(self) -> str:

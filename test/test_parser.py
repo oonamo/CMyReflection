@@ -1005,3 +1005,43 @@ def test_void_is_never_created():
     assert "sizeof(void*)" in generated_content
 
     assert "sizeof(void)" not in generated_content
+
+
+def test_enum_checker_is_generated_correctly_with_enums():
+    c_code = """\
+    // cmy:reflect
+    typedef enum
+    {
+        VAL1,
+    } Enum1;
+    // cmy:reflect
+    typedef enum
+    {
+        VAL2,
+    } Enum2;
+    // cmy:reflect
+    typedef enum
+    {
+        VAL3,
+    } Enum3;
+
+    // cmy:reflect
+    // cmy:unchecked
+    typedef enum
+    {
+        VAL4,
+    } Enum4;
+    """
+
+    reflector = Reflector()
+    generate_reflection(reflector, "test.h", c_code)
+    reflector.resolve()
+
+    generated_content = str(reflector)
+
+    assert "enum_is_checked" in generated_content
+
+    assert "case TYPE_ENUM_ENUM1: return true;" in generated_content
+    assert "case TYPE_ENUM_ENUM2: return true;" in generated_content
+    assert "case TYPE_ENUM_ENUM3: return true;" in generated_content
+    assert "case TYPE_ENUM_ENUM4: return true;" not in generated_content
