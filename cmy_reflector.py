@@ -1169,7 +1169,6 @@ static inline bool enum_is_checked(FIELD_TYPE type) {{
 {cases_str}
     default: return false;
     }}
-    return false;
 }}
 """
 
