@@ -219,7 +219,6 @@ static inline bool enum_is_checked(FIELD_TYPE type) {
     case TYPE_ENUM_ENUMTYPE: return true;
     default: return false;
     }
-    return false;
 }
 
 DEFINE_FIELD_SETTER(StringType, TYPE_STRUCT_STRINGTYPE, StringType)

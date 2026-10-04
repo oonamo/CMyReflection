@@ -193,6 +193,9 @@ class Plugin:
     pre_macros: list[Macro] = dataclasses.field(default_factory=list)
     macros: list[Macro] = dataclasses.field(default_factory=list)
     depends_on: list[str] = dataclasses.field(default_factory=list)
+    data_providers: dict[str, Callable[[], Any]] = dataclasses.field(
+        default_factory=dict, init=False
+    )
 
     _setup_hook: Callable[[Any], None] = dataclasses.field(default=None, init=False)
     _struct_field_tags: dict = dataclasses.field(default_factory=dict, init=False)
@@ -351,6 +354,16 @@ class Plugin:
         """Decorator to register the plugin setup"""
         self._setup_hook = func
         return func
+
+    def data(self, export_key: str):
+        """Decorator to expose data to other plugins"""
+
+        def decorator(func):
+            full_key = f"{self.name}.{export_key}"
+            self.data_providers[full_key] = func
+            return func
+
+        return decorator
 
     def emit_code(self, func):
         """Decorator for functions that return raw C code strings."""
@@ -798,6 +811,7 @@ class Reflector:
         self.plugin_mapped_types: dict[str, dict[str, list[str]]] = defaultdict(
             lambda: defaultdict(list)
         )
+        self.plugin_data = {}
 
     def validate_tags(self):
         """Checks for any unregistered tags"""
@@ -914,6 +928,13 @@ class Reflector:
             for tag_name, handler in p.enum_tags.items():
                 enum_claims[tag_name].append((p.name, handler))
 
+            for key, provider_func in p.data_providers.items():
+                if key in self.plugin_data:
+                    raise ValueError(
+                        f"- Data collision: key '{key}' already has data '{self.plugin_data[key]}'"
+                    )
+                self.plugin_data[key] = provider_func()
+
             self.active_type_mappers.extend(p.type_mappers)
 
         def resolve_claims(claims, active_dict, context_name):
@@ -939,6 +960,13 @@ class Reflector:
                 "Plugin loading failed due to the following errors:\n"
                 + "\n".join(errors)
             )
+
+    def get_plugin_data(self, key: str):
+        if key not in self.plugin_data:
+            raise ValueError(
+                f"Key '{key}' does not have plugin data. Ensure dependencies are correctly ordered"
+            )
+        return self.plugin_data.get(key)
 
     def get_struct(self, identifier: str) -> CStruct | None:
         """Returns the CStruct object or None if not found"""

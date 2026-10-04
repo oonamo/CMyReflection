@@ -1045,3 +1045,42 @@ def test_enum_checker_is_generated_correctly_with_enums():
     assert "case TYPE_ENUM_ENUM2: return true;" in generated_content
     assert "case TYPE_ENUM_ENUM3: return true;" in generated_content
     assert "case TYPE_ENUM_ENUM4: return true;" not in generated_content
+
+
+def test_can_set_plugin_data():
+    p1 = Plugin("p1")
+    p2 = Plugin("p2", depends_on=["p1"])
+
+    @p1.setup
+    def p1_setup(reflector):
+        pass
+
+    @p1.data("my_data")
+    def data():
+        return 23
+
+    cmy_reflector.add_plugin(p1)
+
+    @p2.setup
+    def p2_setup(reflector):
+        assert reflector.get_plugin_data("p1.my_data") == 23
+
+    cmy_reflector.add_plugin(p2)
+
+    reflector = Reflector()
+    reflector.load_plugins()
+
+
+def test_errors_when_getting_invalid_data():
+    p1 = Plugin("p1")
+
+    @p1.setup
+    def p1_setup(reflector):
+        reflector.get_plugin_data("non_existing")
+
+    cmy_reflector.add_plugin(p1)
+    reflector = Reflector()
+
+    expected_err = "Key 'non_existing' does not have plugin data. Ensure dependencies are correctly ordered"
+    with pytest.raises(ValueError, match=re.escape(expected_err)):
+        reflector.load_plugins()

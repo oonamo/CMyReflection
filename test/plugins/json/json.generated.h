@@ -308,7 +308,6 @@ static inline bool enum_is_checked(FIELD_TYPE type) {
     case TYPE_ENUM_ACCOUNTSTATE: return true;
     default: return false;
     }
-    return false;
 }
 
 DEFINE_FIELD_SETTER(PostInteraction, TYPE_ENUM_POSTINTERACTION, PostInteraction)

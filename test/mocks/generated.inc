@@ -112,7 +112,6 @@ static inline bool enum_is_checked(FIELD_TYPE type) {
     case TYPE_ENUM_DEVICESTATE: return true;
     default: return false;
     }
-    return false;
 }
 
 DEFINE_ENUM_SETTER(BallSize, TYPE_ENUM_BALLSIZE, BallSize, is_valid_BallSize)
