@@ -140,6 +140,11 @@ _PRIMITIVE_FORMATS = {
 }
 
 
+@stdformat.data("primitive_formats")
+def export_formats():
+    return _PRIMITIVE_FORMATS
+
+
 def has_field_str_attribute(reflector, type_name):
     if reflector.is_enum(type_name):
         return True
@@ -352,6 +357,11 @@ _PRIMITIVE_PARSERS = {
     "int32_t": ("strtol(str_val, &endptr, 10)", "long"),
     "int64_t": ("strtoll(str_val, &endptr, 10)", "long long"),
 }
+
+
+@stdformat.data("primitive_parsers")
+def export_parsers():
+    return _PRIMITIVE_PARSERS
 
 
 def _generate_type_from_str(

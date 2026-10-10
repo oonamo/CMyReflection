@@ -1084,3 +1084,90 @@ def test_errors_when_getting_invalid_data():
     expected_err = "Key 'non_existing' does not have plugin data. Ensure dependencies are correctly ordered"
     with pytest.raises(ValueError, match=re.escape(expected_err)):
         reflector.load_plugins()
+
+
+def test_correctly_adds_type_map_data():
+    p1 = Plugin("p1")
+    p2 = Plugin("p2", depends_on=["p1"])
+
+    c_code = """
+    // cmy:reflect
+    typedef struct
+    {
+            int i;
+            double d;
+            float f;
+            size_t s;
+            ssize_t ss;
+            uint32_t t;
+
+            bool a;
+    } my_type_t;
+    """
+
+    @p1.setup
+    def p1_setup(reflector):
+        pass
+
+    @p2.setup
+    def p2_setup(reflector):
+        pass
+
+    @p1.type_mapper(
+        signature="ReflectResult dummy_thing(FIELD_TYPE type)", switch_var="type"
+    )
+    def p1_map(reflector, type_name, type_enum, ctype, suffix):
+        if type_name == "bool":
+            return (None, "return REFLECT_ERR_TYPE_MISMATCH")
+        fdef = f"ReflectResult foo_{suffix}() {{ return REFLECT_OK; }}"
+        case_def = f"return foo_{suffix}();"
+
+        return (fdef, case_def)
+
+    @p2.function()
+    def p2_test(reflector):
+        expected_mapped_types = [
+            "my_type_t",
+            "int",
+            "double",
+            "float",
+            "size_t",
+            "ssize_t",
+            "uint32_t",
+            "bool",
+        ]
+
+        p1_type_map_data = reflector.get_plugin_data("p1.type_maps.dummy_thing")
+
+        assert sorted(expected_mapped_types) == sorted(p1_type_map_data)
+
+        p1_func_definitions = reflector.get_plugin_data("p1.mapped_funcs.dummy_thing")
+
+        p1_fdef_names = [fname for fname, _ in p1_func_definitions]
+        expected_fdef_names = [
+            "foo_my_type_t",
+            "foo_int",
+            "foo_double",
+            "foo_float",
+            "foo_size_t",
+            "foo_ssize_t",
+            "foo_u32",
+        ]
+
+        assert sorted(expected_fdef_names) == sorted(p1_fdef_names)
+
+        return "ReflectResult dummy_t() { int a; }"
+
+    cmy_reflector.add_plugin(p1)
+    cmy_reflector.add_plugin(p2)
+
+    reflector = Reflector()
+    reflector.load_plugins()
+
+    generate_reflection(reflector, "test.h", c_code)
+    reflector.resolve()
+
+    generated_content = str(reflector)
+
+    # Checks that @p2_function ran
+    assert "ReflectResult dummy_t() { int a; }" in generated_content

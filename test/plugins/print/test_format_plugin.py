@@ -7,8 +7,9 @@ import pytest
 project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 
+import cmy_reflector
 import plugins.format as stdformat
-from cmy_reflector import _PLUGINS, Reflector, generate_reflection
+from cmy_reflector import _PLUGINS, Plugin, Reflector, generate_reflection
 
 
 @pytest.fixture(autouse=True)
@@ -66,7 +67,7 @@ def test_struct_field_catches_missing_specifier():
     reflector.resolve()
 
     try:
-        generated_content = str(reflector)
+        _ = str(reflector)
         assert None
     except ValueError as e:
         err_str = str(e)
@@ -74,3 +75,45 @@ def test_struct_field_catches_missing_specifier():
     assert (
         "Tag 'format' with value '\"INVALID\"' doesn't appear to have a format specifier."
     ) in err_str
+
+
+def test_exports_format_specifiers():
+    c_code = """
+    // cmy:reflect
+    typedef struct {
+        int i;
+    } my_struct_t;
+    """
+
+    dependent = Plugin("dep", depends_on=["format"])
+
+    @dependent.setup
+    def dep_setup(reflector):
+        pass
+
+    @dependent.function()
+    def dep_func(reflector):
+        print(reflector.plugin_data)
+        exported_format_specifiers = reflector.get_plugin_data(
+            "format.primitive_formats"
+        )
+        assert exported_format_specifiers == stdformat._PRIMITIVE_FORMATS
+
+        exported_parse_specifiers = reflector.get_plugin_data(
+            "format.primitive_parsers"
+        )
+        assert exported_parse_specifiers == stdformat._PRIMITIVE_PARSERS
+
+        return "ReflectResult foo() { return REFLECT_OK; }"
+
+    cmy_reflector.add_plugin(dependent)
+
+    reflector = Reflector()
+    reflector.load_plugins()
+
+    generate_reflection(reflector, "test.h", c_code)
+    reflector.resolve()
+
+    content = str(reflector)
+
+    assert "ReflectResult foo() { return REFLECT_OK; }" in content

@@ -157,6 +157,21 @@ class FuncDef:
     name: str
     params: str
 
+    def from_str(signature: str):
+        match = SIG_REGEX.match(signature)
+        if match:
+            fdef = FuncDef(
+                qualifiers=match.group("prefix"),
+                rettype=match.group("rettype"),
+                name=match.group("fname"),
+                params=match.group("params"),
+            )
+            return fdef
+        else:
+            raise ValueError(
+                f"Could not use regex to match function signature:\n{signature}"
+            )
+
     def prototype_string(self, with_qualifiers: bool = True) -> str:
         """Converts a FuncDef to it's C prototype"""
         q = f"{self.qualifiers.strip()} " if with_qualifiers else ""
@@ -1638,6 +1653,11 @@ FieldType get_base_type(FieldType type) {{
                 standalone_funcs = []
                 switch_cases = []
 
+                implement_function = []
+                implement_case = []
+
+                mapper_data: FuncDef = FuncDef.from_str(mapper.signature)
+
                 for type_name, type_enum in self.type_map.items():
                     if type_name == "unknown":
                         continue
@@ -1654,11 +1674,21 @@ FieldType get_base_type(FieldType type) {{
                         if func_code:
                             fdef = self._add_proto(p, func_code, False, mapper.requires)
                             if fdef and "extern" not in fdef.qualifiers:
+                                implement_function.append((fdef.name, type_name))
                                 standalone_funcs.append(func_code)
                         if case_code:
+                            implement_case.append(type_name)
                             switch_cases.append(
                                 f"        case {type_enum}: {case_code}"
                             )
+                if implement_function:
+                    self.plugin_data[f"{p.name}.mapped_funcs.{mapper_data.name}"] = (
+                        implement_function
+                    )
+                if implement_case:
+                    self.plugin_data[f"{p.name}.type_maps.{mapper_data.name}"] = (
+                        implement_case
+                    )
                 if switch_cases:
                     switch_body = "\n".join(switch_cases)
                     router = f"""\
