@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.1.0](https://github.com/oonamo/CMyReflection/compare/v1.0.1...v1.1.0) (2026-10-10)
+
+
+### Features
+
+* add `enum_is_checked` function for checking if enum is checked ([234a43c](https://github.com/oonamo/CMyReflection/commit/234a43c03eb03bdbc58572a185713aa46233a8d8))
+* add `is_ptr` function to reflector class ([cd00590](https://github.com/oonamo/CMyReflection/commit/cd005900f7f86ee2ac4bf8fc9a29428ddb83116f))
+* add generated array element getters ([e2bc709](https://github.com/oonamo/CMyReflection/commit/e2bc709848529afce9421f30bebb0b2e5f899d94))
+* add plugin data export support ([e73c897](https://github.com/oonamo/CMyReflection/commit/e73c89716d94791925a245af9756feb22b46661d))
+* allow for forcing declarations for empty type maps ([8684553](https://github.com/oonamo/CMyReflection/commit/86845538efab5c645907cfcc586926fc48b51e05))
+* **format-plugin:** add `set_field_from_str` functions to format-plugin ([28dfc80](https://github.com/oonamo/CMyReflection/commit/28dfc802248307ac649bc0a9eb246ad453652f44))
+* implement method to expose implemented types in type_maps ([9cbc506](https://github.com/oonamo/CMyReflection/commit/9cbc5067f1a6a7e0bb6f2ff3eb154d3b7933943f))
+* **json-plugin:** create convenient to_json* wrappers for structs ([63d64ba](https://github.com/oonamo/CMyReflection/commit/63d64bae1c2325a8806333139ad6c8f4e4e9e140))
+
+
+### Bug Fixes
+
+* avoid TYPE_VOID from ever being generated ([7cbaf73](https://github.com/oonamo/CMyReflection/commit/7cbaf7356873377393ebbf0e64da0cdbdb39cc2d))
+* check for read access in element getter ([7649d02](https://github.com/oonamo/CMyReflection/commit/7649d0257ef2f7dea114ed06c47c64e66f3d5c92))
+* ensure that sizeof(void) is never present in generated header ([b4ba136](https://github.com/oonamo/CMyReflection/commit/b4ba136777c7ac90eda98b21aa71e864231481f6))
+* remove fallback for `enum_is_checked` ([ce38d88](https://github.com/oonamo/CMyReflection/commit/ce38d880731734c393fa747921c6266f484efeaf))
+
 ## [1.0.1](https://github.com/oonamo/CMyReflection/compare/v1.0.0...v1.0.1) (2026-09-23)
 
 
